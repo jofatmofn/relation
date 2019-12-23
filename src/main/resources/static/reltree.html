@@ -1,0 +1,34 @@
+<script src="sigmajs/sigma.min.js"></script>
+<div id="container">
+  <style>
+    #graph-container {
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      position: absolute;
+    }
+  </style>
+  <div id="graph-container"></div>
+</div>
+<script src="sigmajs/plugins/sigma.layout.forceAtlas2.min.js"></script>
+<script src="sigmajs/plugins/sigma.renderers.edgeLabels.min.js"></script>
+<script src="js/relationUtils.js"></script>
+<script>
+(async function() {
+g = await invokeService("/basic/retrieveRelations", "");
+
+// Instantiate sigma:
+s = new sigma({
+	graph: g,
+	renderer: {                                                        
+		container: "graph-container",
+		type: "canvas" 
+    }
+});
+
+// https://github.com/jacomyal/sigma.js/issues/939
+s.startForceAtlas2({worker: true, barnesHutOptimize: true});
+
+})();
+</script>
