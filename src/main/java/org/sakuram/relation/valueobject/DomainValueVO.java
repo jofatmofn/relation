@@ -1,18 +1,20 @@
 package org.sakuram.relation.valueobject;
 
 public class DomainValueVO {
-	private long id;	
+	private int id;	
 	private String category;	
 	private String value;	
 	private boolean isRelationParentChild;	
-	private boolean isRelationSpouse;	
+	private boolean isRelationSpouse;
+	private boolean isInputAsAttribute;
+	private String repetitionType;
 	private String attributeDomain;
 
-	public long getId() {
+	public int getId() {
 		return id;
 	}
 
-	public void setId(long id) {
+	public void setId(int id) {
 		this.id = id;
 	}
 
@@ -46,6 +48,22 @@ public class DomainValueVO {
 
 	public void setRelationSpouse(boolean isRelationSpouse) {
 		this.isRelationSpouse = isRelationSpouse;
+	}
+
+	public boolean isInputAsAttribute() {
+		return isInputAsAttribute;
+	}
+
+	public void setInputAsAttribute(boolean isInputAsAttribute) {
+		this.isInputAsAttribute = isInputAsAttribute;
+	}
+
+	public String getRepetitionType() {
+		return repetitionType;
+	}
+
+	public void setRepetitionType(String repetitionType) {
+		this.repetitionType = repetitionType;
 	}
 
 	public String getAttributeDomain() {

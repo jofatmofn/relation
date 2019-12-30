@@ -1,6 +1,7 @@
 <html>
 	<head>
-		<script src="sigmajs/sigma.min.js"></script>
+		<!-- script src="sigmajs/sigma.min.js"></script -->
+		<script src="sigmajs/sigma.require.js"></script>
 		<!-- script src="sigmajs/plugins/sigma.layout.forceAtlas2.min.js"></script -->
 		<script src="sigmajs/plugins/sigma.renderers.edgeLabels.min.js"></script>
 
@@ -10,25 +11,113 @@
 		<script src="sigmajs/plugins/sigma.plugins.animate.min.js"></script>
 
 		<script src="js/relationUtils.js"></script>
+		<script src="js/constants.js"></script>
 		<script>
 		// TODO: Externalise the script to js/reltree.js
 		(async function() {
 
-			var categoryWiseDomainValueVOListMap;
+			var domainValueVOList, highlightedNode, loginUserPersonId;
 			
-			categoryWiseDomainValueVOListMap = await invokeService("/basic/retrieveDomainValues", "");
-			g = await invokeService("/basic/retrieveRelations", "");
+			loginUserPersonId = 6;	// TODO: After integration with login, this should be user's person id
+			domainValueVOList = await invokeService("/basic/retrieveDomainValues", "");
 
-			// Instantiate sigma:
+			// Instantiate sigma
 			s = new sigma({
-				graph: g,
+				graph: await invokeService("/basic/retrieveRelations", {startPersonId : loginUserPersonId}),
 				renderer: {
 					container: "graph-container",
 					type: "canvas"
 				}
 			});
-			/*
-			*/
+			s.bind('overNode', function(e) {
+			  s.settings('doubleClickEnabled', false);
+			});
+
+			s.bind('outNode', function(e) {
+			  s.settings('doubleClickEnabled', true);
+			});
+			s.bind('clickNode', async function(e) {	// TODO: Move this to a named function
+			  console.log(e.type, e.data.node.label, e.data.captor);
+				var attributeValueVOList, rightBarElement, inputElement, attributeValueElement, saveButtonElement, addButtonElement;
+				if (highlightedNode != undefined) {
+					highlightedNode.color = "rgb(1,179,255)";
+				}
+				e.data.node.color = "rgb(179,179,179)";
+				highlightedNode = e.data.node;
+				s.refresh();
+				attributeValueVOList = await invokeService("/basic/retrievePersonAttributes", e.data.node.id);
+				rightBarElement = document.getElementById("sidebar");
+				rightBarElement.setAttribute("personid",e.data.node.id);
+				rightBarElement.innerHTML = "";
+				for (let attributeValueVO of attributeValueVOList) {
+					attributeValueElement = document.createElement("div");
+					rightBarElement.appendChild(attributeValueElement);
+					attributeValueElement.className = "attrVal";
+					attributeValueElement.appendChild(document.createTextNode(attributeValueVO.attributeName));
+					attributeValueElement.appendChild(document.createElement("br"));
+					inputElement = document.createElement("input");
+					attributeValueElement.appendChild(inputElement);
+					inputElement.setAttribute("type","text");
+					inputElement.setAttribute("value", attributeValueVO.attributeValue);
+					inputElement.setAttribute("attributeid", attributeValueVO.attributeDvId);
+					attributeValueElement.appendChild(document.createElement("br"));
+					// TODO: To accommodate other fields isValueAccurate, startDate, endDate
+				}
+				addButtonElement = document.createElement("button");
+				rightBarElement.appendChild(addButtonElement);
+				addButtonElement.appendChild(document.createTextNode("+"));
+				addButtonElement.onclick = function() {
+					var selectElement, optionElement;
+					attributeValueElement = document.createElement("div");
+					rightBarElement.appendChild(attributeValueElement);
+					attributeValueElement.className = "attrVal";
+					selectElement = document.createElement("select");
+					attributeValueElement.appendChild(selectElement);
+					selectElement.setAttribute("name","attributenames");
+					attributeValueElement.appendChild(document.createElement("br"));
+					for (let domainValueVO of domainValueVOList) {
+						if (domainValueVO.category == CATEGORY_PERSON_ATTRIBUTE && domainValueVO.inputAsAttribute) {
+							optionElement = document.createElement("option");
+							selectElement.appendChild(optionElement);
+							optionElement.setAttribute("value", domainValueVO.id);
+							optionElement.appendChild(document.createTextNode(domainValueVO.value));
+						}
+					}
+					inputElement = document.createElement("input");
+					attributeValueElement.appendChild(inputElement);
+					inputElement.setAttribute("type","text");
+					attributeValueElement.appendChild(document.createElement("br"));
+					selectElement.onchange = function() {
+						inputElement.setAttribute("attributeid", selectElement.options[selectElement.selectedIndex].value);
+					};
+					// TODO: To accommodate other fields isValueAccurate, startDate, endDate
+				};
+				saveButtonElement = document.createElement("button");
+				rightBarElement.appendChild(saveButtonElement);
+				saveButtonElement.appendChild(document.createTextNode("Save"));
+				saveButtonElement.onclick = async function() {
+					var attributeValueVOList, attributeValueVO, saveAttributesRequestVO;
+					attributeValueVOList = [];
+					saveAttributesRequestVO = {entityId: rightBarElement.getAttribute("personid"), attributeValueVOList: attributeValueVOList};
+					
+					for (let attributeInputElement of rightBarElement.querySelectorAll("input[attributeid]")) {
+						if (attributeInputElement.value != "") {
+							attributeValueVO = {attributeDvId: attributeInputElement.getAttribute("attributeid"), attributeValue: attributeInputElement.value};
+							attributeValueVOList.push(attributeValueVO);
+						}
+					}
+					await invokeService("/basic/savePersonAttributes", saveAttributesRequestVO);
+					alert("Saved");
+				};
+				
+			});
+
+			s.bind('doubleClickNode', async function(e) {
+			  console.log(e.type, e.data.node.label, e.data.captor);
+				s.graph.clear();
+				s.graph.read(await invokeService("/basic/retrieveRelations", {startPersonId : e.data.node.id}));
+				s.refresh();
+			});
 
 			// https://github.com/jacomyal/sigma.js/issues/939
 			// s.startForceAtlas2({worker: true, barnesHutOptimize: false});
@@ -67,25 +156,46 @@
 	<body>
 		<div id="container">
 		  <style>
+			#topbar {
+				top: 0;
+				left: 0;
+				height: 15%;
+				width: 100%;
+				position: absolute;
+				background-color: Blue;
+			}
+			#leftbar {
+				top: 15%;
+				left: 0;
+				height: 85%;
+				width: 20%;
+				position: absolute;
+				background-color: Beige;
+			}
 			#graph-container {
-			  top: 0;
-			  bottom: 0;
-			  left: 0;
-			  right: 0;
+				top: 15%;
+				left: 20%;
+			  height: 85%;
+			  width: 60%;
 			  position: absolute;
+				background-color: Red;
 			}
 			#sidebar {
 			  bottom: 0;
 			  right: 0;
 			  width: 20%;
-			  height: 100%;
+			  height: 85%;
 			  position: absolute;
 			  background-color: Beige;
-			  padding: 10px;
+			}
+			.attrVal {
+				border: 5px solid Black;
 			}
 		  </style>
+		  <div id="topbar"></div>
+		  <div id="leftbar"></div>
 		  <div id="graph-container"></div>
-		  <div id="sidebar"/>
+		  <div id="sidebar"></div>
 		</div>
 	</body>
 </html>

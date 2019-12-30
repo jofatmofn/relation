@@ -1,0 +1,7 @@
+const ENTITY_TYPE_PERSON = 1;
+const ENTITY_TYPE_RELATION = 2;
+
+const CATEGORY_RELATION_NAME = "RelName";
+const CATEGORY_RELATION_SUB_TYPE = "RelSubType";
+const CATEGORY_PERSON_ATTRIBUTE = "PersAttribute";
+const CATEGORY_RELATION_ATTRIBUTE = "RelAttribute";
