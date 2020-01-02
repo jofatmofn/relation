@@ -41,12 +41,12 @@ public class PersonRelationController {
     	return personRelationService.retrieveAttributes(Constants.ENTITY_TYPE_RELATION, entityId);
     }
     
-    @RequestMapping(value = "/savePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/savePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public void savePersonAttributes(@RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
     	personRelationService.savePersonAttributes(saveAttributesRequestVO);
     }
     
-    @RequestMapping(value = "/saveRelationAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/saveRelationAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public void saveRelationAttributes(@RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
     	personRelationService.saveRelationAttributes(saveAttributesRequestVO);
     }

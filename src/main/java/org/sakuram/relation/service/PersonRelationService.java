@@ -160,13 +160,13 @@ public class PersonRelationService {
     	
     	attributeValueVOList = new ArrayList<AttributeValueVO>();
     	for(AttributeValue attributeValue : attributeValueList) {
-    		attributeValueVO = new AttributeValueVO();
-    		attributeValueVOList.add(attributeValueVO);
     		
     		domainValueFlags.setDomainValue(attributeValue.getAttribute());
     		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
     				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
     				domainValueFlags.isInputAsAttribute()) {
+        		attributeValueVO = new AttributeValueVO();
+        		attributeValueVOList.add(attributeValueVO);
         		attributeValueVO.setId(attributeValue.getId());
         		attributeValueVO.setAttributeDvId(attributeValue.getAttribute().getId());
         		attributeValueVO.setAttributeName(attributeValue.getAttribute().getValue());
@@ -229,7 +229,6 @@ public class PersonRelationService {
     	
     	creator = personRepository.findById(6L)
 				.orElseThrow(() -> new AppException("Invalid Person Id " + 6L, null));  // TODO: After integration with login, this should be user's person id
-    	// TODO: Validate inputs based on domainValueFlag repetitionType
     	attributeValueList = new ArrayList<AttributeValue>();
     	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
     		attributeValue = new AttributeValue();
