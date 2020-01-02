@@ -1,0 +1,35 @@
+#topbar {
+	top: 0;
+	left: 0;
+	height: 15%;
+	width: 100%;
+	position: absolute;
+	background-color: Blue;
+}
+#leftbar {
+	top: 15%;
+	left: 0;
+	height: 85%;
+	width: 20%;
+	position: absolute;
+	background-color: Beige;
+}
+#graph-container {
+	top: 15%;
+	left: 20%;
+	height: 85%;
+	width: 60%;
+	position: absolute;
+	background-color: Red;
+}
+#sidebar {
+	bottom: 0;
+	right: 0;
+	width: 20%;
+	height: 85%;
+	position: absolute;
+	background-color: Beige;
+}
+.attrVal {
+	border: 5px solid Brown;
+}
