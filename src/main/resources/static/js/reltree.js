@@ -1,4 +1,4 @@
-var domainValueVOList, highlightedNode, loginUserPersonId, domainValueVOMap;
+var domainValueVOList, highlightedEntity, loginUserPersonId, domainValueVOMap;
 
 async function drawGraph() {
 
@@ -15,6 +15,15 @@ async function drawGraph() {
 		renderer: {
 			container: "graph-container",
 			type: "canvas"
+		},
+		settings: {
+			minEdgeSize: 0.5,
+			maxEdgeSize: 4,
+			enableEdgeHovering: true,
+			edgeHoverColor: 'edge',
+			defaultEdgeHoverColor: '#000',
+			edgeHoverSizeRatio: 1,
+			edgeHoverExtremities: true
 		}
 	});
 	
@@ -24,8 +33,11 @@ async function drawGraph() {
 
 	s.bind('outNode', function(e) {
 	  s.settings('doubleClickEnabled', true);
-	});			
-	s.bind('clickNode', editPersonNode);
+	});
+	
+	s.bind('clickNode', editEntityAttributes);
+	
+	s.bind('clickEdge', editEntityAttributes);
 	
 	s.bind('doubleClickNode', async function(e) {
 		console.log(e.type, e.data.node.label, e.data.captor);
@@ -66,19 +78,31 @@ async function drawGraph() {
 
 }
 
-async function editPersonNode(e) {
-	console.log(e.type, e.data.node.label, e.data.captor);
-	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, saveButtonElement, addButtonElement;
+async function editEntityAttributes(e) {
+	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, saveButtonElement, addButtonElement, isPersonNode;
 	
-	if (highlightedNode != undefined) {
-		highlightedNode.color = "rgb(1,179,255)";
+	if (highlightedEntity != undefined) {
+		highlightedEntity.color = DEFAULT_COLOR;
 	}
-	e.data.node.color = "rgb(179,179,179)";
-	highlightedNode = e.data.node;
+	
+	if (e.type == "clickNode") {
+		isPersonNode = true;
+		highlightedEntity = e.data.node;
+		console.log(e.type, e.data.node.label, e.data.captor);
+		attributeValueVOList = await invokeService("/basic/retrievePersonAttributes", e.data.node.id);
+	}
+	else {
+		isPersonNode = false;
+		highlightedEntity = e.data.edge;
+		console.log(e.type, e.data.edge.label, e.data.captor);
+		attributeValueVOList = await invokeService("/basic/retrieveRelationAttributes", e.data.edge.id);
+	}
+	
+	highlightedEntity.color = HIGHLIGHT_COLOR;
 	s.refresh();
-	attributeValueVOList = await invokeService("/basic/retrievePersonAttributes", e.data.node.id);
+	
 	rightBarElement = document.getElementById("sidebar");
-	rightBarElement.setAttribute("personid",e.data.node.id);
+	rightBarElement.setAttribute("entityid", (isPersonNode ? e.data.node.id : e.data.edge.id));
 	rightBarElement.innerHTML = "";
 	for (let attributeValueVO of attributeValueVOList) {
 		attributeValueBlockElement = document.createElement("div");
@@ -100,7 +124,7 @@ async function editPersonNode(e) {
 		attributeValueBlockElement.appendChild(selectElement);
 		selectElement.setAttribute("name","attributenames");
 		for (let domainValueVO of domainValueVOList) {
-			if (domainValueVO.category == CATEGORY_PERSON_ATTRIBUTE && domainValueVO.inputAsAttribute) {
+			if (domainValueVO.category == (isPersonNode ? CATEGORY_PERSON_ATTRIBUTE : CATEGORY_RELATION_ATTRIBUTE) && domainValueVO.inputAsAttribute) {
 				optionElement = document.createElement("option");
 				selectElement.appendChild(optionElement);
 				optionElement.setAttribute("value", domainValueVO.id);
@@ -132,7 +156,7 @@ async function editPersonNode(e) {
 	saveButtonElement.onclick = async function() {
 		var attributeValueVOList, attributeValueVO, saveAttributesRequestVO, inputElements;
 		attributeValueVOList = [];
-		saveAttributesRequestVO = {entityId: rightBarElement.getAttribute("personid"), attributeValueVOList: attributeValueVOList};
+		saveAttributesRequestVO = {entityId: rightBarElement.getAttribute("entityid"), attributeValueVOList: attributeValueVOList};
 		
 		for (let attributeValueBlkElement of rightBarElement.querySelectorAll("div[attributedvid]")) {
 			// TODO: Validation across attributeValue elements (based on repetitionType)
@@ -150,7 +174,7 @@ async function editPersonNode(e) {
 				attributeValueVOList.push(attributeValueVO);
 			}
 		}
-		await invokeService("/basic/savePersonAttributes", saveAttributesRequestVO);
+		await invokeService((isPersonNode ? "/basic/savePersonAttributes" : "/basic/saveRelationAttributes"), saveAttributesRequestVO);
 		alert("Saved");
 	};	
 }

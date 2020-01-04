@@ -75,14 +75,16 @@ public class PersonRelationService {
     		personVOList.add(personVO);
     		
     		personVO.setId(String.valueOf(person.getId()));
-    		personVO.setSize("5.0");
+    		personVO.setSize(5.0);
     		personVO.setColor("rgb(1,179,255)");
     		personVO.setX(Math.random());
     		personVO.setY(Math.random());
     		for (AttributeValue attributeValue : person.getAttributeValueList()) {
-        		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
+        		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_LABEL &&
+        				(attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
         				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now()))) {
-        			personVO.setAttribute(attributeValue.getAttribute().getValue(), attributeValue.getAttributeValue());
+        			personVO.setLabel(attributeValue.getAttributeValue());
+        			break;
         		}
     		}
     	}
@@ -95,10 +97,12 @@ public class PersonRelationService {
     		relationVO.setId(String.valueOf(relation.getId()));
     		relationVO.setSource(String.valueOf(relation.getPerson1().getId()));
     		relationVO.setTarget(String.valueOf(relation.getPerson2().getId()));
+    		relationVO.setSize(0.5);
     		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
-        		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
+        		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) &&
+        				(attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
         				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now()))) {
-        			relationVO.setAttribute(attributeValue.getAttribute().getValue(), attributeValue.getAttributeValue());
+        			relationVO.setLabel(attributeValue.getAttribute().getId(), attributeValue.getAttributeValue());
         		}
     		}
     	}

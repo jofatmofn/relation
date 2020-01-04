@@ -1,11 +1,14 @@
 package org.sakuram.relation.valueobject;
 
+import org.sakuram.relation.util.Constants;
+
 public class RelationVO {
 
 	private String id;
 	private String source;
 	private String target;
 	private String label;
+	private double size;
 
 	public String getId() {
 		return id;
@@ -35,31 +38,35 @@ public class RelationVO {
 		return label;
 	}
 
-	public void setLabel(String label) {
-		this.label = label;
-	}
-	
-	public void setAttribute(String attributeName, String attributeValue) {
-		switch(attributeName) {
-			case "person1ForPerson2":
-				if (getLabel() == null || getLabel().equals("")) {
-					setLabel(attributeValue);
+	public void setLabel(int attributeDvId, String attributeValue) {
+		switch(attributeDvId) {
+			case Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2:
+				if (label == null || label.equals("")) {
+					label = attributeValue;
 				}
 				else {
-					setLabel(attributeValue + "-" + getLabel());
+					label = attributeValue + "-" + label;
 				}
 				break;
-			case "person2ForPerson1":
-				if (getLabel() == null || getLabel().equals("")) {
-					setLabel(attributeValue);
+			case Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1:
+				if (label == null || label.equals("")) {
+					label = attributeValue;
 				}
 				else {
-					setLabel(getLabel() + "-" + attributeValue);
+					label = label + "-" + attributeValue;
 				}
 				break;
 			default:
-				System.out.println("Attribute " + attributeName + " ignored.");
+				System.out.println("Attribute " + attributeDvId + " ignored.");
 		}
+	}
+
+	public double getSize() {
+		return size;
+	}
+
+	public void setSize(double size) {
+		this.size = size;
 	}
 	
 }

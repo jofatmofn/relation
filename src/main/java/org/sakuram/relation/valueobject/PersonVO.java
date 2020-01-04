@@ -4,8 +4,7 @@ public class PersonVO {
 	
 	private String id;
 	private String label;
-	private String gender;
-	private String size;
+	private double size;
 	private String color;
 	private double x;
 	private double y;
@@ -26,19 +25,11 @@ public class PersonVO {
 		this.label = label;
 	}
 
-	public String getGender() {
-		return gender;
-	}
-
-	public void setGender(String gender) {
-		this.gender = gender;
-	}
-
-	public String getSize() {
+	public double getSize() {
 		return size;
 	}
 
-	public void setSize(String size) {
+	public void setSize(double size) {
 		this.size = size;
 	}
 
@@ -66,23 +57,4 @@ public class PersonVO {
 		this.y = y;
 	}
 
-	public void setAttribute(String attributeName, String attributeValue) {
-		switch(attributeName) {
-			case "label":
-				setLabel(attributeValue);
-				break;
-			case "size":
-				setSize(attributeValue);
-				break;
-			case "color":
-				setColor(attributeValue);
-				break;
-			case "gender":
-				setGender(attributeValue);
-				break;
-			default:
-				System.out.println("Attribute " + attributeName + " ignored.");
-		}
-	}
-	
 }
