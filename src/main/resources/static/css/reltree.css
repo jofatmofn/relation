@@ -30,6 +30,9 @@
 	position: absolute;
 	background-color: Beige;
 }
-.attrVal {
+.attrValError {
 	border: 5px solid Brown;
+}
+.attrVal {
+	border: 5px solid Green;
 }

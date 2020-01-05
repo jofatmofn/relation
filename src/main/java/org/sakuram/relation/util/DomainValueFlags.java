@@ -4,7 +4,7 @@ import org.sakuram.relation.bean.DomainValue;
 
 public class DomainValueFlags {
 	private String attributeDomain, repetitionType;
-	private boolean isRelationParentChild, isRelationSpouse, isInputAsAttribute;
+	private boolean isRelationParentChild, isRelationSpouse, isInputAsAttribute, isInputMandatory;
 	
 	public void setDomainValue(DomainValue domainValue) {
     	String flagsArr[];
@@ -35,10 +35,13 @@ public class DomainValueFlags {
 				isInputAsAttribute = new Boolean(flagsArr[Constants.FLAG_POSITION_INPUT_AS_ATTRIBUTE]);    				
 			}
 			if (flagsArr.length > Constants.FLAG_POSITION_REPETITION) {
-				repetitionType = flagsArr[Constants.FLAG_POSITION_REPETITION];    				
+				repetitionType = flagsArr[Constants.FLAG_POSITION_REPETITION];
 			}
 			if (flagsArr.length > Constants.FLAG_POSITION_DOMAIN) {
-				attributeDomain = flagsArr[Constants.FLAG_POSITION_DOMAIN];    				
+				attributeDomain = flagsArr[Constants.FLAG_POSITION_DOMAIN];
+			}
+			if (flagsArr.length > Constants.FLAG_POSITION_INPUT_MANDATORY) {
+				isInputMandatory = new Boolean(flagsArr[Constants.FLAG_POSITION_INPUT_MANDATORY]);
 			}
 		}
 		
@@ -62,6 +65,10 @@ public class DomainValueFlags {
 	
 	public String getAttributeDomain() {
 		return attributeDomain;
+	}
+	
+	public boolean isInputMandatory() {
+		return isInputMandatory;
 	}
 	
 }

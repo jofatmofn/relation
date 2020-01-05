@@ -1,12 +1,30 @@
 var domainValueVOList, highlightedEntity, loginUserPersonId, domainValueVOMap;
+var paSelectElement, raSelectElement, paDomainValueVOList, raDomainValueVOList, isPersonNode;
 
 async function drawGraph() {
 
 	loginUserPersonId = 6;	// TODO: After integration with login, this should be user's person id
 	domainValueVOList = await invokeService("/basic/retrieveDomainValues", "");
 	domainValueVOMap = new Map();
+	paSelectElement = document.createElement("select");
+	paSelectElement.setAttribute("name","attributenames");
+	raSelectElement = document.createElement("select");
+	raSelectElement.setAttribute("name","attributenames");
+	paDomainValueVOList = [];
+	raDomainValueVOList = [];
 	for (let domainValueVO of domainValueVOList) {
 		domainValueVOMap.set(domainValueVO.id, domainValueVO);
+		optionElement = document.createElement("option");
+		optionElement.setAttribute("value", domainValueVO.id);
+		optionElement.appendChild(document.createTextNode(domainValueVO.value));
+		if (domainValueVO.category == CATEGORY_PERSON_ATTRIBUTE && domainValueVO.inputAsAttribute) {
+			paSelectElement.appendChild(optionElement);
+			paDomainValueVOList.push(domainValueVO);
+		}
+		else if (domainValueVO.category == CATEGORY_RELATION_ATTRIBUTE && domainValueVO.inputAsAttribute) {
+			raSelectElement.appendChild(optionElement);
+			raDomainValueVOList.push(domainValueVO);
+		}
 	}
 
 	// Instantiate sigma
@@ -80,7 +98,7 @@ async function drawGraph() {
 }
 
 async function editEntityAttributes(e) {
-	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, saveButtonElement, addButtonElement, isPersonNode;
+	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, saveButtonElement, addButtonElement;
 	
 	if (highlightedEntity != undefined) {
 		highlightedEntity.color = DEFAULT_COLOR;
@@ -124,21 +142,12 @@ async function editEntityAttributes(e) {
 		rightBarElement.appendChild(attributeValueBlockElement);
 		attributeValueBlockElement.className = "attrVal";
 		
-		selectElement = document.createElement("select");
+		selectElement = (isPersonNode ? paSelectElement : raSelectElement).cloneNode(true);
 		attributeValueBlockElement.appendChild(selectElement);
-		selectElement.setAttribute("name","attributenames");
-		for (let domainValueVO of domainValueVOList) {
-			if (domainValueVO.category == (isPersonNode ? CATEGORY_PERSON_ATTRIBUTE : CATEGORY_RELATION_ATTRIBUTE) && domainValueVO.inputAsAttribute) {
-				optionElement = document.createElement("option");
-				selectElement.appendChild(optionElement);
-				optionElement.setAttribute("value", domainValueVO.id);
-				optionElement.appendChild(document.createTextNode(domainValueVO.value));
-			}
-		}
 		createAttributeBlock(attributeValueBlockElement, {attributeDvId: parseInt(selectElement.options[0].value)});
 		selectElement.onchange = function() {
 			var avbChildNodeList, skippedNodeCount, avbChildNode;
-			avbChildNodeList = attributeValueBlockElement.childNodes;
+			avbChildNodeList = selectElement.parentElement.childNodes;
 			skippedNodeCount = 0;
 			while (avbChildNodeList.length > skippedNodeCount) {
 				avbChildNode = avbChildNodeList[skippedNodeCount];
@@ -149,7 +158,7 @@ async function editEntityAttributes(e) {
 					skippedNodeCount = skippedNodeCount + 1;
 				}
 			}
-			createAttributeBlock(attributeValueBlockElement, {attributeDvId: parseInt(selectElement.options[selectElement.selectedIndex].value)});
+			createAttributeBlock(selectElement.parentElement, {attributeDvId: parseInt(selectElement.options[selectElement.selectedIndex].value)});
 		};
 		
 	};
@@ -157,28 +166,76 @@ async function editEntityAttributes(e) {
 	saveButtonElement = document.getElementById("savebutton");
 	saveButtonElement.onclick = async function() {
 		var attributeValueVOList, attributeValueVO, saveAttributesRequestVO, inputElements;
+		var attributeVsValueListMap, attributeDvId, attributeDomainValueVO;
+		var ind1, ind2, attributeValueNBlkList;
+		
 		attributeValueVOList = [];
+		attributeVsValueListMap = new Map();
 		saveAttributesRequestVO = {entityId: rightBarElement.getAttribute("entityid"), attributeValueVOList: attributeValueVOList};
 		
 		for (let attributeValueBlkElement of rightBarElement.querySelectorAll("div[attributedvid]")) {
-			// TODO: Validation across attributeValue elements (based on repetitionType)
 			inputElements = attributeValueBlkElement.getElementsByTagName("input");
-			if (inputElements[0].value != "") {
-				attributeValueVO = {attributeDvId: attributeValueBlkElement.getAttribute("attributedvid"), attributeValue: inputElements[0].value, valueAccurate: inputElements[1].checked, startDate: null, endDate: null};
-				if (inputElements.length > 2) {
-					if (inputElements[2].value != "") {
-						attributeValueVO.startDate = pikadayToIsoFormat(inputElements[2].value);
-					}
-					if (inputElements[3].value != "") {
-						attributeValueVO.endDate = pikadayToIsoFormat(inputElements[3].value);
+			attributeValueBlkElement.className = "attrVal";
+			attributeDvId = parseInt(attributeValueBlkElement.getAttribute("attributedvid"));
+			attributeValueVO = {attributeDvId: attributeDvId, attributeValue: inputElements[0].value, valueAccurate: inputElements[1].checked, startDate: null, endDate: null};
+			if (inputElements.length > 2) {
+				if (inputElements[2].value != "") {
+					attributeValueVO.startDate = pikadayToIsoFormat(inputElements[2].value);
+				}
+				if (inputElements[3].value != "") {
+					attributeValueVO.endDate = pikadayToIsoFormat(inputElements[3].value);
+				}
+			}
+			attributeValueVOList.push(attributeValueVO);
+			if (attributeVsValueListMap.has(attributeDvId)) {
+				attributeValueNBlkList = attributeVsValueListMap.get(attributeDvId);
+			}
+			else {
+				attributeValueNBlkList = [];
+				attributeVsValueListMap.set(attributeDvId, attributeValueNBlkList);
+			}
+			attributeValueNBlkList.push({attributeValueVO: attributeValueVO, attributeValueBlkElement: attributeValueBlkElement})
+		}
+		for (let attributeDomainValueVO of (isPersonNode ? paDomainValueVOList : raDomainValueVOList)) {
+			if (attributeDomainValueVO.inputMandatory && !attributeVsValueListMap.has(attributeDomainValueVO.id)) {
+				alert(attributeDomainValueVO.value + " is a mandatory property");
+				return;
+			}
+			if (attributeDomainValueVO.repetitionType == FLAG_ATTRIBUTE_REPETITION_NON_OVERLAPPING_ALLOWED && attributeVsValueListMap.has(attributeDomainValueVO.id)) {
+				attributeValueNBlkList = attributeVsValueListMap.get(attributeDomainValueVO.id);
+				for (ind1 = 0; ind1 < attributeValueNBlkList.length - 1; ind1++) {
+					for (ind2 = ind1 + 1; ind2 < attributeValueNBlkList.length; ind2++) {
+						if (areOverlappingDates(attributeValueNBlkList[ind1].attributeValueVO.startDate, attributeValueNBlkList[ind1].attributeValueVO.endDate, attributeValueNBlkList[ind2].attributeValueVO.startDate, attributeValueNBlkList[ind2].attributeValueVO.endDate)) {
+							alert("Multiple values with effective period overlapping not allowed for " + attributeDomainValueVO.value);
+							return;
+						}
 					}
 				}
-				attributeValueVOList.push(attributeValueVO);
+			}
+		}
+		for (let keyValueArr of attributeVsValueListMap.entries()) {
+			attributeDomainValueVO = domainValueVOMap.get(keyValueArr[0]);
+			if (attributeDomainValueVO.repetitionType == FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED && keyValueArr[1].length > 1) {
+				alert("Multiple Values not allowed for " + attributeDomainValueVO.value);
+				return;
+			}
+			for (let value of keyValueArr[1]) {
+				if (value.attributeValueVO.attributeValue == "") {
+					value.attributeValueBlkElement.className = "attrValError";
+					alert("Blank is not a valid value");
+					return;
+				}
+				if (value.attributeValueVO.startDate != null && value.attributeValueVO.endDate != null && new Date(value.attributeValueVO.startDate) > new Date(value.attributeValueVO.endDate)) {
+					value.attributeValueBlkElement.className = "attrValError";
+					alert("Start date cannot be after end date");
+					return;
+				}
 			}
 		}
 		await invokeService((isPersonNode ? "/basic/savePersonAttributes" : "/basic/saveRelationAttributes"), saveAttributesRequestVO);
 		alert("Saved");
-	};	
+	};
+	
 }
 
 function pikadayToIsoFormat(pDateStr) {
@@ -198,6 +255,27 @@ function isoToPikadayFormat(iDateStr) {
 	iDate = new Date(iDateStr);
 	dayNo = iDate.getDate();
 	return [days[iDate.getDay()], months[iDate.getMonth()], dayNo < 10 ? "0" + dayNo : dayNo, iDate.getFullYear()].join(" ");
+}
+
+function areOverlappingDates(startDate1Str, endDate1Str, startDate2Str, endDate2Str) {
+	var startDate1, endDate1, startDate2, endDate2;
+	if (startDate1Str != null) {
+		startDate1 = new Date(startDate1Str);
+	}
+	if (endDate1Str != null) {
+		endDate1 = new Date(endDate1Str);
+	}
+	if (startDate2Str != null) {
+		startDate2 = new Date(startDate2Str);
+	}
+	if (endDate2Str != null) {
+		endDate2 = new Date(endDate2Str);
+	}
+	if ((startDate1Str === null || endDate2Str === null || startDate1 <= endDate2) &&
+		(endDate1Str === null || startDate2Str === null || endDate1 >= startDate2)) {
+		return true;
+	}
+	return false;
 }
 
 function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {

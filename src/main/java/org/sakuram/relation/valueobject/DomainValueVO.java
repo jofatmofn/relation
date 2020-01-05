@@ -9,6 +9,7 @@ public class DomainValueVO {
 	private boolean isInputAsAttribute;
 	private String repetitionType;
 	private String attributeDomain;
+	private boolean isInputMandatory;
 
 	public int getId() {
 		return id;
@@ -72,6 +73,14 @@ public class DomainValueVO {
 
 	public void setAttributeDomain(String attributeDomain) {
 		this.attributeDomain = attributeDomain;
+	}
+
+	public boolean isInputMandatory() {
+		return isInputMandatory;
+	}
+
+	public void setInputMandatory(boolean isInputMandatory) {
+		this.isInputMandatory = isInputMandatory;
 	}
 	
 }

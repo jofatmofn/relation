@@ -133,7 +133,8 @@ public class PersonRelationService {
     		domainValueVO.setRelationSpouse(domainValueFlags.isRelationSpouse());
     		domainValueVO.setInputAsAttribute(domainValueFlags.isInputAsAttribute());
     		domainValueVO.setRepetitionType(domainValueFlags.getRepetitionType());
-    		domainValueVO.setAttributeDomain(domainValueVO.getAttributeDomain());
+    		domainValueVO.setAttributeDomain(domainValueFlags.getAttributeDomain());
+    		domainValueVO.setInputMandatory(domainValueFlags.isInputMandatory());
     	}
     	
     	return domainValueVOList;
