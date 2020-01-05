@@ -184,13 +184,21 @@ public class PersonRelationService {
     }
     
     public void savePersonAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
-    	Person person = null;
+    	Person person, creator;
     	List<AttributeValue> attributeValueList;
     	
-		person = personRepository.findById(saveAttributesRequestVO.getEntityId())
-				.orElseThrow(() -> new AppException("Invalid Person " + saveAttributesRequestVO.getEntityId(), null));
-		deleteExistingInputAttributes(person.getAttributeValueList());
-		// TODO: Delete only the modified values. Else the creator id and timestamp will be lost.
+    	if (saveAttributesRequestVO.getEntityId() == -1) {
+        	creator = personRepository.findById(6L)
+    				.orElseThrow(() -> new AppException("Invalid Person Id " + 6L, null));  // TODO: After integration with login, this should be user's person id
+    		person = new Person();
+    		person.setCreator(creator);
+    	}
+    	else {
+    		person = personRepository.findById(saveAttributesRequestVO.getEntityId())
+    				.orElseThrow(() -> new AppException("Invalid Person " + saveAttributesRequestVO.getEntityId(), null));
+    		deleteExistingInputAttributes(person.getAttributeValueList());
+    		// TODO: Delete only the modified values. Else the creator id and timestamp will be lost.
+    	}
     	
     	attributeValueList = attributeValueVOToEntity(saveAttributesRequestVO.getAttributeValueVOList(), person, null);
     	

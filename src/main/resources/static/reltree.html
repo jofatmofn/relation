@@ -21,9 +21,21 @@
 	<body onload="drawGraph()">
 		<div id="container">
 			<div id="topbar"></div>
-			<div id="leftbar"></div>
+			<div id="leftbar">
+				<div id="leftbartitle">Functions</div>
+				<div id="leftbarbody">
+					<button onclick="addPerson()">Add Person</button>
+				</div>
+			</div>
 			<div id="graph-container"></div>
-			<div id="sidebar"></div>
+			<div id="sidebar">
+				<div id="sidebartitle">Properties</div>
+				<div>
+					<button id="addbutton">+</button>
+					<button id="savebutton">Save</button>
+				</div>
+				<div id="sidebarbody"></div>
+			</div>
 		</div>
 	</body>
 </html>

@@ -37,8 +37,8 @@ public class Person {
 	private String loginId;
 	
 	@ManyToOne
-	@JoinColumn(name="creator_id", nullable=false)
-	private Person creatorId;
+	@JoinColumn(name="creator_fk", nullable=false)
+	private Person creator;
 	
 	@Column(name="created_at", nullable=false, updatable=false)
 	@CreationTimestamp
@@ -64,12 +64,12 @@ public class Person {
 		this.loginId = loginId;
 	}
 
-	public Person getCreatorId() {
-		return creatorId;
+	public Person getCreator() {
+		return creator;
 	}
 
-	public void setCreatorId(Person creatorId) {
-		this.creatorId = creatorId;
+	public void setCreator(Person creator) {
+		this.creator= creator;
 	}
 
 	public Timestamp getCreatedAt() {

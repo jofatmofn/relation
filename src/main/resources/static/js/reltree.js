@@ -44,6 +44,7 @@ async function drawGraph() {
 		s.graph.clear();
 		s.graph.read(await invokeService("/basic/retrieveRelations", {startPersonId : e.data.node.id}));
 		s.refresh();
+		document.getElementById("sidebarbody").innerHTML = "";
 	});
 
 	// *** sigma.layout.noverlap ***
@@ -85,23 +86,28 @@ async function editEntityAttributes(e) {
 		highlightedEntity.color = DEFAULT_COLOR;
 	}
 	
+	attributeValueVOList = [];
 	if (e.type == "clickNode") {
 		isPersonNode = true;
 		highlightedEntity = e.data.node;
 		console.log(e.type, e.data.node.label, e.data.captor);
-		attributeValueVOList = await invokeService("/basic/retrievePersonAttributes", e.data.node.id);
+		if (e.data.node.id > 0) {
+			attributeValueVOList = await invokeService("/basic/retrievePersonAttributes", e.data.node.id);
+		}
 	}
 	else {
 		isPersonNode = false;
 		highlightedEntity = e.data.edge;
 		console.log(e.type, e.data.edge.label, e.data.captor);
-		attributeValueVOList = await invokeService("/basic/retrieveRelationAttributes", e.data.edge.id);
+		if (e.data.node.id > 0) {
+			attributeValueVOList = await invokeService("/basic/retrieveRelationAttributes", e.data.edge.id);
+		}
 	}
 	
 	highlightedEntity.color = HIGHLIGHT_COLOR;
 	s.refresh();
 	
-	rightBarElement = document.getElementById("sidebar");
+	rightBarElement = document.getElementById("sidebarbody");
 	rightBarElement.setAttribute("entityid", (isPersonNode ? e.data.node.id : e.data.edge.id));
 	rightBarElement.innerHTML = "";
 	for (let attributeValueVO of attributeValueVOList) {
@@ -111,9 +117,7 @@ async function editEntityAttributes(e) {
 		attributeValueBlockElement.appendChild(document.createTextNode(attributeValueVO.attributeName));
 		createAttributeBlock(attributeValueBlockElement, attributeValueVO);
 	}
-	addButtonElement = document.createElement("button");
-	rightBarElement.appendChild(addButtonElement);
-	addButtonElement.appendChild(document.createTextNode("+"));
+	addButtonElement = document.getElementById("addbutton");
 	addButtonElement.onclick = function() {
 		var selectElement, optionElement;
 		attributeValueBlockElement = document.createElement("div");
@@ -150,9 +154,7 @@ async function editEntityAttributes(e) {
 		
 	};
 	
-	saveButtonElement = document.createElement("button");
-	rightBarElement.appendChild(saveButtonElement);
-	saveButtonElement.appendChild(document.createTextNode("Save"));
+	saveButtonElement = document.getElementById("savebutton");
 	saveButtonElement.onclick = async function() {
 		var attributeValueVOList, attributeValueVO, saveAttributesRequestVO, inputElements;
 		attributeValueVOList = [];
@@ -266,4 +268,20 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 			endDateElement.setAttribute("disabled","");
 		}
 	}
+}
+
+function addPerson() {
+	if (s.graph.nodes(NEW_ENTITY_ID) == null) {
+		s.graph.addNode({
+			id: NEW_ENTITY_ID,
+			size: 5.0,
+			x: Math.random() / 10,
+			y: Math.random() / 10,
+			dX: 0,
+			dY: 0,
+			type: 'goo'
+		});
+	}
+	
+	s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(NEW_ENTITY_ID)});
 }
