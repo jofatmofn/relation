@@ -188,7 +188,7 @@ public class PersonRelationService {
     	Person person, creator;
     	List<AttributeValue> attributeValueList;
     	
-    	if (saveAttributesRequestVO.getEntityId() == -1) {
+    	if (saveAttributesRequestVO.getEntityId() == Constants.NEW_ENTITY_ID) {
         	creator = personRepository.findById(6L)
     				.orElseThrow(() -> new AppException("Invalid Person Id " + 6L, null));  // TODO: After integration with login, this should be user's person id
     		person = new Person();
@@ -259,5 +259,27 @@ public class PersonRelationService {
     		attributeValue.setCreatorId(creator);
     	}
     	return attributeValueList;
+    }
+    
+    public long searchPerson(List<AttributeValueVO> attributeValueVOList) {
+    	StringBuilder querySB;
+    	boolean firstTime;
+    	List<Person> personList;
+    	
+    	firstTime = true;
+    	querySB = new StringBuilder();
+    	querySB.append("SELECT * FROM person p ");
+    	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
+    		querySB.append((firstTime ? "WHERE " : "AND "));
+    		firstTime = false;
+    		querySB.append("EXISTS (SELECT 1 FROM attribute_value WHERE person_fk = p.id AND attribute_fk = ");
+    		querySB.append(attributeValueVO.getAttributeDvId());
+    		querySB.append(" AND LOWER(attribute_value) = '");	// Beware: PostgreSQL specific syntax
+    		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
+    		querySB.append("') ");
+    	}
+    	
+    	personList = personRepository.executeDynamicQuery(querySB.toString());
+    	return (personList.size() > 0 ? personList.get(0).getId() : Constants.NEW_ENTITY_ID);
     }
 }

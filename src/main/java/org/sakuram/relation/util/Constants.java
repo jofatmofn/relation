@@ -31,4 +31,5 @@ public class Constants {
 	public static final int FLAG_POSITION_INPUT_MANDATORY = 3;
 	
 	public static final String CSV_SEPARATOR = ",";
+	public static final long NEW_ENTITY_ID = -1L;
 }

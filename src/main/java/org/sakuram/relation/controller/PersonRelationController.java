@@ -51,4 +51,9 @@ public class PersonRelationController {
     	personRelationService.saveRelationAttributes(saveAttributesRequestVO);
     }
     
+    @RequestMapping(value = "/searchPerson", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public long searchPerson(@RequestBody List<AttributeValueVO> attributeValueVOList) {
+    	return personRelationService.searchPerson(attributeValueVOList);
+    }
+    
 }

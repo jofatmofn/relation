@@ -1,5 +1,6 @@
 var domainValueVOList, highlightedEntity, loginUserPersonId, domainValueVOMap;
 var paSelectElement, raSelectElement, paDomainValueVOList, raDomainValueVOList, isPersonNode;
+var action;
 
 async function drawGraph() {
 
@@ -98,7 +99,7 @@ async function drawGraph() {
 }
 
 async function editEntityAttributes(e) {
-	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, saveButtonElement, addButtonElement;
+	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, actionButtonElement, addButtonElement;
 	
 	if (highlightedEntity != undefined) {
 		highlightedEntity.color = DEFAULT_COLOR;
@@ -111,30 +112,35 @@ async function editEntityAttributes(e) {
 		console.log(e.type, e.data.node.label, e.data.captor);
 		if (e.data.node.id > 0) {
 			attributeValueVOList = await invokeService("/basic/retrievePersonAttributes", e.data.node.id);
+			action = ACTION_SAVE;
 		}
 	}
 	else {
 		isPersonNode = false;
 		highlightedEntity = e.data.edge;
 		console.log(e.type, e.data.edge.label, e.data.captor);
-		if (e.data.node.id > 0) {
+		if (e.data.edge.id > 0) {
 			attributeValueVOList = await invokeService("/basic/retrieveRelationAttributes", e.data.edge.id);
 		}
 	}
 	
 	highlightedEntity.color = HIGHLIGHT_COLOR;
-	s.refresh();
 	
 	rightBarElement = document.getElementById("sidebarbody");
-	rightBarElement.setAttribute("entityid", (isPersonNode ? e.data.node.id : e.data.edge.id));
+	rightBarElement.setAttribute("entityid", highlightedEntity.id);
 	rightBarElement.innerHTML = "";
 	for (let attributeValueVO of attributeValueVOList) {
+		if (attributeValueVO.attributeDvId == PERSON_ATTRIBUTE_DV_ID_LABEL) {
+			highlightedEntity.label = attributeValueVO.attributeValue;
+		}
 		attributeValueBlockElement = document.createElement("div");
 		rightBarElement.appendChild(attributeValueBlockElement);
 		attributeValueBlockElement.className = "attrVal";
 		attributeValueBlockElement.appendChild(document.createTextNode(attributeValueVO.attributeName));
 		createAttributeBlock(attributeValueBlockElement, attributeValueVO);
 	}
+	s.refresh();
+	
 	addButtonElement = document.getElementById("addbutton");
 	addButtonElement.onclick = function() {
 		var selectElement, optionElement;
@@ -163,11 +169,20 @@ async function editEntityAttributes(e) {
 		
 	};
 	
-	saveButtonElement = document.getElementById("savebutton");
-	saveButtonElement.onclick = async function() {
+	actionButtonElement = document.getElementById("actionbutton");
+	actionButtonElement.textContent = action;
+	switch(action) {
+		case ACTION_SAVE:
+			document.getElementById("sidebartitle").textContent = "Properties";
+			break;
+		case ACTION_SEARCH:
+			document.getElementById("sidebartitle").textContent = "Search Criteria";
+			break;
+	}
+	actionButtonElement.onclick = async function() {
 		var attributeValueVOList, attributeValueVO, saveAttributesRequestVO, inputElements;
 		var attributeVsValueListMap, attributeDvId, attributeDomainValueVO;
-		var ind1, ind2, attributeValueNBlkList;
+		var ind1, ind2, attributeValueNBlkList, searchedPersonId;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
@@ -177,13 +192,16 @@ async function editEntityAttributes(e) {
 			inputElements = attributeValueBlkElement.getElementsByTagName("input");
 			attributeValueBlkElement.className = "attrVal";
 			attributeDvId = parseInt(attributeValueBlkElement.getAttribute("attributedvid"));
-			attributeValueVO = {attributeDvId: attributeDvId, attributeValue: inputElements[0].value, valueAccurate: inputElements[1].checked, startDate: null, endDate: null};
-			if (inputElements.length > 2) {
-				if (inputElements[2].value != "") {
-					attributeValueVO.startDate = pikadayToIsoFormat(inputElements[2].value);
-				}
-				if (inputElements[3].value != "") {
-					attributeValueVO.endDate = pikadayToIsoFormat(inputElements[3].value);
+			attributeValueVO = {attributeDvId: attributeDvId, attributeValue: inputElements[0].value, valueAccurate: null, startDate: null, endDate: null};
+			if (action == ACTION_SAVE) {
+				attributeValueVO.valueAccurate = inputElements[1].checked;
+				if (inputElements.length > 2) {
+					if (inputElements[2].value != "") {
+						attributeValueVO.startDate = pikadayToIsoFormat(inputElements[2].value);
+					}
+					if (inputElements[3].value != "") {
+						attributeValueVO.endDate = pikadayToIsoFormat(inputElements[3].value);
+					}
 				}
 			}
 			attributeValueVOList.push(attributeValueVO);
@@ -196,44 +214,68 @@ async function editEntityAttributes(e) {
 			}
 			attributeValueNBlkList.push({attributeValueVO: attributeValueVO, attributeValueBlkElement: attributeValueBlkElement})
 		}
-		for (let attributeDomainValueVO of (isPersonNode ? paDomainValueVOList : raDomainValueVOList)) {
-			if (attributeDomainValueVO.inputMandatory && !attributeVsValueListMap.has(attributeDomainValueVO.id)) {
-				alert(attributeDomainValueVO.value + " is a mandatory property");
-				return;
-			}
-			if (attributeDomainValueVO.repetitionType == FLAG_ATTRIBUTE_REPETITION_NON_OVERLAPPING_ALLOWED && attributeVsValueListMap.has(attributeDomainValueVO.id)) {
-				attributeValueNBlkList = attributeVsValueListMap.get(attributeDomainValueVO.id);
-				for (ind1 = 0; ind1 < attributeValueNBlkList.length - 1; ind1++) {
-					for (ind2 = ind1 + 1; ind2 < attributeValueNBlkList.length; ind2++) {
-						if (areOverlappingDates(attributeValueNBlkList[ind1].attributeValueVO.startDate, attributeValueNBlkList[ind1].attributeValueVO.endDate, attributeValueNBlkList[ind2].attributeValueVO.startDate, attributeValueNBlkList[ind2].attributeValueVO.endDate)) {
-							alert("Multiple values with effective period overlapping not allowed for " + attributeDomainValueVO.value);
-							return;
+		if (action == ACTION_SAVE) {
+			// Validations
+			for (let attributeDomainValueVO of (isPersonNode ? paDomainValueVOList : raDomainValueVOList)) {
+				if (attributeDomainValueVO.inputMandatory && !attributeVsValueListMap.has(attributeDomainValueVO.id)) {
+					alert(attributeDomainValueVO.value + " is a mandatory property");
+					return;
+				}
+				if (attributeDomainValueVO.repetitionType == FLAG_ATTRIBUTE_REPETITION_NON_OVERLAPPING_ALLOWED && attributeVsValueListMap.has(attributeDomainValueVO.id)) {
+					attributeValueNBlkList = attributeVsValueListMap.get(attributeDomainValueVO.id);
+					for (ind1 = 0; ind1 < attributeValueNBlkList.length - 1; ind1++) {
+						for (ind2 = ind1 + 1; ind2 < attributeValueNBlkList.length; ind2++) {
+							if (areOverlappingDates(attributeValueNBlkList[ind1].attributeValueVO.startDate, attributeValueNBlkList[ind1].attributeValueVO.endDate, attributeValueNBlkList[ind2].attributeValueVO.startDate, attributeValueNBlkList[ind2].attributeValueVO.endDate)) {
+								alert("Multiple values with effective period overlapping not allowed for " + attributeDomainValueVO.value);
+								return;
+							}
 						}
 					}
 				}
 			}
-		}
-		for (let keyValueArr of attributeVsValueListMap.entries()) {
-			attributeDomainValueVO = domainValueVOMap.get(keyValueArr[0]);
-			if (attributeDomainValueVO.repetitionType == FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED && keyValueArr[1].length > 1) {
-				alert("Multiple Values not allowed for " + attributeDomainValueVO.value);
-				return;
-			}
-			for (let value of keyValueArr[1]) {
-				if (value.attributeValueVO.attributeValue == "") {
-					value.attributeValueBlkElement.className = "attrValError";
-					alert("Blank is not a valid value");
+			for (let keyValueArr of attributeVsValueListMap.entries()) {
+				attributeDomainValueVO = domainValueVOMap.get(keyValueArr[0]);
+				if (attributeDomainValueVO.repetitionType == FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED && keyValueArr[1].length > 1) {
+					alert("Multiple Values not allowed for " + attributeDomainValueVO.value);
 					return;
 				}
-				if (value.attributeValueVO.startDate != null && value.attributeValueVO.endDate != null && new Date(value.attributeValueVO.startDate) > new Date(value.attributeValueVO.endDate)) {
-					value.attributeValueBlkElement.className = "attrValError";
-					alert("Start date cannot be after end date");
-					return;
+				for (let value of keyValueArr[1]) {
+					if (value.attributeValueVO.attributeValue == "") {
+						value.attributeValueBlkElement.className = "attrValError";
+						alert("Blank is not a valid value");
+						return;
+					}
+					if (value.attributeValueVO.startDate != null && value.attributeValueVO.endDate != null && new Date(value.attributeValueVO.startDate) > new Date(value.attributeValueVO.endDate)) {
+						value.attributeValueBlkElement.className = "attrValError";
+						alert("Start date cannot be after end date");
+						return;
+					}
 				}
 			}
 		}
-		await invokeService((isPersonNode ? "/basic/savePersonAttributes" : "/basic/saveRelationAttributes"), saveAttributesRequestVO);
-		alert("Saved");
+		switch(action) {
+			case ACTION_SAVE:
+				await invokeService((isPersonNode ? "/basic/savePersonAttributes" : "/basic/saveRelationAttributes"), saveAttributesRequestVO);
+				alert("Saved");
+				break;
+			case ACTION_SEARCH:
+				searchedPersonId = await invokeService("/basic/searchPerson", attributeValueVOList);
+				if (searchedPersonId == NEW_ENTITY_ID) {
+					alert("Person with the specified properties could not be found");
+				}
+				else {
+					s.graph.dropNode(NEW_ENTITY_ID);
+					if (s.graph.nodes(searchedPersonId) != null) {
+						alert("Person exists already");
+						action = ACTION_SAVE;
+						s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(searchedPersonId)});
+					}
+					else {
+						addPerson(searchedPersonId);
+					}
+				}
+				break;
+		}
 	};
 	
 }
@@ -295,6 +337,10 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 	if (attributeValueVO.attributeValue != undefined) {
 		valueElement.setAttribute("value", attributeValueVO.attributeValue);
 	}
+
+	if (action != ACTION_SAVE) {
+		return;
+	}
 	
 	attributeValueBlockElement.appendChild(document.createElement("br"));
 	
@@ -348,10 +394,11 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 	}
 }
 
-function addPerson() {
-	if (s.graph.nodes(NEW_ENTITY_ID) == null) {
+function addPerson(personId = NEW_ENTITY_ID) {
+	if (s.graph.nodes(personId) == null) {
 		s.graph.addNode({
-			id: NEW_ENTITY_ID,
+			id: personId,
+			label: 'Yet to be Added',
 			size: 5.0,
 			x: Math.random() / 10,
 			y: Math.random() / 10,
@@ -360,6 +407,28 @@ function addPerson() {
 			type: 'goo'
 		});
 	}
-	
+	action = ACTION_SAVE;
+	s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(personId)});
+}
+
+function searchPerson() {
+	if (s.graph.nodes(NEW_ENTITY_ID) == null) {
+		s.graph.addNode({
+			id: NEW_ENTITY_ID,
+			label: 'Yet to be Searched',
+			size: 5.0,
+			x: Math.random() / 10,
+			y: Math.random() / 10,
+			dX: 0,
+			dY: 0,
+			type: 'goo'
+		});
+	}
+	action = ACTION_SEARCH;
 	s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(NEW_ENTITY_ID)});
+}
+
+function clearGraph() {
+	s.graph.clear();
+	s.refresh();
 }
