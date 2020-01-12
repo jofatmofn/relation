@@ -79,7 +79,7 @@ public class PersonRelationService {
     		
     		personVO.setId(String.valueOf(person.getId()));
     		personVO.setSize(5.0);
-    		personVO.setColor("rgb(1,179,255)");
+    		personVO.setColor(Constants.DEFAULT_COLOR);
     		personVO.setX(Math.random());
     		personVO.setY(Math.random());
     		for (AttributeValue attributeValue : person.getAttributeValueList()) {
@@ -105,7 +105,7 @@ public class PersonRelationService {
         		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) &&
         				(attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
         				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now()))) {
-            		attributeDv = domainValueRepository.findById(Integer.valueOf(attributeValue.getAttributeValue()))
+            		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
             				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
         			relationVO.setLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
         		}
@@ -122,7 +122,7 @@ public class PersonRelationService {
     	DomainValueFlags domainValueFlags;
     	
     	domainValueFlags = new DomainValueFlags();
-    	domainValueList = domainValueRepository.findAll();
+    	domainValueList = domainValueRepository.findAllByOrderByCategoryAscValueAsc();
     	domainValueVOList = new ArrayList<DomainValueVO>(domainValueList.size());
     	
     	for (DomainValue domainValue : domainValueList) {

@@ -16,7 +16,7 @@ public class DomainValue {
 
 	@Id	 
 	@Column(name="id", nullable=false)
-	private int id;
+	private long id;
 	
 	@Column(name="category", nullable=false)
 	private String category;
@@ -27,11 +27,11 @@ public class DomainValue {
 	@Column(name="flags_csv", nullable=true)
 	private String flagsCsv;
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

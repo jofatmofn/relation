@@ -38,26 +38,22 @@ public class RelationVO {
 		return label;
 	}
 
-	public void setLabel(int attributeDvId, String attributeValue) {
-		switch(attributeDvId) {
-			case Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2:
-				if (label == null || label.equals("")) {
-					label = attributeValue;
-				}
-				else {
-					label = attributeValue + "-" + label;
-				}
-				break;
-			case Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1:
-				if (label == null || label.equals("")) {
-					label = attributeValue;
-				}
-				else {
-					label = label + "-" + attributeValue;
-				}
-				break;
-			default:
-				System.out.println("Attribute " + attributeDvId + " ignored.");
+	public void setLabel(long attributeDvId, String attributeValue) {
+		if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) {
+			if (label == null || label.equals("")) {
+				label = attributeValue;
+			}
+			else {
+				label = attributeValue + "-" + label;
+			}
+		}
+		else if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) {
+			if (label == null || label.equals("")) {
+				label = attributeValue;
+			}
+			else {
+				label = label + "-" + attributeValue;
+			}
 		}
 	}
 

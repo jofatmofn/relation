@@ -58,6 +58,7 @@ async function drawGraph() {
 			type: "canvas"
 		},
 		settings: {
+			doubleClickEnabled: false,
 			minEdgeSize: 0.5,
 			maxEdgeSize: 4,
 			enableEdgeHovering: true,
@@ -68,13 +69,14 @@ async function drawGraph() {
 		}
 	});
 	
+	/* https://github.com/jacomyal/sigma.js/issues/910
 	s.bind('overNode', function(e) {
 	  s.settings('doubleClickEnabled', false);
 	});
 
 	s.bind('outNode', function(e) {
 	  s.settings('doubleClickEnabled', true);
-	});
+	}); */
 	
 	s.bind('clickNode', editEntityAttributes);
 	
@@ -82,12 +84,11 @@ async function drawGraph() {
 	
 	s.bind('doubleClickNode', async function(e) {
 		console.log(e.type, e.data.node.label, e.data.captor);
-		s.graph.clear();
-		console.log("Graph Cleared");
-		s.graph.read(await invokeService("/basic/retrieveRelations", {startPersonId : e.data.node.id}));
-		console.log("Graph read");
-		s.refresh();
-		console.log("Graph Refreshed");
+		if (e.data.node.id != NEW_ENTITY_ID && e.data.node.id != SEARCH_ENTITY_ID) {
+			s.graph.clear();
+			s.graph.read(await invokeService("/basic/retrieveRelations", {startPersonId : e.data.node.id}));
+			s.refresh();
+		}
 		document.getElementById("sidebarbody").innerHTML = "";
 	});
 
@@ -132,13 +133,16 @@ async function editEntityAttributes(e) {
 	}
 	
 	attributeValueVOList = [];
+	action = ACTION_SAVE;
 	if (e.type == "clickNode") {
 		isPersonNode = true;
 		highlightedEntity = e.data.node;
 		console.log(e.type, e.data.node.label, e.data.captor);
+		if (e.data.node.id == SEARCH_ENTITY_ID) {
+			action = ACTION_SEARCH;
+		}
 		if (e.data.node.id > 0) {
 			attributeValueVOList = await invokeService("/basic/retrievePersonAttributes", e.data.node.id);
-			action = ACTION_SAVE;
 		}
 	}
 	else {
@@ -166,7 +170,10 @@ async function editEntityAttributes(e) {
 	}
 	s.refresh();
 	
+	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'>+</button><button id='actionbutton'>" + action + "</button>";
 	addButtonElement = document.getElementById("addbutton");
+	actionButtonElement = document.getElementById("actionbutton");
+	
 	addButtonElement.onclick = function() {
 		var selectElement, optionElement;
 		attributeValueBlockElement = document.createElement("div");
@@ -194,12 +201,10 @@ async function editEntityAttributes(e) {
 		
 	};
 	
-	actionButtonElement = document.getElementById("actionbutton");
-	actionButtonElement.textContent = action;
 	switch(action) {
 		case ACTION_SAVE:
 			if (isPersonNode) {
-				document.getElementById("sidebartitle").textContent = "Details of " + highlightedEntity.label + "(" + highlightedEntity.id + ")";
+				document.getElementById("sidebartitle").textContent = "Details of " + (highlightedEntity.id == NEW_ENTITY_ID ? "new person" : highlightedEntity.label + "(" + highlightedEntity.id + ")");
 			}
 			else {
 				person1Node = s.graph.nodes(highlightedEntity.source);
@@ -211,6 +216,7 @@ async function editEntityAttributes(e) {
 			document.getElementById("sidebartitle").textContent = "Person Search Criteria";
 			break;
 	}
+	
 	actionButtonElement.onclick = async function() {
 		var attributeValueVOList, attributeValueVO, saveAttributesRequestVO, inputElements;
 		var attributeVsValueListMap, attributeDvId, attributeDomainValueVO;
@@ -320,10 +326,9 @@ async function editEntityAttributes(e) {
 					alert("Person with the specified properties could not be found");
 				}
 				else {
-					s.graph.dropNode(NEW_ENTITY_ID);
+					s.graph.dropNode(SEARCH_ENTITY_ID);
 					if (s.graph.nodes(searchedPersonId) != null) {
 						alert("Person exists already");
-						action = ACTION_SAVE;
 						s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(searchedPersonId)});
 					}
 					else {
@@ -471,42 +476,41 @@ function addPerson(personId = NEW_ENTITY_ID) {
 	if (personId == NEW_ENTITY_ID) {
 		s.graph.nodes(NEW_ENTITY_ID).label = 'Yet to be Added';
 	}
-	action = ACTION_SAVE;
 	s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(personId)});
 }
 
 function searchPerson() {
-	if (s.graph.nodes(NEW_ENTITY_ID) == null) {
+	if (s.graph.nodes(SEARCH_ENTITY_ID) == null) {
 		s.graph.addNode({
-			id: NEW_ENTITY_ID,
+			id: SEARCH_ENTITY_ID,
 			size: 5.0,
 			x: Math.random(),
 			y: Math.random(),
 			type: 'goo'
 		});
 	}
-	s.graph.nodes(NEW_ENTITY_ID).label = 'Yet to be Searched';
-	action = ACTION_SEARCH;
-	s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(NEW_ENTITY_ID)});
+	s.graph.nodes(SEARCH_ENTITY_ID).label = 'Yet to be Searched';
+	s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(SEARCH_ENTITY_ID)});
 }
 
 function clearGraph() {
 	s.graph.clear();
 	s.refresh();
-	document.getElementById("sidebartitle").textContent = "";
+	document.getElementById("sidebartitle").innerHTML = "";
+	document.getElementById("sidebarbuttons").innerHTML = "";
+	document.getElementById("sidebarbody").innerHTML = "";
 }
 
 function relatePersons() {
 	var actionButtonElement, selectElement, optionElement, node, rightBarElement, person1Element, person2Element;
 	
-	actionButtonElement = document.getElementById("actionbutton");
-	actionButtonElement.textContent = ACTION_RELATE;
+	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Relate</button>";
 	document.getElementById("sidebartitle").textContent = "Related Persons";
 	
 	selectElement = document.createElement("select");
 	selectElement.setAttribute("name","persons");
 	for (let node of s.graph.nodes()) {
-		if (node.id != NEW_ENTITY_ID) {
+		if (node.id != NEW_ENTITY_ID && node.id != SEARCH_ENTITY_ID) {
 			optionElement = document.createElement("option");
 			optionElement.setAttribute("value", node.id);
 			optionElement.appendChild(document.createTextNode(node.label + " (" + node.id + ")"));
@@ -525,6 +529,7 @@ function relatePersons() {
 	person2Element = selectElement.cloneNode(true);
 	rightBarElement.appendChild(person2Element);
 	
+	actionButtonElement = document.getElementById("actionbutton");
 	actionButtonElement.onclick = async function() {
 		var person1Id, person2Id, relationId;
 		person1Id = parseInt(person1Element.options[person1Element.selectedIndex].value);
@@ -542,7 +547,6 @@ function relatePersons() {
 			size: 5.0,
 			type: 'goo'
 		});
-		action = ACTION_SAVE;
 		s.renderers[0].dispatchEvent('clickEdge', {edge: s.graph.edges(relationId)});
 	}
 }

@@ -1,7 +1,7 @@
 package org.sakuram.relation.valueobject;
 
 public class DomainValueVO {
-	private int id;	
+	private long id;	
 	private String category;	
 	private String value;	
 	private boolean isRelationParentChild;	
@@ -11,11 +11,11 @@ public class DomainValueVO {
 	private String attributeDomain;
 	private boolean isInputMandatory;
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

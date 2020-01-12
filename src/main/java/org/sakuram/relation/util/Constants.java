@@ -10,9 +10,9 @@ public class Constants {
 	public static final String CATEGORY_PERSON_ATTRIBUTE = "PersAttribute";
 	public static final String CATEGORY_RELATION_ATTRIBUTE = "RelAttribute";
 
-	public static final int PERSON_ATTRIBUTE_DV_ID_LABEL = 16;
-	public static final int RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 = 34;
-	public static final int RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 = 35;
+	public static final long PERSON_ATTRIBUTE_DV_ID_LABEL = 16;
+	public static final long RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 = 34;
+	public static final long RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 = 35;
 	
 	public static final String FLAG_RELATION_TYPE_PARENT_CHILD = "PC";
 	public static final String FLAG_RELATION_TYPE_SPOUSE = "Sp";
@@ -32,4 +32,5 @@ public class Constants {
 	
 	public static final String CSV_SEPARATOR = ",";
 	public static final long NEW_ENTITY_ID = -1L;
+	public static final String DEFAULT_COLOR = "rgb(1,179,255)";
 }

@@ -4,7 +4,7 @@ import java.sql.Date;
 
 public class AttributeValueVO {
 	private long id;
-	private int attributeDvId;
+	private long attributeDvId;
 	private String attributeName;
 	private String attributeValue;
 	private boolean isValueAccurate;
@@ -19,11 +19,11 @@ public class AttributeValueVO {
 		this.id = id;
 	}
 	
-	public int getAttributeDvId() {
+	public long getAttributeDvId() {
 		return attributeDvId;
 	}
 
-	public void setAttributeDvId(int attributeDvId) {
+	public void setAttributeDvId(long attributeDvId) {
 		this.attributeDvId = attributeDvId;
 	}
 
