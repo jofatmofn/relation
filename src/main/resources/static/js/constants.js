@@ -21,3 +21,6 @@ const RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 = 35;
 
 const ACTION_SAVE = "Save";
 const ACTION_SEARCH = "Search";
+const ACTION_RELATE = "Relate";
+
+const VALID_RELATIONS_JSON = JSON.stringify([["1", "5"],["5", "1"],["1", "6"],["6", "1"],["2", "5"],["5", "2"],["2", "6"],["6", "2"],["3", "4"],["4", "3"]]);

@@ -24,7 +24,7 @@ public class DomainValue {
 	@Column(name="value", nullable=false)
 	private String value;
 	
-	@Column(name="flags_csv", nullable=false)
+	@Column(name="flags_csv", nullable=true)
 	private String flagsCsv;
 
 	public int getId() {

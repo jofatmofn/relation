@@ -42,8 +42,8 @@ public class Relation {
 	private Person person2;
 	
 	@ManyToOne
-	@JoinColumn(name="creator_id", nullable=false)
-	private Person creatorId;
+	@JoinColumn(name="creator_fk", nullable=false)
+	private Person creator;
 	
 	@Column(name="created_at", nullable=false, updatable=false)
 	@CreationTimestamp
@@ -77,12 +77,12 @@ public class Relation {
 		this.person2 = person2;
 	}
 
-	public Person getCreatorId() {
-		return creatorId;
+	public Person getCreator() {
+		return creator;
 	}
 
-	public void setCreatorId(Person creatorId) {
-		this.creatorId = creatorId;
+	public void setCreator(Person creator) {
+		this.creator = creator;
 	}
 
 	public Timestamp getCreatedAt() {

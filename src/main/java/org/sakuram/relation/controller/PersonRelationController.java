@@ -1,13 +1,18 @@
 package org.sakuram.relation.controller;
 
 import java.util.List;
+
+import javax.servlet.http.HttpSession;
+
 import org.sakuram.relation.service.PersonRelationService;
+import org.sakuram.relation.util.AppException;
 import org.sakuram.relation.util.Constants;
 import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.DomainValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsResponseVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
+import org.sakuram.relation.valueobject.SaveRelationRequestVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/basic")
 public class PersonRelationController {
+	
+	private final String SESSION_ATTRIBUTE_LOGGED_IN_USER = "loggedInUser";
+	
     @Autowired
     PersonRelationService personRelationService;
     
@@ -42,12 +50,14 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/savePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void savePersonAttributes(@RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
-    	personRelationService.savePersonAttributes(saveAttributesRequestVO);
+    public long savePersonAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
+    	saveAttributesRequestVO.setCreatorId(getCreatorId(httpSession));
+    	return personRelationService.savePersonAttributes(saveAttributesRequestVO);
     }
     
     @RequestMapping(value = "/saveRelationAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void saveRelationAttributes(@RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
+    public void saveRelationAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
+    	saveAttributesRequestVO.setCreatorId(getCreatorId(httpSession));
     	personRelationService.saveRelationAttributes(saveAttributesRequestVO);
     }
     
@@ -56,4 +66,19 @@ public class PersonRelationController {
     	return personRelationService.searchPerson(attributeValueVOList);
     }
     
+    @RequestMapping(value = "/saveRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public long saveRelation(HttpSession httpSession, @RequestBody SaveRelationRequestVO saveRelationRequestVO) {
+    	saveRelationRequestVO.setCreatorId(getCreatorId(httpSession));
+    	return personRelationService.saveRelation(saveRelationRequestVO);
+    }
+    
+    private long getCreatorId(HttpSession httpSession) {
+    	return 6L;	// TODO: After login feature, the following code is to be used
+    	/* Object loggedInUserObject;
+    	loggedInUserObject = httpSession.getAttribute(SESSION_ATTRIBUTE_LOGGED_IN_USER);
+    	if (loggedInUserObject == null) {
+    		new AppException("Log in to access this functionality", null);
+    	}
+    	return (long)loggedInUserObject; */
+    }
 }

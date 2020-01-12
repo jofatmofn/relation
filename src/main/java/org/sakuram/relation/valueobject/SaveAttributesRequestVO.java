@@ -5,6 +5,7 @@ import java.util.List;
 public class SaveAttributesRequestVO {
 	private long entityId;
 	private List<AttributeValueVO> attributeValueVOList;
+	private long creatorId;
 
 	public long getEntityId() {
 		return entityId;
@@ -20,5 +21,13 @@ public class SaveAttributesRequestVO {
 
 	public void setAttributeValueVOList(List<AttributeValueVO> attributeValueVOList) {
 		this.attributeValueVOList = attributeValueVOList;
+	}
+
+	public long getCreatorId() {
+		return creatorId;
+	}
+
+	public void setCreatorId(long creatorId) {
+		this.creatorId = creatorId;
 	}
 }

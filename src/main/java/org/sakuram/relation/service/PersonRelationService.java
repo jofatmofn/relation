@@ -2,6 +2,7 @@ package org.sakuram.relation.service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +25,7 @@ import org.sakuram.relation.valueobject.RelationVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsResponseVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
+import org.sakuram.relation.valueobject.SaveRelationRequestVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +52,7 @@ public class PersonRelationService {
     	List<RelationVO> relationVOList;
     	RelationVO relationVO;
     	Set<Person> relatedPersonSet;
+    	DomainValue attributeDv;
     	
     	retrieveRelationsResponseVO = new RetrieveRelationsResponseVO();
     	personVOList = new ArrayList<PersonVO>();
@@ -102,7 +105,9 @@ public class PersonRelationService {
         		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) &&
         				(attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
         				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now()))) {
-        			relationVO.setLabel(attributeValue.getAttribute().getId(), attributeValue.getAttributeValue());
+            		attributeDv = domainValueRepository.findById(Integer.valueOf(attributeValue.getAttributeValue()))
+            				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
+        			relationVO.setLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
         		}
     		}
     	}
@@ -184,13 +189,14 @@ public class PersonRelationService {
     	return attributeValueVOList;
     }
     
-    public void savePersonAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
+    public long savePersonAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
     	Person person, creator;
     	List<AttributeValue> attributeValueList;
     	
+    	creator = personRepository.findById(saveAttributesRequestVO.getCreatorId())
+				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getCreatorId(), null));
+    	
     	if (saveAttributesRequestVO.getEntityId() == Constants.NEW_ENTITY_ID) {
-        	creator = personRepository.findById(6L)
-    				.orElseThrow(() -> new AppException("Invalid Person Id " + 6L, null));  // TODO: After integration with login, this should be user's person id
     		person = new Person();
     		person.setCreator(creator);
     	}
@@ -201,22 +207,27 @@ public class PersonRelationService {
     		// TODO: Delete only the modified values. Else the creator id and timestamp will be lost.
     	}
     	
-    	attributeValueList = attributeValueVOToEntity(saveAttributesRequestVO.getAttributeValueVOList(), person, null);
+    	attributeValueList = attributeValueVOToEntity(saveAttributesRequestVO.getAttributeValueVOList(), person, null, creator);
     	
 		person.setAttributeValueList(attributeValueList);
-		personRepository.save(person);
+		person = personRepository.save(person);
+		return person.getId();
     }
     
     public void saveRelationAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
     	Relation relation = null;
     	List<AttributeValue> attributeValueList;
+    	Person creator;
+    	
+    	creator = personRepository.findById(saveAttributesRequestVO.getCreatorId())
+				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getCreatorId(), null));
     	
 		relation = relationRepository.findById(saveAttributesRequestVO.getEntityId())
 				.orElseThrow(() -> new AppException("Invalid Relation " + saveAttributesRequestVO.getEntityId(), null));
 		deleteExistingInputAttributes(relation.getAttributeValueList());
 		// TODO: Delete only the modified values. Else the creator id and timestamp will be lost.
     	
-    	attributeValueList = attributeValueVOToEntity(saveAttributesRequestVO.getAttributeValueVOList(), null, relation);
+    	attributeValueList = attributeValueVOToEntity(saveAttributesRequestVO.getAttributeValueVOList(), null, relation, creator);
     	
 		relation.setAttributeValueList(attributeValueList);
 		relationRepository.save(relation);
@@ -234,14 +245,11 @@ public class PersonRelationService {
     	}
     }
     
-    private List<AttributeValue> attributeValueVOToEntity(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation) {
+    private List<AttributeValue> attributeValueVOToEntity(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation, Person creator) {
     	List<AttributeValue> attributeValueList;
     	AttributeValue attributeValue;
     	DomainValue attributeDv;
-    	Person creator;
     	
-    	creator = personRepository.findById(6L)
-				.orElseThrow(() -> new AppException("Invalid Person Id " + 6L, null));  // TODO: After integration with login, this should be user's person id
     	attributeValueList = new ArrayList<AttributeValue>();
     	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
     		attributeValue = new AttributeValue();
@@ -281,5 +289,29 @@ public class PersonRelationService {
     	
     	personList = personRepository.executeDynamicQuery(querySB.toString());
     	return (personList.size() > 0 ? personList.get(0).getId() : Constants.NEW_ENTITY_ID);
+    }
+    
+    public long saveRelation(SaveRelationRequestVO saveRelationRequestVO) {
+    	Person person1, person2, creator;
+    	Relation relation;
+    	HashSet<Person> personSet;
+    	
+    	person1 = personRepository.findById(saveRelationRequestVO.getPerson1Id())
+				.orElseThrow(() -> new AppException("Invalid Person Id " + saveRelationRequestVO.getPerson1Id(), null));
+    	person2 = personRepository.findById(saveRelationRequestVO.getPerson2Id())
+				.orElseThrow(() -> new AppException("Invalid Person Id " + saveRelationRequestVO.getPerson2Id(), null));
+    	creator = personRepository.findById(saveRelationRequestVO.getCreatorId())
+				.orElseThrow(() -> new AppException("Invalid Person Id " + saveRelationRequestVO.getCreatorId(), null));
+    	// TODO: To check reverse also; Create a new repository method
+    	personSet = new HashSet<Person>(Arrays.asList(new Person[]{person1, person2}));
+    	if (relationRepository.findByPerson1InAndPerson2In(personSet, personSet).size() > 0) {
+    		throw new AppException(saveRelationRequestVO.getPerson1Id() + " and " + saveRelationRequestVO.getPerson2Id() + " are already related.", null);
+    	}
+    	relation = new Relation();
+    	relation.setPerson1(person1);
+    	relation.setPerson2(person2);
+    	relation.setCreator(creator);
+    	relation = relationRepository.save(relation);
+    	return relation.getId();
     }
 }

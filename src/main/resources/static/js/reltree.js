@@ -1,9 +1,15 @@
 var domainValueVOList, highlightedEntity, loginUserPersonId, domainValueVOMap;
 var paSelectElement, raSelectElement, paDomainValueVOList, raDomainValueVOList, isPersonNode;
-var action;
+var action, selectElementMap;
 
 async function drawGraph() {
-
+	
+	var selectElement;
+	window.addEventListener("unhandledrejection", event =>
+	{
+		alert(event.reason);
+	});
+	
 	loginUserPersonId = 6;	// TODO: After integration with login, this should be user's person id
 	domainValueVOList = await invokeService("/basic/retrieveDomainValues", "");
 	domainValueVOMap = new Map();
@@ -11,6 +17,7 @@ async function drawGraph() {
 	paSelectElement.setAttribute("name","attributenames");
 	raSelectElement = document.createElement("select");
 	raSelectElement.setAttribute("name","attributenames");
+	selectElementMap = new Map();
 	paDomainValueVOList = [];
 	raDomainValueVOList = [];
 	for (let domainValueVO of domainValueVOList) {
@@ -18,13 +25,28 @@ async function drawGraph() {
 		optionElement = document.createElement("option");
 		optionElement.setAttribute("value", domainValueVO.id);
 		optionElement.appendChild(document.createTextNode(domainValueVO.value));
-		if (domainValueVO.category == CATEGORY_PERSON_ATTRIBUTE && domainValueVO.inputAsAttribute) {
-			paSelectElement.appendChild(optionElement);
-			paDomainValueVOList.push(domainValueVO);
+		if (domainValueVO.category == CATEGORY_PERSON_ATTRIBUTE) {
+			if (domainValueVO.inputAsAttribute) {
+				paSelectElement.appendChild(optionElement);
+				paDomainValueVOList.push(domainValueVO);
+			}
 		}
-		else if (domainValueVO.category == CATEGORY_RELATION_ATTRIBUTE && domainValueVO.inputAsAttribute) {
-			raSelectElement.appendChild(optionElement);
-			raDomainValueVOList.push(domainValueVO);
+		else if (domainValueVO.category == CATEGORY_RELATION_ATTRIBUTE) {
+			if (domainValueVO.inputAsAttribute) {
+				raSelectElement.appendChild(optionElement);
+				raDomainValueVOList.push(domainValueVO);
+			}
+		}
+		else {
+			if (selectElementMap.has(domainValueVO.category)) {
+				selectElement = selectElementMap.get(domainValueVO.category);
+			}
+			else {
+				selectElement = document.createElement("select");
+				selectElement.setAttribute("name", domainValueVO.category);
+				selectElementMap.set(domainValueVO.category, selectElement);
+			}
+			selectElement.appendChild(optionElement);
 		}
 	}
 
@@ -61,8 +83,11 @@ async function drawGraph() {
 	s.bind('doubleClickNode', async function(e) {
 		console.log(e.type, e.data.node.label, e.data.captor);
 		s.graph.clear();
+		console.log("Graph Cleared");
 		s.graph.read(await invokeService("/basic/retrieveRelations", {startPersonId : e.data.node.id}));
+		console.log("Graph read");
 		s.refresh();
+		console.log("Graph Refreshed");
 		document.getElementById("sidebarbody").innerHTML = "";
 	});
 
@@ -100,6 +125,7 @@ async function drawGraph() {
 
 async function editEntityAttributes(e) {
 	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, actionButtonElement, addButtonElement;
+	var person1Node, person2Node;
 	
 	if (highlightedEntity != undefined) {
 		highlightedEntity.color = DEFAULT_COLOR;
@@ -127,7 +153,6 @@ async function editEntityAttributes(e) {
 	highlightedEntity.color = HIGHLIGHT_COLOR;
 	
 	rightBarElement = document.getElementById("sidebarbody");
-	rightBarElement.setAttribute("entityid", highlightedEntity.id);
 	rightBarElement.innerHTML = "";
 	for (let attributeValueVO of attributeValueVOList) {
 		if (attributeValueVO.attributeDvId == PERSON_ATTRIBUTE_DV_ID_LABEL) {
@@ -173,26 +198,32 @@ async function editEntityAttributes(e) {
 	actionButtonElement.textContent = action;
 	switch(action) {
 		case ACTION_SAVE:
-			document.getElementById("sidebartitle").textContent = "Properties";
+			if (isPersonNode) {
+				document.getElementById("sidebartitle").textContent = "Details of " + highlightedEntity.label + "(" + highlightedEntity.id + ")";
+			}
+			else {
+				person1Node = s.graph.nodes(highlightedEntity.source);
+				person2Node = s.graph.nodes(highlightedEntity.target);
+				document.getElementById("sidebartitle").textContent = "Details of relation between " + person1Node.label + "(" + person1Node.id + ") and " + person2Node.label + "(" + person2Node.id + ")";
+			}
 			break;
 		case ACTION_SEARCH:
-			document.getElementById("sidebartitle").textContent = "Search Criteria";
+			document.getElementById("sidebartitle").textContent = "Person Search Criteria";
 			break;
 	}
 	actionButtonElement.onclick = async function() {
 		var attributeValueVOList, attributeValueVO, saveAttributesRequestVO, inputElements;
 		var attributeVsValueListMap, attributeDvId, attributeDomainValueVO;
-		var ind1, ind2, attributeValueNBlkList, searchedPersonId;
+		var ind1, ind2, attributeValueNBlkList, searchedPersonId, entityId;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
-		saveAttributesRequestVO = {entityId: rightBarElement.getAttribute("entityid"), attributeValueVOList: attributeValueVOList};
+		saveAttributesRequestVO = {entityId: highlightedEntity.id, attributeValueVOList: attributeValueVOList};
 		
 		for (let attributeValueBlkElement of rightBarElement.querySelectorAll("div[attributedvid]")) {
-			inputElements = attributeValueBlkElement.getElementsByTagName("input");
-			attributeValueBlkElement.className = "attrVal";
+			inputElements = attributeValueBlkElement.querySelectorAll("input,select:not([name=attributenames])");
 			attributeDvId = parseInt(attributeValueBlkElement.getAttribute("attributedvid"));
-			attributeValueVO = {attributeDvId: attributeDvId, attributeValue: inputElements[0].value, valueAccurate: null, startDate: null, endDate: null};
+			attributeValueVO = {attributeDvId: attributeDvId, attributeValue: (inputElements[0].tagName == "INPUT" ? inputElements[0].value : inputElements[0].options[inputElements[0].selectedIndex].value), valueAccurate: null, startDate: null, endDate: null};
 			if (action == ACTION_SAVE) {
 				attributeValueVO.valueAccurate = inputElements[1].checked;
 				if (inputElements.length > 2) {
@@ -252,11 +283,36 @@ async function editEntityAttributes(e) {
 					}
 				}
 			}
+			if (!isPersonNode) {
+				if (!VALID_RELATIONS_JSON.includes(JSON.stringify([attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)[0].attributeValueVO.attributeValue,
+					attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)[0].attributeValueVO.attributeValue]))) {
+					alert("Invalid pair of relations");
+					return;
+				}
+				// TODO: Validate relation sub type
+			}
 		}
 		switch(action) {
 			case ACTION_SAVE:
-				await invokeService((isPersonNode ? "/basic/savePersonAttributes" : "/basic/saveRelationAttributes"), saveAttributesRequestVO);
+				entityId = await invokeService((isPersonNode ? "/basic/savePersonAttributes" : "/basic/saveRelationAttributes"), saveAttributesRequestVO);
 				alert("Saved");
+				if (isPersonNode && highlightedEntity.id == NEW_ENTITY_ID) {
+					s.graph.dropNode(NEW_ENTITY_ID);
+					s.graph.addNode({
+						id: entityId,
+						size: 5.0,
+						x: Math.random() / 10,
+						y: Math.random() / 10,
+						dX: 0,
+						dY: 0,
+						type: 'goo'
+					});
+					highlightedEntity = s.graph.nodes(entityId);
+					highlightedEntity.color = HIGHLIGHT_COLOR;
+				}
+				highlightedEntity.label = (isPersonNode ? attributeVsValueListMap.get(PERSON_ATTRIBUTE_DV_ID_LABEL)[0].attributeValueVO.attributeValue :
+					domainValueVOMap.get(parseInt(attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)[0].attributeValueVO.attributeValue)).value + "-" + domainValueVOMap.get(parseInt(attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)[0].attributeValueVO.attributeValue)).value);
+				s.refresh();
 				break;
 			case ACTION_SEARCH:
 				searchedPersonId = await invokeService("/basic/searchPerson", attributeValueVOList);
@@ -331,12 +387,20 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 	
 	attributeValueBlockElement.appendChild(document.createTextNode("Value: "));
 	
-	valueElement = document.createElement("input");
-	attributeValueBlockElement.appendChild(valueElement);
-	valueElement.setAttribute("type","text");	// TODO: Based on the person/relation attribute, the type of input will vary
-	if (attributeValueVO.attributeValue != undefined) {
-		valueElement.setAttribute("value", attributeValueVO.attributeValue);
+	if (attributeDomainValueVO.attributeDomain == "") {
+		valueElement = document.createElement("input");
+		valueElement.setAttribute("type","text");
+		if (attributeValueVO.attributeValue != undefined) {
+			valueElement.setAttribute("value", attributeValueVO.attributeValue);
+		}
 	}
+	else {
+		valueElement = selectElementMap.get(attributeDomainValueVO.attributeDomain).cloneNode(true);
+		if (attributeValueVO.attributeValue != undefined) {
+			valueElement.value = domainValueVOMap.get(parseInt(attributeValueVO.attributeValue)).id;
+		}
+	}
+	attributeValueBlockElement.appendChild(valueElement);
 
 	if (action != ACTION_SAVE) {
 		return;
@@ -398,14 +462,14 @@ function addPerson(personId = NEW_ENTITY_ID) {
 	if (s.graph.nodes(personId) == null) {
 		s.graph.addNode({
 			id: personId,
-			label: 'Yet to be Added',
 			size: 5.0,
-			x: Math.random() / 10,
-			y: Math.random() / 10,
-			dX: 0,
-			dY: 0,
+			x: Math.random(),
+			y: Math.random(),
 			type: 'goo'
 		});
+	}
+	if (personId == NEW_ENTITY_ID) {
+		s.graph.nodes(NEW_ENTITY_ID).label = 'Yet to be Added';
 	}
 	action = ACTION_SAVE;
 	s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(personId)});
@@ -415,15 +479,13 @@ function searchPerson() {
 	if (s.graph.nodes(NEW_ENTITY_ID) == null) {
 		s.graph.addNode({
 			id: NEW_ENTITY_ID,
-			label: 'Yet to be Searched',
 			size: 5.0,
-			x: Math.random() / 10,
-			y: Math.random() / 10,
-			dX: 0,
-			dY: 0,
+			x: Math.random(),
+			y: Math.random(),
 			type: 'goo'
 		});
 	}
+	s.graph.nodes(NEW_ENTITY_ID).label = 'Yet to be Searched';
 	action = ACTION_SEARCH;
 	s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(NEW_ENTITY_ID)});
 }
@@ -431,4 +493,56 @@ function searchPerson() {
 function clearGraph() {
 	s.graph.clear();
 	s.refresh();
+	document.getElementById("sidebartitle").textContent = "";
+}
+
+function relatePersons() {
+	var actionButtonElement, selectElement, optionElement, node, rightBarElement, person1Element, person2Element;
+	
+	actionButtonElement = document.getElementById("actionbutton");
+	actionButtonElement.textContent = ACTION_RELATE;
+	document.getElementById("sidebartitle").textContent = "Related Persons";
+	
+	selectElement = document.createElement("select");
+	selectElement.setAttribute("name","persons");
+	for (let node of s.graph.nodes()) {
+		if (node.id != NEW_ENTITY_ID) {
+			optionElement = document.createElement("option");
+			optionElement.setAttribute("value", node.id);
+			optionElement.appendChild(document.createTextNode(node.label + " (" + node.id + ")"));
+			selectElement.appendChild(optionElement);
+		}
+	}
+	rightBarElement = document.getElementById("sidebarbody");
+	
+	rightBarElement.innerHTML = "";
+	rightBarElement.appendChild(document.createTextNode("Person 1"));
+	person1Element = selectElement.cloneNode(true);
+	rightBarElement.appendChild(person1Element);
+	
+	rightBarElement.appendChild(document.createElement("br"));
+	rightBarElement.appendChild(document.createTextNode("Person 2"));
+	person2Element = selectElement.cloneNode(true);
+	rightBarElement.appendChild(person2Element);
+	
+	actionButtonElement.onclick = async function() {
+		var person1Id, person2Id, relationId;
+		person1Id = parseInt(person1Element.options[person1Element.selectedIndex].value);
+		person2Id = parseInt(person2Element.options[person2Element.selectedIndex].value);
+		if (person1Id == person2Id) {
+			alert("Same person cannot be part of a relation");
+			return;
+		}
+		relationId = await invokeService("/basic/saveRelation", {person1Id: person1Id, person2Id: person2Id});
+		s.graph.addEdge({
+			id: relationId,
+			source: person1Id,
+			target: person2Id,
+			label: '',
+			size: 5.0,
+			type: 'goo'
+		});
+		action = ACTION_SAVE;
+		s.renderers[0].dispatchEvent('clickEdge', {edge: s.graph.edges(relationId)});
+	}
 }
