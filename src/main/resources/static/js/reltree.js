@@ -384,9 +384,20 @@ function areOverlappingDates(startDate1Str, endDate1Str, startDate2Str, endDate2
 function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 	var valueElement, isAccurateElement, startDateElement, endDateElement;
 	var startDatePicker, endDatePicker, attributeDomainValueVO;
+	var deleteBlockImageElement;
 	
 	attributeDomainValueVO = domainValueVOMap.get(attributeValueVO.attributeDvId);
 	attributeValueBlockElement.setAttribute("attributedvid", attributeValueVO.attributeDvId);
+	
+	attributeValueBlockElement.appendChild(document.createTextNode("     "));
+	deleteBlockImageElement = document.createElement("img");
+	attributeValueBlockElement.appendChild(deleteBlockImageElement);
+	deleteBlockImageElement.setAttribute("src","img/delete.png");
+	deleteBlockImageElement.setAttribute("alt","Delete Property");
+	deleteBlockImageElement.setAttribute("style","width='50%';height='50%'");
+	deleteBlockImageElement.onclick = async function() {
+		attributeValueBlockElement.remove();
+	};
 	
 	attributeValueBlockElement.appendChild(document.createElement("br"));
 	
