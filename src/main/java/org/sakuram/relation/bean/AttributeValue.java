@@ -10,6 +10,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -44,7 +45,7 @@ public class AttributeValue {
 	@Column(name="attribute_value", nullable=false)
 	private String attributeValue;
 	
-	@Column(name="is_value_accurate", nullable=true)
+	@Column(name="is_value_accurate", nullable=false)
 	private boolean isValueAccurate;
 	
 	@Column(name="start_date", nullable=true)
@@ -54,13 +55,17 @@ public class AttributeValue {
 	private Date endDate;
 	
 	@ManyToOne
-	@JoinColumn(name="creator_id", nullable=false)
-	private Person creatorId;
+	@JoinColumn(name="creator_fk", nullable=false)
+	private Person creator;
 	
 	@Column(name="created_at", nullable=false, updatable=false)
 	@CreationTimestamp
 	private Timestamp createdAt;
 
+	@OneToOne
+	@JoinColumn(name="overwritten_by_fk", nullable=true)
+	private AttributeValue overwrittenBy;
+	
 	public long getId() {
 		return id;
 	}
@@ -125,12 +130,12 @@ public class AttributeValue {
 		this.endDate = endDate;
 	}
 
-	public Person getCreatorId() {
-		return creatorId;
+	public Person getCreator() {
+		return creator;
 	}
 
-	public void setCreatorId(Person creatorId) {
-		this.creatorId = creatorId;
+	public void setCreator(Person creator) {
+		this.creator= creator;
 	}
 
 	public Timestamp getCreatedAt() {
@@ -139,6 +144,14 @@ public class AttributeValue {
 
 	public void setCreatedAt(Timestamp createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public AttributeValue getOverwrittenBy() {
+		return overwrittenBy;
+	}
+
+	public void setOverwrittenBy(AttributeValue overwrittenBy) {
+		this.overwrittenBy = overwrittenBy;
 	}
 	
 }

@@ -3,7 +3,7 @@ package org.sakuram.relation.valueobject;
 import java.sql.Date;
 
 public class AttributeValueVO {
-	private long id;
+	private Long id;
 	private long attributeDvId;
 	private String attributeName;
 	private String attributeValue;
@@ -11,11 +11,11 @@ public class AttributeValueVO {
 	private Date startDate;
 	private Date endDate;
 
-	public long getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(long id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 	

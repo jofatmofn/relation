@@ -221,7 +221,7 @@ async function editEntityAttributes(e) {
 		var attributeValueVOList, attributeValueVO, saveAttributesRequestVO, inputElements;
 		var attributeVsValueListMap, attributeDvId, attributeDomainValueVO;
 		var ind1, ind2, attributeValueNBlkList, searchedPersonId, entityId;
-		var relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
+		var attributeValueId, relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
@@ -230,8 +230,11 @@ async function editEntityAttributes(e) {
 		for (let attributeValueBlkElement of rightBarElement.querySelectorAll("div[attributedvid]")) {
 			inputElements = attributeValueBlkElement.querySelectorAll("input,select:not([name=attributenames])");
 			attributeDvId = parseInt(attributeValueBlkElement.getAttribute("attributedvid"));
-			attributeValueVO = {attributeDvId: attributeDvId, attributeValue: (inputElements[0].tagName == "INPUT" ? inputElements[0].value : inputElements[0].options[inputElements[0].selectedIndex].value), valueAccurate: null, startDate: null, endDate: null};
+			attributeValueVO = {attributeDvId: attributeDvId, id: null, attributeValue: (inputElements[0].tagName == "INPUT" ? inputElements[0].value : inputElements[0].options[inputElements[0].selectedIndex].value), valueAccurate: null, startDate: null, endDate: null};
 			if (action == ACTION_SAVE) {
+				if (attributeValueBlkElement.hasAttribute("attributevalueid")) {
+					attributeValueVO.id = parseInt(attributeValueBlkElement.getAttribute("attributevalueid"));
+				}
 				attributeValueVO.valueAccurate = inputElements[1].checked;
 				if (inputElements.length > 2) {
 					if (inputElements[2].value != "") {
@@ -396,6 +399,9 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 	
 	attributeDomainValueVO = domainValueVOMap.get(attributeValueVO.attributeDvId);
 	attributeValueBlockElement.setAttribute("attributedvid", attributeValueVO.attributeDvId);
+	if (attributeValueVO.id != undefined) {
+		attributeValueBlockElement.setAttribute("attributevalueid", attributeValueVO.id);
+	}
 	
 	attributeValueBlockElement.appendChild(document.createTextNode("     "));
 	deleteBlockImageElement = document.createElement("img");

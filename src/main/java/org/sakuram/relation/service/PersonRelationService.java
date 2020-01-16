@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.sakuram.relation.bean.AttributeValue;
@@ -174,7 +175,8 @@ public class PersonRelationService {
     		domainValueFlags.setDomainValue(attributeValue.getAttribute());
     		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
     				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
-    				domainValueFlags.isInputAsAttribute()) {
+    				domainValueFlags.isInputAsAttribute() &&
+    				attributeValue.getOverwrittenBy() == null) {
         		attributeValueVO = new AttributeValueVO();
         		attributeValueVOList.add(attributeValueVO);
         		attributeValueVO.setId(attributeValue.getId());
@@ -191,7 +193,6 @@ public class PersonRelationService {
     
     public long savePersonAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
     	Person person, creator;
-    	List<AttributeValue> attributeValueList;
     	
     	creator = personRepository.findById(saveAttributesRequestVO.getCreatorId())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getCreatorId(), null));
@@ -199,24 +200,20 @@ public class PersonRelationService {
     	if (saveAttributesRequestVO.getEntityId() == Constants.NEW_ENTITY_ID) {
     		person = new Person();
     		person.setCreator(creator);
+    		person = personRepository.save(person);
     	}
     	else {
     		person = personRepository.findById(saveAttributesRequestVO.getEntityId())
     				.orElseThrow(() -> new AppException("Invalid Person " + saveAttributesRequestVO.getEntityId(), null));
-    		deleteExistingInputAttributes(person.getAttributeValueList());
-    		// TODO: Delete only the modified values. Else the creator id and timestamp will be lost.
     	}
     	
-    	attributeValueList = attributeValueVOToEntity(saveAttributesRequestVO.getAttributeValueVOList(), person, null, creator);
+    	saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), person, null, creator);
     	
-		person.setAttributeValueList(attributeValueList);
-		person = personRepository.save(person);
 		return person.getId();
     }
     
     public void saveRelationAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
     	Relation relation = null;
-    	List<AttributeValue> attributeValueList;
     	Person creator;
     	
     	creator = personRepository.findById(saveAttributesRequestVO.getCreatorId())
@@ -224,49 +221,70 @@ public class PersonRelationService {
     	
 		relation = relationRepository.findById(saveAttributesRequestVO.getEntityId())
 				.orElseThrow(() -> new AppException("Invalid Relation " + saveAttributesRequestVO.getEntityId(), null));
-		deleteExistingInputAttributes(relation.getAttributeValueList());
-		// TODO: Delete only the modified values. Else the creator id and timestamp will be lost.
     	
-    	attributeValueList = attributeValueVOToEntity(saveAttributesRequestVO.getAttributeValueVOList(), null, relation, creator);
-    	
-		relation.setAttributeValueList(attributeValueList);
-		relationRepository.save(relation);
+    	saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), null, relation, creator);
     }
 
-    private void deleteExistingInputAttributes(List<AttributeValue> attributeValueList) {
+    private void saveAttributeValue(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation, Person creator) {
+    	AttributeValue attributeValue, insertedAttributeValue, deletedAttributeValue;
+    	List<Long> incomingAttributeValueWithIdList, insertedAttributeValueIdList;
     	DomainValueFlags domainValueFlags;
     	
-    	domainValueFlags = new DomainValueFlags();
-    	for(AttributeValue attributeValue : attributeValueList) {
-    		domainValueFlags.setDomainValue(attributeValue.getAttribute());
-    		if (domainValueFlags.isInputAsAttribute()) {
-    			attributeValueRepository.delete(attributeValue);
+    	incomingAttributeValueWithIdList = new ArrayList<Long>();
+    	insertedAttributeValueIdList = new ArrayList<Long>();
+    	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
+    		if (attributeValueVO.getId() == null) {
+    			insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, creator);
+    			insertedAttributeValueIdList.add(insertedAttributeValue.getId());
+    		}
+    		else {
+    			incomingAttributeValueWithIdList.add(attributeValueVO.getId());
+    			attributeValue = attributeValueRepository.findById(attributeValueVO.getId())
+    					.orElseThrow(() -> new AppException("Invalid Attribute Value Id " + attributeValueVO.getId(), null));
+    			if (attributeValueVO.getAttributeDvId() != attributeValue.getAttribute().getId()) {
+    				throw new AppException("Invalid input from client.", null);
+    			}
+    			if (!Objects.equals(attributeValueVO.getAttributeValue(), attributeValue.getAttributeValue()) ||
+    					!Objects.equals(attributeValueVO.isValueAccurate(), attributeValue.isValueAccurate()) ||
+    					!Objects.equals(attributeValueVO.getStartDate(), attributeValue.getStartDate()) || 
+    					!Objects.equals(attributeValueVO.getEndDate(), attributeValue.getEndDate())) {
+    				insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, creator);
+        			insertedAttributeValueIdList.add(insertedAttributeValue.getId());
+    				attributeValue.setOverwrittenBy(insertedAttributeValue);
+    				attributeValueRepository.save(attributeValue);
+    			}
     		}
     	}
+    	
+    	domainValueFlags = new DomainValueFlags();
+		deletedAttributeValue = attributeValueRepository.findById(Constants.DELETED_ATTRIBUTE_VALUE_ID)
+				.orElseThrow(() -> new AppException("Invalid Attribute Value Id " + Constants.DELETED_ATTRIBUTE_VALUE_ID, null));
+    	for(AttributeValue toDeleteAttributeValue : (person != null ? person.getAttributeValueList() : relation.getAttributeValueList())) {
+    		domainValueFlags.setDomainValue(toDeleteAttributeValue.getAttribute());
+    		if (domainValueFlags.isInputAsAttribute() && !incomingAttributeValueWithIdList.contains(toDeleteAttributeValue.getId()) && toDeleteAttributeValue.getOverwrittenBy() == null) {
+    			toDeleteAttributeValue.setOverwrittenBy(deletedAttributeValue);
+				attributeValueRepository.save(toDeleteAttributeValue);
+    		}
+    	}
+
     }
-    
-    private List<AttributeValue> attributeValueVOToEntity(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation, Person creator) {
-    	List<AttributeValue> attributeValueList;
+
+    private AttributeValue insertAttributeValue(AttributeValueVO attributeValueVO, Person person, Relation relation, Person creator) {
     	AttributeValue attributeValue;
     	DomainValue attributeDv;
     	
-    	attributeValueList = new ArrayList<AttributeValue>();
-    	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
-    		attributeValue = new AttributeValue();
-    		attributeValueList.add(attributeValue);
-    		
-    		attributeDv = domainValueRepository.findById(attributeValueVO.getAttributeDvId())
-    				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValueVO.getAttributeDvId(), null));
-    		attributeValue.setAttribute(attributeDv);
-    		attributeValue.setAttributeValue(attributeValueVO.getAttributeValue());
-    		attributeValue.setPerson(person);
-    		attributeValue.setRelation(relation);
-    		attributeValue.setValueAccurate(attributeValueVO.isValueAccurate());
-    		attributeValue.setStartDate(attributeValueVO.getStartDate());
-    		attributeValue.setEndDate(attributeValueVO.getEndDate());
-    		attributeValue.setCreatorId(creator);
-    	}
-    	return attributeValueList;
+		attributeValue = new AttributeValue();
+		attributeDv = domainValueRepository.findById(attributeValueVO.getAttributeDvId())
+				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValueVO.getAttributeDvId(), null));
+		attributeValue.setAttribute(attributeDv);
+		attributeValue.setAttributeValue(attributeValueVO.getAttributeValue());
+		attributeValue.setPerson(person);
+		attributeValue.setRelation(relation);
+		attributeValue.setValueAccurate(attributeValueVO.isValueAccurate());
+		attributeValue.setStartDate(attributeValueVO.getStartDate());
+		attributeValue.setEndDate(attributeValueVO.getEndDate());
+		attributeValue.setCreator(creator);
+		return attributeValueRepository.save(attributeValue);
     }
     
     public long searchPerson(List<AttributeValueVO> attributeValueVOList) {
