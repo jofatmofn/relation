@@ -221,6 +221,7 @@ async function editEntityAttributes(e) {
 		var attributeValueVOList, attributeValueVO, saveAttributesRequestVO, inputElements;
 		var attributeVsValueListMap, attributeDvId, attributeDomainValueVO;
 		var ind1, ind2, attributeValueNBlkList, searchedPersonId, entityId;
+		var relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
@@ -290,12 +291,19 @@ async function editEntityAttributes(e) {
 				}
 			}
 			if (!isPersonNode) {
-				if (!VALID_RELATIONS_JSON.includes(JSON.stringify([attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)[0].attributeValueVO.attributeValue,
-					attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)[0].attributeValueVO.attributeValue]))) {
+				relationPerson1ForPerson2 = attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)[0].attributeValueVO.attributeValue;
+				relationPerson2ForPerson1 = attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)[0].attributeValueVO.attributeValue;
+				relationSubType = attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_RELATION_SUB_TYPE)[0].attributeValueVO.attributeValue;
+				attributeDomainValueVO = domainValueVOMap.get(parseInt(relationPerson1ForPerson2));
+				if (!VALID_RELATIONS_JSON.includes(JSON.stringify([relationPerson1ForPerson2, relationPerson2ForPerson1]))) {
 					alert("Invalid pair of relations");
 					return;
 				}
-				// TODO: Validate relation sub type
+				if (attributeDomainValueVO.relationParentChild && !VALID_RELSUBTYPES_PARENT_CHILD.includes(relationSubType) ||
+					attributeDomainValueVO.relationSpouse && !VALID_RELSUBTYPES_SPOUSE.includes(relationSubType)) {
+					alert("Invalid relation sub type");
+					return;
+					}
 			}
 		}
 		switch(action) {
