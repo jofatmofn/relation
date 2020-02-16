@@ -54,6 +54,9 @@ public class PersonRelationService {
     	RelationVO relationVO;
     	Set<Person> relatedPersonSet;
     	DomainValue attributeDv;
+    	long relationAttributeDVIdOtherForStart;
+    	String otherPersonId;
+    	short childCount;
     	
     	retrieveRelationsResponseVO = new RetrieveRelationsResponseVO();
     	personVOList = new ArrayList<PersonVO>();
@@ -81,18 +84,22 @@ public class PersonRelationService {
     		personVO.setId(String.valueOf(person.getId()));
     		personVO.setSize(5.0);
     		personVO.setColor(Constants.DEFAULT_COLOR);
-    		personVO.setX(Math.random());
-    		personVO.setY(Math.random());
+    		if (person.equals(startPerson)) {
+	    		personVO.setX(265);
+	    		personVO.setY(260);
+    		}
     		for (AttributeValue attributeValue : person.getAttributeValueList()) {
         		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_LABEL &&
         				(attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
-        				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now()))) {
+        				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
+        				attributeValue.getOverwrittenBy() == null) {
         			personVO.setLabel(attributeValue.getAttributeValue());
         			break;
         		}
     		}
     	}
     	
+    	childCount = 0;
     	relationList = relationRepository.findByPerson1InAndPerson2In(relatedPersonSet, relatedPersonSet);
     	for (Relation relation : relationList) {
     		relationVO = new RelationVO();
@@ -102,13 +109,55 @@ public class PersonRelationService {
     		relationVO.setSource(String.valueOf(relation.getPerson1().getId()));
     		relationVO.setTarget(String.valueOf(relation.getPerson2().getId()));
     		relationVO.setSize(0.5);
+    		if (relation.getPerson1().equals(startPerson)) {
+    			otherPersonId = String.valueOf(relation.getPerson2().getId());
+    			relationAttributeDVIdOtherForStart = Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1;
+    		}
+    		else if (relation.getPerson2().equals(startPerson)){
+    			otherPersonId = String.valueOf(relation.getPerson1().getId());
+    			relationAttributeDVIdOtherForStart = Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2;
+    		}
+    		else {
+    			otherPersonId = null;
+    			relationAttributeDVIdOtherForStart = -1;
+    		}
     		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
         		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) &&
         				(attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
-        				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now()))) {
+        				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
+        				attributeValue.getOverwrittenBy() == null) {
             		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
             				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
         			relationVO.setLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
+        			
+        			if (otherPersonId != null && attributeValue.getAttribute().getId() == relationAttributeDVIdOtherForStart) {
+            			for (PersonVO pVO : personVOList) {
+            				if (pVO.getId().equals(otherPersonId)) {
+		        				switch(attributeValue.getAttributeValue()) {
+		        				case Constants.RELATION_NAME_FATHER:
+		        					pVO.setX(265);
+		        					pVO.setY(160);
+		        		    		break;
+		        				case Constants.RELATION_NAME_MOTHER:
+		        					pVO.setX(530);
+		        					pVO.setY(160);
+		        		    		break;
+		        				case Constants.RELATION_NAME_HUSBAND:
+		        				case Constants.RELATION_NAME_WIFE:
+		        					pVO.setX(530);
+		        					pVO.setY(260);
+		        		    		break;
+		        				case Constants.RELATION_NAME_SON:
+		        				case Constants.RELATION_NAME_DAUGHTER:
+		        			    	childCount++;
+		        			    	pVO.setX(260 + childCount * 50);
+		        			    	pVO.setY(360);
+		        		    		break;
+		        				}
+		        				break;
+            				}
+            			}
+        			}
         		}
     		}
     	}
@@ -228,6 +277,7 @@ public class PersonRelationService {
     private void saveAttributeValue(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation, Person creator) {
     	AttributeValue attributeValue, insertedAttributeValue, deletedAttributeValue;
     	List<Long> incomingAttributeValueWithIdList, insertedAttributeValueIdList;
+    	List<AttributeValue> toDeleteAttributeValueList;
     	DomainValueFlags domainValueFlags;
     	
     	incomingAttributeValueWithIdList = new ArrayList<Long>();
@@ -259,14 +309,16 @@ public class PersonRelationService {
     	domainValueFlags = new DomainValueFlags();
 		deletedAttributeValue = attributeValueRepository.findById(Constants.DELETED_ATTRIBUTE_VALUE_ID)
 				.orElseThrow(() -> new AppException("Invalid Attribute Value Id " + Constants.DELETED_ATTRIBUTE_VALUE_ID, null));
-    	for(AttributeValue toDeleteAttributeValue : (person != null ? person.getAttributeValueList() : relation.getAttributeValueList())) {
-    		domainValueFlags.setDomainValue(toDeleteAttributeValue.getAttribute());
-    		if (domainValueFlags.isInputAsAttribute() && !incomingAttributeValueWithIdList.contains(toDeleteAttributeValue.getId()) && toDeleteAttributeValue.getOverwrittenBy() == null) {
-    			toDeleteAttributeValue.setOverwrittenBy(deletedAttributeValue);
-				attributeValueRepository.save(toDeleteAttributeValue);
-    		}
-    	}
-
+		toDeleteAttributeValueList = (person != null ? person.getAttributeValueList() : relation.getAttributeValueList());
+		if (toDeleteAttributeValueList != null) {
+	    	for(AttributeValue toDeleteAttributeValue : toDeleteAttributeValueList) {
+	    		domainValueFlags.setDomainValue(toDeleteAttributeValue.getAttribute());
+	    		if (domainValueFlags.isInputAsAttribute() && !incomingAttributeValueWithIdList.contains(toDeleteAttributeValue.getId()) && toDeleteAttributeValue.getOverwrittenBy() == null) {
+	    			toDeleteAttributeValue.setOverwrittenBy(deletedAttributeValue);
+					attributeValueRepository.save(toDeleteAttributeValue);
+	    		}
+	    	}
+		}
     }
 
     private AttributeValue insertAttributeValue(AttributeValueVO attributeValueVO, Person person, Relation relation, Person creator) {

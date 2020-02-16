@@ -296,17 +296,19 @@ async function editEntityAttributes(e) {
 			if (!isPersonNode) {
 				relationPerson1ForPerson2 = attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)[0].attributeValueVO.attributeValue;
 				relationPerson2ForPerson1 = attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)[0].attributeValueVO.attributeValue;
-				relationSubType = attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_RELATION_SUB_TYPE)[0].attributeValueVO.attributeValue;
 				attributeDomainValueVO = domainValueVOMap.get(parseInt(relationPerson1ForPerson2));
 				if (!VALID_RELATIONS_JSON.includes(JSON.stringify([relationPerson1ForPerson2, relationPerson2ForPerson1]))) {
 					alert("Invalid pair of relations");
 					return;
 				}
-				if (attributeDomainValueVO.relationParentChild && !VALID_RELSUBTYPES_PARENT_CHILD.includes(relationSubType) ||
-					attributeDomainValueVO.relationSpouse && !VALID_RELSUBTYPES_SPOUSE.includes(relationSubType)) {
-					alert("Invalid relation sub type");
-					return;
+				if (attributeVsValueListMap.has(RELATION_ATTRIBUTE_DV_ID_RELATION_SUB_TYPE)) {
+					relationSubType = attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_RELATION_SUB_TYPE)[0].attributeValueVO.attributeValue;
+					if (attributeDomainValueVO.relationParentChild && !VALID_RELSUBTYPES_PARENT_CHILD.includes(relationSubType) ||
+						attributeDomainValueVO.relationSpouse && !VALID_RELSUBTYPES_SPOUSE.includes(relationSubType)) {
+						alert("Invalid relation sub type");
+						return;
 					}
+				}
 			}
 		}
 		switch(action) {

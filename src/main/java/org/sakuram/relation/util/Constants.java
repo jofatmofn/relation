@@ -14,6 +14,13 @@ public class Constants {
 	public static final long RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 = 34;
 	public static final long RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 = 35;
 	
+	public static final String RELATION_NAME_FATHER = "1";
+	public static final String RELATION_NAME_MOTHER = "2";
+	public static final String RELATION_NAME_HUSBAND = "3";
+	public static final String RELATION_NAME_WIFE = "4";
+	public static final String RELATION_NAME_SON = "5";
+	public static final String RELATION_NAME_DAUGHTER = "6";
+	
 	public static final String FLAG_RELATION_TYPE_PARENT_CHILD = "PC";
 	public static final String FLAG_RELATION_TYPE_SPOUSE = "Sp";
 	
