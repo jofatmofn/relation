@@ -10,9 +10,9 @@ import org.sakuram.relation.util.Constants;
 import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.DomainValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
-import org.sakuram.relation.valueobject.RetrieveRelationsResponseVO;
+import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
-import org.sakuram.relation.valueobject.SaveRelationRequestVO;
+import org.sakuram.relation.valueobject.RelatedPersonsVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,7 +30,7 @@ public class PersonRelationController {
     PersonRelationService personRelationService;
     
     @RequestMapping(value = "/retrieveRelations", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public RetrieveRelationsResponseVO retrieveRelations(@RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+    public GraphVO retrieveRelations(@RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	return personRelationService.retrieveRelations(retrieveRelationsRequestVO);
     }
     
@@ -67,7 +67,7 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/saveRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public long saveRelation(HttpSession httpSession, @RequestBody SaveRelationRequestVO saveRelationRequestVO) {
+    public long saveRelation(HttpSession httpSession, @RequestBody RelatedPersonsVO saveRelationRequestVO) {
     	saveRelationRequestVO.setCreatorId(getCreatorId(httpSession));
     	return personRelationService.saveRelation(saveRelationRequestVO);
     }

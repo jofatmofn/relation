@@ -1,6 +1,6 @@
 package org.sakuram.relation.valueobject;
 
-public class SaveRelationRequestVO {
+public class RelatedPersonsVO {
 	private long person1Id;
 	private long person2Id;
 	private long creatorId;

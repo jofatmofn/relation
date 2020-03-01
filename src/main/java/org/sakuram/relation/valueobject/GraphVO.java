@@ -2,7 +2,7 @@ package org.sakuram.relation.valueobject;
 
 import java.util.List;
 
-public class RetrieveRelationsResponseVO {
+public class GraphVO {
 	private List<PersonVO> nodes;
 	private List<RelationVO> edges;
 	

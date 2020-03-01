@@ -529,36 +529,18 @@ function clearGraph() {
 }
 
 function relatePersons() {
-	var actionButtonElement, selectElement, optionElement, node, rightBarElement, person1Element, person2Element;
+	var actionButtonElement;
 	
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Relate</button>";
 	document.getElementById("sidebartitle").textContent = "Related Persons";
-	
-	selectElement = document.createElement("select");
-	selectElement.setAttribute("name","persons");
-	for (let node of s.graph.nodes()) {
-		if (node.id != NEW_ENTITY_ID && node.id != SEARCH_ENTITY_ID) {
-			optionElement = document.createElement("option");
-			optionElement.setAttribute("value", node.id);
-			optionElement.appendChild(document.createTextNode(node.label + " (" + node.id + ")"));
-			selectElement.appendChild(optionElement);
-		}
-	}
-	rightBarElement = document.getElementById("sidebarbody");
-	
-	rightBarElement.innerHTML = "";
-	rightBarElement.appendChild(document.createTextNode("Person 1"));
-	person1Element = selectElement.cloneNode(true);
-	rightBarElement.appendChild(person1Element);
-	
-	rightBarElement.appendChild(document.createElement("br"));
-	rightBarElement.appendChild(document.createTextNode("Person 2"));
-	person2Element = selectElement.cloneNode(true);
-	rightBarElement.appendChild(person2Element);
+
+	getPersonsPair();
 	
 	actionButtonElement = document.getElementById("actionbutton");
 	actionButtonElement.onclick = async function() {
-		var person1Id, person2Id, relationId;
+		var person1Id, person2Id, relationId, person1Element, person2Element;
+		person1Element = document.getElementById("person1");
+		person2Element = document.getElementById("person2");
 		person1Id = parseInt(person1Element.options[person1Element.selectedIndex].value);
 		person2Id = parseInt(person2Element.options[person2Element.selectedIndex].value);
 		if (person1Id == person2Id) {
@@ -576,4 +558,58 @@ function relatePersons() {
 		});
 		s.renderers[0].dispatchEvent('clickEdge', {edge: s.graph.edges(relationId)});
 	}
+}
+
+function ascertainRelation() {
+	var actionButtonElement;
+	
+	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Ascertain</button>";
+	document.getElementById("sidebartitle").textContent = "Ascertain Relation";
+
+	getPersonsPair();
+	
+	actionButtonElement = document.getElementById("actionbutton");
+	actionButtonElement.onclick = async function() {
+		var person1Id, person2Id, relationId, person1Element, person2Element;
+		person1Element = document.getElementById("person1");
+		person2Element = document.getElementById("person2");
+		person1Id = parseInt(person1Element.options[person1Element.selectedIndex].value);
+		person2Id = parseInt(person2Element.options[person2Element.selectedIndex].value);
+		if (person1Id == person2Id) {
+			alert("Same person cannot be part of a relation");
+			return;
+		}
+		s.graph.clear();
+		s.graph.read(await invokeService("/algo/retrieveRelationPath", {person1Id: person1Id, person2Id: person2Id}));
+		s.refresh();
+	}
+}
+
+function getPersonsPair() {
+	var selectElement, optionElement, node, rightBarElement, person1Element, person2Element;
+	
+	selectElement = document.createElement("select");
+	selectElement.setAttribute("name","persons");
+	for (let node of s.graph.nodes()) {
+		if (node.id != NEW_ENTITY_ID && node.id != SEARCH_ENTITY_ID) {
+			optionElement = document.createElement("option");
+			optionElement.setAttribute("value", node.id);
+			optionElement.appendChild(document.createTextNode(node.label + " (" + node.id + ")"));
+			selectElement.appendChild(optionElement);
+		}
+	}
+	rightBarElement = document.getElementById("sidebarbody");
+	
+	rightBarElement.innerHTML = "";
+	rightBarElement.appendChild(document.createTextNode("Person 1"));
+	person1Element = selectElement.cloneNode(true);
+	person1Element.setAttribute("id", "person1");
+	rightBarElement.appendChild(person1Element);
+	
+	rightBarElement.appendChild(document.createElement("br"));
+	rightBarElement.appendChild(document.createTextNode("Person 2"));
+	person2Element = selectElement.cloneNode(true);
+	person2Element.setAttribute("id", "person2");
+	rightBarElement.appendChild(person2Element);
+	
 }

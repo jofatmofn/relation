@@ -21,12 +21,10 @@ import org.sakuram.relation.util.Constants;
 import org.sakuram.relation.util.DomainValueFlags;
 import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.DomainValueVO;
-import org.sakuram.relation.valueobject.PersonVO;
-import org.sakuram.relation.valueobject.RelationVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
-import org.sakuram.relation.valueobject.RetrieveRelationsResponseVO;
+import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
-import org.sakuram.relation.valueobject.SaveRelationRequestVO;
+import org.sakuram.relation.valueobject.RelatedPersonsVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,28 +42,15 @@ public class PersonRelationService {
 	@Autowired
 	AttributeValueRepository attributeValueRepository;
 	
-	public RetrieveRelationsResponseVO retrieveRelations(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
-    	RetrieveRelationsResponseVO retrieveRelationsResponseVO;
+	@Autowired
+	ServiceParts serviceParts;
+	
+	public GraphVO retrieveRelations(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	Person startPerson;
-    	List<PersonVO> personVOList;
-    	PersonVO personVO;
-    	List<Relation> relationList, participatingRelationList;
-    	List<RelationVO> relationVOList;
-    	RelationVO relationVO;
+    	List<Relation> participatingRelationList;
     	Set<Person> relatedPersonSet;
-    	DomainValue attributeDv;
-    	long relationAttributeDVIdOtherForStart;
-    	String otherPersonId;
-    	short childCount;
     	
-    	retrieveRelationsResponseVO = new RetrieveRelationsResponseVO();
-    	personVOList = new ArrayList<PersonVO>();
-    	retrieveRelationsResponseVO.setNodes(personVOList);
-    	relationVOList = new ArrayList<RelationVO>();
-    	retrieveRelationsResponseVO.setEdges(relationVOList);
     	relatedPersonSet = new HashSet<Person>();
-    	relationList = new ArrayList<Relation>();
-    	
     	startPerson = personRepository.findById(retrieveRelationsRequestVO.getStartPersonId())
 				.orElseThrow(() -> new AppException("Invalid Person " + retrieveRelationsRequestVO.getStartPersonId(), null));
 		relatedPersonSet.add(startPerson);
@@ -77,92 +62,8 @@ public class PersonRelationService {
     	for (Relation relation : participatingRelationList) {
     		relatedPersonSet.add(relation.getPerson1());
     	}
-    	for (Person person : relatedPersonSet) {
-    		personVO = new PersonVO();
-    		personVOList.add(personVO);
-    		
-    		personVO.setId(String.valueOf(person.getId()));
-    		personVO.setSize(5.0);
-    		personVO.setColor(Constants.DEFAULT_COLOR);
-    		if (person.equals(startPerson)) {
-	    		personVO.setX(265);
-	    		personVO.setY(260);
-    		}
-    		for (AttributeValue attributeValue : person.getAttributeValueList()) {
-        		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_LABEL &&
-        				(attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
-        				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
-        				attributeValue.getOverwrittenBy() == null) {
-        			personVO.setLabel(attributeValue.getAttributeValue());
-        			break;
-        		}
-    		}
-    	}
     	
-    	childCount = 0;
-    	relationList = relationRepository.findByPerson1InAndPerson2In(relatedPersonSet, relatedPersonSet);
-    	for (Relation relation : relationList) {
-    		relationVO = new RelationVO();
-    		relationVOList.add(relationVO);
-    		
-    		relationVO.setId(String.valueOf(relation.getId()));
-    		relationVO.setSource(String.valueOf(relation.getPerson1().getId()));
-    		relationVO.setTarget(String.valueOf(relation.getPerson2().getId()));
-    		relationVO.setSize(0.5);
-    		if (relation.getPerson1().equals(startPerson)) {
-    			otherPersonId = String.valueOf(relation.getPerson2().getId());
-    			relationAttributeDVIdOtherForStart = Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1;
-    		}
-    		else if (relation.getPerson2().equals(startPerson)){
-    			otherPersonId = String.valueOf(relation.getPerson1().getId());
-    			relationAttributeDVIdOtherForStart = Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2;
-    		}
-    		else {
-    			otherPersonId = null;
-    			relationAttributeDVIdOtherForStart = -1;
-    		}
-    		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
-        		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) &&
-        				(attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
-        				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
-        				attributeValue.getOverwrittenBy() == null) {
-            		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
-            				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
-        			relationVO.setLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
-        			
-        			if (otherPersonId != null && attributeValue.getAttribute().getId() == relationAttributeDVIdOtherForStart) {
-            			for (PersonVO pVO : personVOList) {
-            				if (pVO.getId().equals(otherPersonId)) {
-		        				switch(attributeValue.getAttributeValue()) {
-		        				case Constants.RELATION_NAME_FATHER:
-		        					pVO.setX(265);
-		        					pVO.setY(160);
-		        		    		break;
-		        				case Constants.RELATION_NAME_MOTHER:
-		        					pVO.setX(530);
-		        					pVO.setY(160);
-		        		    		break;
-		        				case Constants.RELATION_NAME_HUSBAND:
-		        				case Constants.RELATION_NAME_WIFE:
-		        					pVO.setX(530);
-		        					pVO.setY(260);
-		        		    		break;
-		        				case Constants.RELATION_NAME_SON:
-		        				case Constants.RELATION_NAME_DAUGHTER:
-		        			    	childCount++;
-		        			    	pVO.setX(260 + childCount * 50);
-		        			    	pVO.setY(360);
-		        		    		break;
-		        				}
-		        				break;
-            				}
-            			}
-        			}
-        		}
-    		}
-    	}
-    	
-    	return retrieveRelationsResponseVO;
+    	return serviceParts.buildGraph(relatedPersonSet, startPerson);
     }
 	
     public List<DomainValueVO> retrieveDomainValues() {
@@ -361,7 +262,7 @@ public class PersonRelationService {
     	return (personList.size() > 0 ? personList.get(0).getId() : Constants.NEW_ENTITY_ID);
     }
     
-    public long saveRelation(SaveRelationRequestVO saveRelationRequestVO) {
+    public long saveRelation(RelatedPersonsVO saveRelationRequestVO) {
     	Person person1, person2, creator;
     	Relation relation;
     	HashSet<Person> personSet;
