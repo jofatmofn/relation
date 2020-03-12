@@ -158,6 +158,7 @@ async function editEntityAttributes(e) {
 	
 	rightBarElement = document.getElementById("sidebarbody");
 	rightBarElement.innerHTML = "";
+	/* Current attribute values from back-end */
 	for (let attributeValueVO of attributeValueVOList) {
 		if (attributeValueVO.attributeDvId == PERSON_ATTRIBUTE_DV_ID_LABEL) {
 			highlightedEntity.label = attributeValueVO.attributeValue;
@@ -167,6 +168,18 @@ async function editEntityAttributes(e) {
 		attributeValueBlockElement.className = "attrVal";
 		attributeValueBlockElement.appendChild(document.createTextNode(attributeValueVO.attributeName));
 		createAttributeBlock(attributeValueBlockElement, attributeValueVO);
+	}
+	/* Mandatory attributes for new entity */
+	if (action == ACTION_SAVE && attributeValueVOList.length == 0) {
+		for (let attributeDomainValueVO of (isPersonNode ? paDomainValueVOList : raDomainValueVOList)) {
+			if (attributeDomainValueVO.inputMandatory) {
+				attributeValueBlockElement = document.createElement("div");
+				rightBarElement.appendChild(attributeValueBlockElement);
+				attributeValueBlockElement.className = "attrVal";
+				attributeValueBlockElement.appendChild(document.createTextNode(attributeDomainValueVO.value));
+				createAttributeBlock(attributeValueBlockElement, {attributeDvId: attributeDomainValueVO.id});
+			}
+		}
 	}
 	s.refresh();
 	
