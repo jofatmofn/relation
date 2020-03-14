@@ -126,7 +126,7 @@ async function drawGraph() {
 
 async function editEntityAttributes(e) {
 	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, actionButtonElement, addButtonElement;
-	var person1Node, person2Node;
+	var person1Node, person2Node, retrieveRelationAttributesResponseVO,  person1GenderDVId, person2GenderDVId, person1ForPerson2SelectElement,  person2ForPerson2SelectElement;
 	
 	if (highlightedEntity != undefined) {
 		highlightedEntity.color = DEFAULT_COLOR;
@@ -150,7 +150,13 @@ async function editEntityAttributes(e) {
 		highlightedEntity = e.data.edge;
 		console.log(e.type, e.data.edge.label, e.data.captor);
 		if (e.data.edge.id > 0) {
-			attributeValueVOList = await invokeService("/basic/retrieveRelationAttributes", e.data.edge.id);
+			retrieveRelationAttributesResponseVO = await invokeService("/basic/retrieveRelationAttributes", e.data.edge.id);
+			attributeValueVOList = retrieveRelationAttributesResponseVO.attributeValueVOList;
+			person1GenderDVId = retrieveRelationAttributesResponseVO.person1GenderDVId;
+			person2GenderDVId = retrieveRelationAttributesResponseVO.person2GenderDVId;
+		}
+		else {
+			alert("Debug: Scenario when e.data.edge.id equals 0!");
 		}
 	}
 	
@@ -182,6 +188,45 @@ async function editEntityAttributes(e) {
 		}
 	}
 	s.refresh();
+	
+	/* Set default value for person2ForPerson1 */
+	/* Beware: This code may go out of sync with what is configured */
+	if (!isPersonNode && person1GenderDVId != null && person2GenderDVId != null) {
+		for (let attributeValueBlkElement of rightBarElement.querySelectorAll("div[attributedvid]")) {
+			attributeDvId = parseInt(attributeValueBlkElement.getAttribute("attributedvid"));
+			if (attributeDvId == RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) {
+				person1ForPerson2SelectElement = attributeValueBlkElement.querySelector("select[name=RelName]");
+			}
+			else if (attributeDvId == RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) {
+				person2ForPerson1SelectElement = attributeValueBlkElement.querySelector("select[name=RelName]");
+			}
+		}
+		
+		person1ForPerson2SelectElement.onchange = function() {
+			person1ForPerson2RelationDVId = parseInt(person1ForPerson2SelectElement.options[person1ForPerson2SelectElement.selectedIndex].value);
+			switch(true) {
+				case person1GenderDVId == GENDER_MALE_DV_ID && person1ForPerson2RelationDVId == RELATION_NAME_HUSBAND_DV_ID && person2GenderDVId == GENDER_FEMALE_DV_ID:
+					person2ForPerson1SelectElement.value = RELATION_NAME_WIFE_DV_ID;
+					break;
+				case person1GenderDVId == GENDER_FEMALE_DV_ID && person1ForPerson2RelationDVId == RELATION_NAME_WIFE_DV_ID && person2GenderDVId == GENDER_MALE_DV_ID:
+					person2ForPerson1SelectElement.value = RELATION_NAME_HUSBAND_DV_ID;
+					break;
+				case (person1GenderDVId == GENDER_MALE_DV_ID && person1ForPerson2RelationDVId == RELATION_NAME_FATHER_DV_ID || person1GenderDVId == GENDER_FEMALE_DV_ID && person1ForPerson2RelationDVId == RELATION_NAME_MOTHER_DV_ID) && person2GenderDVId == GENDER_MALE_DV_ID:
+					person2ForPerson1SelectElement.value = RELATION_NAME_SON_DV_ID;
+					break;
+				case (person1GenderDVId == GENDER_MALE_DV_ID && person1ForPerson2RelationDVId == RELATION_NAME_FATHER_DV_ID || person1GenderDVId == GENDER_FEMALE_DV_ID && person1ForPerson2RelationDVId == RELATION_NAME_MOTHER_DV_ID) && person2GenderDVId == GENDER_FEMALE_DV_ID:
+					person2ForPerson1SelectElement.value = RELATION_NAME_DAUGHTER_DV_ID;
+					break;
+				case (person1GenderDVId == GENDER_MALE_DV_ID && person1ForPerson2RelationDVId == RELATION_NAME_SON_DV_ID || person1GenderDVId == GENDER_FEMALE_DV_ID && person1ForPerson2RelationDVId == RELATION_NAME_DAUGHTER_DV_ID) && person2GenderDVId == GENDER_MALE_DV_ID:
+					person2ForPerson1SelectElement.value = RELATION_NAME_FATHER_DV_ID;
+					break;
+				case (person1GenderDVId == GENDER_MALE_DV_ID && person1ForPerson2RelationDVId == RELATION_NAME_SON_DV_ID || person1GenderDVId == GENDER_FEMALE_DV_ID && person1ForPerson2RelationDVId == RELATION_NAME_DAUGHTER_DV_ID) && person2GenderDVId == GENDER_FEMALE_DV_ID:
+					person2ForPerson1SelectElement.value = RELATION_NAME_MOTHER_DV_ID;
+					break;
+				/* On error do nothing; Validations come later */
+			}
+		}
+	}
 	
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'>+</button><button id='actionbutton'>" + action + "</button>";
 	addButtonElement = document.getElementById("addbutton");
@@ -321,6 +366,16 @@ async function editEntityAttributes(e) {
 						alert("Invalid relation sub type");
 						return;
 					}
+				}
+				/* Beware: The following validation may go out of sync with what is configured */
+				person1ForPerson2RelationDVId = parseInt(person1ForPerson2SelectElement.options[person1ForPerson2SelectElement.selectedIndex].value);
+				person2ForPerson1RelationDVId = parseInt(person2ForPerson1SelectElement.options[person2ForPerson1SelectElement.selectedIndex].value);
+				if (person1GenderDVId == GENDER_MALE_DV_ID && person1ForPerson2RelationDVId != RELATION_NAME_HUSBAND_DV_ID && person1ForPerson2RelationDVId != RELATION_NAME_FATHER_DV_ID && person1ForPerson2RelationDVId != RELATION_NAME_SON_DV_ID ||
+					person1GenderDVId == GENDER_FEMALE_DV_ID && person1ForPerson2RelationDVId != RELATION_NAME_WIFE_DV_ID && person1ForPerson2RelationDVId != RELATION_NAME_MOTHER_DV_ID && person1ForPerson2RelationDVId != RELATION_NAME_DAUGHTER_DV_ID ||
+					person2GenderDVId == GENDER_MALE_DV_ID && person2ForPerson1RelationDVId != RELATION_NAME_HUSBAND_DV_ID && person2ForPerson1RelationDVId != RELATION_NAME_FATHER_DV_ID && person2ForPerson1RelationDVId != RELATION_NAME_SON_DV_ID ||
+					person2GenderDVId == GENDER_FEMALE_DV_ID && person2ForPerson1RelationDVId != RELATION_NAME_WIFE_DV_ID && person2ForPerson1RelationDVId != RELATION_NAME_MOTHER_DV_ID && person2ForPerson1RelationDVId != RELATION_NAME_DAUGHTER_DV_ID) {
+						alert("Relation is not appropriate for the Gender");
+						return;
 				}
 			}
 		}

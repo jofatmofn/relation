@@ -25,6 +25,7 @@ import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
+import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,37 +97,55 @@ public class PersonRelationService {
     	return domainValueVOList;
     }
     
-    public List<AttributeValueVO> retrieveAttributes(byte entityType, long entityId) {
+    public List<AttributeValueVO> retrievePersonAttributes(long entityId) {
     	Person person;
+    	List<AttributeValue> attributeValueList;
+    	
+		person = personRepository.findById(entityId)
+				.orElseThrow(() -> new AppException("Invalid Person " + entityId, null));
+		attributeValueList = person.getAttributeValueList();
+		
+		return attributeValuesEntityToVo(attributeValueList);
+    }
+    
+    public RetrieveRelationAttributesResponseVO retrieveRelationAttributes(long entityId) {
     	Relation relation;
     	List<AttributeValue> attributeValueList;
+    	RetrieveRelationAttributesResponseVO retrieveRelationAttributesResponseVO;
+    	
+		relation = relationRepository.findById(entityId)
+				.orElseThrow(() -> new AppException("Invalid Relation " + entityId, null));
+		attributeValueList = relation.getAttributeValueList();
+		
+    	retrieveRelationAttributesResponseVO = new RetrieveRelationAttributesResponseVO();
+    	for(AttributeValue attributeValue : relation.getPerson1().getAttributeValueList()) {
+    		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER && isCurrentValidAttributeValue(attributeValue)) {
+    	    	retrieveRelationAttributesResponseVO.setPerson1GenderDVId(Long.valueOf(attributeValue.getAttributeValue()));
+    	    	break;
+    		}
+    	}
+    	for(AttributeValue attributeValue : relation.getPerson2().getAttributeValueList()) {
+    		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER && isCurrentValidAttributeValue(attributeValue)) {
+    	    	retrieveRelationAttributesResponseVO.setPerson2GenderDVId(Long.valueOf(attributeValue.getAttributeValue()));
+    	    	break;
+    		}
+    	}
+    	retrieveRelationAttributesResponseVO.setAttributeValueVOList(attributeValuesEntityToVo(attributeValueList));
+    	return retrieveRelationAttributesResponseVO;
+    }
+    
+    private List<AttributeValueVO> attributeValuesEntityToVo(List<AttributeValue> attributeValueList) {
     	List<AttributeValueVO> attributeValueVOList;
     	AttributeValueVO attributeValueVO;
     	DomainValueFlags domainValueFlags;
     	
     	domainValueFlags = new DomainValueFlags();
-    	if (entityType == Constants.ENTITY_TYPE_PERSON) {
-    		person = personRepository.findById(entityId)
-    				.orElseThrow(() -> new AppException("Invalid Person " + entityId, null));
-    		attributeValueList = person.getAttributeValueList();
-    	}
-    	else if (entityType == Constants.ENTITY_TYPE_RELATION) {
-    		relation = relationRepository.findById(entityId)
-    				.orElseThrow(() -> new AppException("Invalid Relation " + entityId, null));
-    		attributeValueList = relation.getAttributeValueList();
-    	}
-    	else {
-    		throw new AppException("Unknow entity type " + entityType, null);
-    	}
     	
     	attributeValueVOList = new ArrayList<AttributeValueVO>();
     	for(AttributeValue attributeValue : attributeValueList) {
     		
     		domainValueFlags.setDomainValue(attributeValue.getAttribute());
-    		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
-    				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
-    				domainValueFlags.isInputAsAttribute() &&
-    				attributeValue.getOverwrittenBy() == null) {
+    		if (isCurrentValidAttributeValue(attributeValue) && domainValueFlags.isInputAsAttribute()) {
         		attributeValueVO = new AttributeValueVO();
         		attributeValueVOList.add(attributeValueVO);
         		attributeValueVO.setId(attributeValue.getId());
@@ -139,6 +158,17 @@ public class PersonRelationService {
     		}
     	}
     	return attributeValueVOList;
+    }
+    
+    private boolean isCurrentValidAttributeValue(AttributeValue attributeValue) {
+		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
+				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
+				attributeValue.getOverwrittenBy() == null) {
+			return true;
+		}
+		else {
+			return false;
+		}
     }
     
     public long savePersonAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {

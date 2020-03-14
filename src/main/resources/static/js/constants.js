@@ -28,3 +28,12 @@ const ACTION_RELATE = "Relate";
 const VALID_RELATIONS_JSON = JSON.stringify([["1", "5"],["5", "1"],["1", "6"],["6", "1"],["2", "5"],["5", "2"],["2", "6"],["6", "2"],["3", "4"],["4", "3"]]);
 const VALID_RELSUBTYPES_SPOUSE = ["7", "8", "9", "10", "11", "12"]
 const VALID_RELSUBTYPES_PARENT_CHILD = ["13", "14", "15"]
+
+const GENDER_MALE_DV_ID = 59;
+const GENDER_FEMALE_DV_ID = 60;
+const RELATION_NAME_FATHER_DV_ID = 1;
+const RELATION_NAME_MOTHER_DV_ID = 2;
+const RELATION_NAME_HUSBAND_DV_ID = 3;
+const RELATION_NAME_WIFE_DV_ID = 4;
+const RELATION_NAME_SON_DV_ID = 5;
+const RELATION_NAME_DAUGHTER_DV_ID = 6;

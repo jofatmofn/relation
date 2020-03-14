@@ -6,13 +6,13 @@ import javax.servlet.http.HttpSession;
 
 import org.sakuram.relation.service.PersonRelationService;
 import org.sakuram.relation.util.AppException;
-import org.sakuram.relation.util.Constants;
 import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.DomainValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
+import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,12 +41,12 @@ public class PersonRelationController {
     
     @RequestMapping(value = "/retrievePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public List<AttributeValueVO> retrievePersonAttributes(@RequestBody long entityId) {
-    	return personRelationService.retrieveAttributes(Constants.ENTITY_TYPE_PERSON, entityId);
+    	return personRelationService.retrievePersonAttributes(entityId);
     }
     
     @RequestMapping(value = "/retrieveRelationAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<AttributeValueVO> retrieveRelationAttributes(@RequestBody long entityId) {
-    	return personRelationService.retrieveAttributes(Constants.ENTITY_TYPE_RELATION, entityId);
+    public RetrieveRelationAttributesResponseVO retrieveRelationAttributes(@RequestBody long entityId) {
+    	return personRelationService.retrieveRelationAttributes(entityId);
     }
     
     @RequestMapping(value = "/savePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

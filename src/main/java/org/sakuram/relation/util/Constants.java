@@ -11,6 +11,7 @@ public class Constants {
 	public static final String CATEGORY_RELATION_ATTRIBUTE = "RelAttribute";
 
 	public static final long PERSON_ATTRIBUTE_DV_ID_LABEL = 16;
+	public static final long PERSON_ATTRIBUTE_DV_ID_GENDER = 19;
 	public static final long RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 = 34;
 	public static final long RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 = 35;
 	
