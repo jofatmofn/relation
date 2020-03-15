@@ -296,9 +296,9 @@ public class PersonRelationService {
     		firstTime = false;
     		querySB.append("EXISTS (SELECT 1 FROM attribute_value WHERE person_fk = p.id AND attribute_fk = ");
     		querySB.append(attributeValueVO.getAttributeDvId());
-    		querySB.append(" AND LOWER(attribute_value) = '");	// Beware: PostgreSQL specific syntax
+    		querySB.append(" AND LOWER(attribute_value) LIKE '%");	// Beware: PostgreSQL specific syntax
     		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
-    		querySB.append("') ");
+    		querySB.append("%') ");
     	}
     	
     	personList = personRepository.executeDynamicQuery(querySB.toString());
