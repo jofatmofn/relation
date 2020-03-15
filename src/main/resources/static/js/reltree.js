@@ -1,17 +1,24 @@
-var domainValueVOList, highlightedEntity, loginUserPersonId, domainValueVOMap;
+var domainValueVOList, isAppReadOnly, highlightedEntity, loginUserPersonId, domainValueVOMap;
 var paSelectElement, raSelectElement, paDomainValueVOList, raDomainValueVOList, isPersonNode;
 var action, selectElementMap;
 
 async function drawGraph() {
 	
-	var selectElement;
+	var selectElement, retrieveAppStartValuesResponseVO, buttonElement;
 	window.addEventListener("unhandledrejection", event =>
 	{
 		alert(event.reason);
 	});
 	
 	loginUserPersonId = 6;	// TODO: After integration with login, this should be user's person id
-	domainValueVOList = await invokeService("/basic/retrieveDomainValues", "");
+	retrieveAppStartValuesResponseVO = await invokeService("/basic/retrieveAppStartValues", "");
+	domainValueVOList = retrieveAppStartValuesResponseVO.domainValueVOList;
+	isAppReadOnly = retrieveAppStartValuesResponseVO.appReadOnly;
+	if (isAppReadOnly) {
+		for (let buttonElement of document.querySelectorAll("div#leftbarbody > button[rel-modify-data]")) {
+			buttonElement.disabled = true;
+		}
+	}
 	domainValueVOMap = new Map();
 	paSelectElement = document.createElement("select");
 	paSelectElement.setAttribute("name","attributenames");

@@ -12,8 +12,10 @@ import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
+import org.sakuram.relation.valueobject.RetrieveAppStartValuesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,14 +31,17 @@ public class PersonRelationController {
     @Autowired
     PersonRelationService personRelationService;
     
+	@Value("${relation.application.readonly}")
+	boolean isAppReadOnly;
+	
     @RequestMapping(value = "/retrieveRelations", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public GraphVO retrieveRelations(@RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	return personRelationService.retrieveRelations(retrieveRelationsRequestVO);
     }
     
-    @RequestMapping(value = "/retrieveDomainValues", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<DomainValueVO> retrieveDomainValues() {
-    	return personRelationService.retrieveDomainValues();
+    @RequestMapping(value = "/retrieveAppStartValues", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public RetrieveAppStartValuesResponseVO retrieveAppStartValues() {
+    	return personRelationService.retrieveAppStartValues();
     }
     
     @RequestMapping(value = "/retrievePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -51,12 +56,18 @@ public class PersonRelationController {
     
     @RequestMapping(value = "/savePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public long savePersonAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
+    	if (isAppReadOnly) {
+    		throw new AppException("Application is running in READ ONLY mode", null);
+    	}
     	saveAttributesRequestVO.setCreatorId(getCreatorId(httpSession));
     	return personRelationService.savePersonAttributes(saveAttributesRequestVO);
     }
     
     @RequestMapping(value = "/saveRelationAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public void saveRelationAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
+    	if (isAppReadOnly) {
+    		throw new AppException("Application is running in READ ONLY mode", null);
+    	}
     	saveAttributesRequestVO.setCreatorId(getCreatorId(httpSession));
     	personRelationService.saveRelationAttributes(saveAttributesRequestVO);
     }
@@ -68,6 +79,9 @@ public class PersonRelationController {
     
     @RequestMapping(value = "/saveRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public long saveRelation(HttpSession httpSession, @RequestBody RelatedPersonsVO saveRelationRequestVO) {
+    	if (isAppReadOnly) {
+    		throw new AppException("Application is running in READ ONLY mode", null);
+    	}
     	saveRelationRequestVO.setCreatorId(getCreatorId(httpSession));
     	return personRelationService.saveRelation(saveRelationRequestVO);
     }

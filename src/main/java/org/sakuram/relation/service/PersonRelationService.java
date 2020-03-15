@@ -25,8 +25,10 @@ import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
+import org.sakuram.relation.valueobject.RetrieveAppStartValuesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +47,9 @@ public class PersonRelationService {
 	
 	@Autowired
 	ServiceParts serviceParts;
+	
+	@Value("${relation.application.readonly}")
+	boolean isAppReadOnly;
 	
 	public GraphVO retrieveRelations(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	Person startPerson;
@@ -67,7 +72,15 @@ public class PersonRelationService {
     	return serviceParts.buildGraph(relatedPersonSet, startPerson);
     }
 	
-    public List<DomainValueVO> retrieveDomainValues() {
+	public RetrieveAppStartValuesResponseVO retrieveAppStartValues() {
+		RetrieveAppStartValuesResponseVO retrieveAppStartValuesResponseVO;
+		retrieveAppStartValuesResponseVO = new RetrieveAppStartValuesResponseVO();
+		retrieveAppStartValuesResponseVO.setDomainValueVOList(retrieveDomainValues());
+		retrieveAppStartValuesResponseVO.setAppReadOnly(isAppReadOnly);
+		return retrieveAppStartValuesResponseVO;
+	}
+	
+    private List<DomainValueVO> retrieveDomainValues() {
     	DomainValueVO domainValueVO;
     	List<DomainValueVO> domainValueVOList;
     	List<DomainValue> domainValueList;
