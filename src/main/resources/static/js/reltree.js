@@ -287,6 +287,7 @@ async function editEntityAttributes(e) {
 		var attributeVsValueListMap, attributeDvId, attributeDomainValueVO;
 		var ind1, ind2, attributeValueNBlkList, searchedPersonId, entityId;
 		var attributeValueId, relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
+		var searchResultsWindowElement, searchResultsTableElement, searchCloseButtonElement, searchReturnButtonElement, searchResultsVO, searchResultsList, srInputElement, srRowNo, searchMessageElement;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
@@ -409,18 +410,74 @@ async function editEntityAttributes(e) {
 				s.refresh();
 				break;
 			case ACTION_SEARCH:
-				searchedPersonId = await invokeService("/basic/searchPerson", attributeValueVOList);
+				searchResultsVO = await invokeService("/basic/searchPerson", attributeValueVOList);
+				searchResultsList = searchResultsVO.resultsList;
+				if (searchResultsList.length == 0) {
+					searchedPersonId = NEW_ENTITY_ID;
+				}
+				
 				if (searchedPersonId == NEW_ENTITY_ID) {
 					alert("Person with the specified properties could not be found");
 				}
 				else {
-					s.graph.dropNode(SEARCH_ENTITY_ID);
-					if (s.graph.nodes(searchedPersonId) != null) {
-						alert("Person exists already");
-						s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(searchedPersonId)});
+					searchResultsWindowElement = document.getElementById("searchresultswindow");
+					searchMessageElement = document.getElementById("searchMessage");
+					searchResultsTableElement = document.getElementById("searchresultstable");
+					searchCloseButtonElement = document.getElementById("searchCloseButton");
+					searchReturnButtonElement = document.getElementById("searchReturnButton");
+					/* Open the modal window and display search results */
+					searchResultsWindowElement.style.display = "block";
+					/* When the user clicks anywhere outside of the modal, close it
+					window.onclick = function(event) {
+						if (event.target == searchResultsWindowElement) {
+							searchResultsWindowElement.style.display = "none";
+						}
+					} */
+					searchResultsTableElement.innerHTML = "";
+					if (searchResultsVO.resultsCount > searchResultsList.length) {
+						searchMessageElement.innerText = "Actual persons found: " + searchResultsVO.resultsCount + ". Showing only " + (searchResultsList.length - 1) + ". Provide more restricting search criteria."
 					}
 					else {
-						addPerson(searchedPersonId);
+						searchMessageElement.innerText = "Showing " + (searchResultsList.length - 1) + " persons."
+					}
+					
+					srRowNo = -1;
+					for (let attributesList of searchResultsList) {
+						srRowNo++;
+						srRowElement = document.createElement("tr");
+						srCellElement = document.createElement("td");
+						srRowElement.appendChild(srCellElement);
+						if (srRowNo > 0) { // To exclude heading
+							srInputElement = document.createElement("input");
+							srCellElement.appendChild(srInputElement);
+							srInputElement.setAttribute("type", "radio");
+							srInputElement.setAttribute("name", "searchresultradio");
+							srInputElement.setAttribute("value", attributesList[0]); // personId
+						}
+						if (srRowNo == 1) { // First data row
+							srInputElement.checked=true;
+						}
+						searchResultsTableElement.appendChild(srRowElement);
+						for (let attributeValue of attributesList) {
+							srCellElement = document.createElement("td");
+							srRowElement.appendChild(srCellElement);
+							srCellElement.appendChild(document.createTextNode(attributeValue));
+						}
+					}
+					searchCloseButtonElement.onclick = function() {
+						searchResultsWindowElement.style.display = "none";
+					}
+					searchReturnButtonElement.onclick = function() {
+						searchedPersonId = document.querySelector('input[type="radio"][name="searchresultradio"]:checked').value;
+						searchResultsWindowElement.style.display = "none";
+						s.graph.dropNode(SEARCH_ENTITY_ID);
+						if (s.graph.nodes(searchedPersonId) != null) {
+							alert("Person exists already");
+							s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(searchedPersonId)});
+						}
+						else {
+							addPerson(searchedPersonId);
+						}
 					}
 				}
 				break;

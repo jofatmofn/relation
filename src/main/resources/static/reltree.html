@@ -17,7 +17,9 @@
 		<script src="js/relationUtils.js"></script>
 		<script src="js/constants.js"></script>
 		<script src="js/reltree.js"></script>
+		
 		<link rel="stylesheet" type="text/css" href="css/reltree.css"/>
+		<link rel="stylesheet" type="text/css" href="css/searchresults.css"/>
 	</head>
 	<body onload="drawGraph()">
 		<div id="container">
@@ -26,10 +28,10 @@
 				<div id="leftbartitle">Functions</div>
 				<div id="leftbarbody">
 					<button onclick="clearGraph()">Clear Graph</button><br/>
-					<button onclick="addPerson()" rel-modify-data>Add Person</button><br/>
 					<button onclick="searchPerson()">Search Person</button><br/>
+					<button onclick="ascertainRelation()">Ascertain Relation</button><br/><br/>
+					<button onclick="addPerson()" rel-modify-data>Add Person</button><br/>
 					<button onclick="relatePersons()" rel-modify-data>Relate Persons</button><br/>
-					<button onclick="ascertainRelation()">Ascertain Relation</button>
 				</div>
 			</div>
 			<div id="graph-container"></div>
@@ -39,6 +41,23 @@
 				<div id="sidebarbuttons"></div>
 				<hr/>
 				<div id="sidebarbody" style="overflow-y:scroll; height:85%"></div>
+			</div>
+		</div>
+		<div id="searchresultswindow" class="modal">
+			<!-- Modal content -->
+			<div class="modal-content">
+				<div class="modal-header">
+					<span id="searchCloseButton" class="close">&times;</span>
+					<div class="fontsize15">Search Results</div>
+					<div class="fontsize13" id="searchMessage"></div>
+				</div>
+				<div class="modal-body">
+					<table id="searchresultstable">
+					</table>
+				</div>
+				<div class="modal-footer">
+					<button id="searchReturnButton">Return with Selection</button><br/>
+				</div>
 			</div>
 		</div>
 	</body>

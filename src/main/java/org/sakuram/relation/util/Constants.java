@@ -42,4 +42,5 @@ public class Constants {
 	public static final long NEW_ENTITY_ID = -1L;
 	public static final String DEFAULT_COLOR = "rgb(1,179,255)";
 	public static final long DELETED_ATTRIBUTE_VALUE_ID = -1L;
+	public static final int SEARCH_RESULTS_MAX_COUNT = 20;
 }

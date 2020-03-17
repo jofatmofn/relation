@@ -3,8 +3,10 @@ package org.sakuram.relation.service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -24,6 +26,7 @@ import org.sakuram.relation.valueobject.DomainValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
+import org.sakuram.relation.valueobject.SearchResultsVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
 import org.sakuram.relation.valueobject.RetrieveAppStartValuesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
@@ -283,10 +286,19 @@ public class PersonRelationService {
 		return attributeValueRepository.save(attributeValue);
     }
     
-    public long searchPerson(List<AttributeValueVO> attributeValueVOList) {
+    public SearchResultsVO searchPerson(List<AttributeValueVO> attributeValueVOList) {
     	StringBuilder querySB;
     	boolean firstTime;
     	List<Person> personList;
+    	long searchResultsCount;
+    	int searchResultsListSize;
+    	SearchResultsVO searchResultsVO;
+    	Map<Long, Integer> attributeVsColumnMap;
+    	List<List<String>> searchResultsList;
+    	List<String> personAttributesList;
+    	DomainValueFlags domainValueFlags;
+    	String attrVal;
+    	DomainValue attributeDv;
     	
     	firstTime = true;
     	querySB = new StringBuilder();
@@ -302,7 +314,59 @@ public class PersonRelationService {
     	}
     	
     	personList = personRepository.executeDynamicQuery(querySB.toString());
-    	return (personList.size() > 0 ? personList.get(0).getId() : Constants.NEW_ENTITY_ID);
+    	
+    	domainValueFlags = new DomainValueFlags();
+    	searchResultsCount = 0;
+    	attributeVsColumnMap = new HashMap<Long, Integer>();
+    	searchResultsVO = new SearchResultsVO();
+    	searchResultsVO.setResultsCount(personList.size());
+    	searchResultsListSize = (personList.size() > Constants.SEARCH_RESULTS_MAX_COUNT?
+    			Constants.SEARCH_RESULTS_MAX_COUNT : (int)personList.size());
+    	searchResultsList = new ArrayList<List<String>>(searchResultsListSize + 1);
+    	searchResultsVO.setResultsList(searchResultsList);
+    	if (searchResultsListSize > 0) {
+    		personAttributesList = new ArrayList<String>(); // For Header
+    		searchResultsList.add(personAttributesList);
+    		personAttributesList.add("Id");
+    	}
+    	for(Person person : personList) {
+    		searchResultsCount++;
+    		personAttributesList = new ArrayList<String>();
+    		searchResultsList.add(personAttributesList);
+    		personAttributesList.add(String.valueOf(person.getId()));
+    		for (AttributeValue attributeValue : person.getAttributeValueList()) {
+    			if(isCurrentValidAttributeValue(attributeValue)) {
+    				domainValueFlags.setDomainValue(attributeValue.getAttribute());
+    				if (domainValueFlags.getAttributeDomain().equals("")) {
+    					attrVal = attributeValue.getAttributeValue();
+    				}
+    				else {
+    					attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
+    							.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
+    					attrVal = attributeDv.getValue();
+    				}
+	    			if (attributeVsColumnMap.containsKey(attributeValue.getAttribute().getId())) {
+	    				listAdd(personAttributesList, attributeVsColumnMap.get(attributeValue.getAttribute().getId()), attrVal);
+	    			}
+	    			else {
+	    				attributeVsColumnMap.put(attributeValue.getAttribute().getId(), attributeVsColumnMap.size() + 1);
+	    				listAdd(searchResultsList.get(0), attributeVsColumnMap.size(), attributeValue.getAttribute().getValue());
+	    				listAdd(personAttributesList, attributeVsColumnMap.size(), attrVal);
+	    			}
+    			}
+    		}
+    		if (searchResultsCount == Constants.SEARCH_RESULTS_MAX_COUNT) {
+    			break;
+    		}
+    	}
+    	return searchResultsVO;
+    }
+
+    private void listAdd(List<String> list, int position, String value) {
+    	for (int i = list.size(); i <= position; i++) {
+    		list.add("");
+    	}
+    	list.set(position, value);
     }
     
     public long saveRelation(RelatedPersonsVO saveRelationRequestVO) {

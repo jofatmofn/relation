@@ -11,6 +11,7 @@ import org.sakuram.relation.valueobject.DomainValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
+import org.sakuram.relation.valueobject.SearchResultsVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
 import org.sakuram.relation.valueobject.RetrieveAppStartValuesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
@@ -73,7 +74,7 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/searchPerson", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public long searchPerson(@RequestBody List<AttributeValueVO> attributeValueVOList) {
+    public SearchResultsVO searchPerson(@RequestBody List<AttributeValueVO> attributeValueVOList) {
     	return personRelationService.searchPerson(attributeValueVOList);
     }
     
