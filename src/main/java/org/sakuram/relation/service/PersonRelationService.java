@@ -1,6 +1,7 @@
 package org.sakuram.relation.service;
 
 import java.time.LocalDate;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -291,7 +292,7 @@ public class PersonRelationService {
     	boolean firstTime;
     	List<Person> personList;
     	long searchResultsCount;
-    	int searchResultsListSize;
+    	int searchResultsListSize, searchResultAttributesListSize;
     	SearchResultsVO searchResultsVO;
     	Map<Long, Integer> attributeVsColumnMap;
     	List<List<String>> searchResultsList;
@@ -299,6 +300,7 @@ public class PersonRelationService {
     	DomainValueFlags domainValueFlags;
     	String attrVal;
     	DomainValue attributeDv;
+    	AttributeValue parentAttributeValue;
     	
     	firstTime = true;
     	querySB = new StringBuilder();
@@ -317,6 +319,7 @@ public class PersonRelationService {
     	
     	domainValueFlags = new DomainValueFlags();
     	searchResultsCount = 0;
+    	searchResultAttributesListSize = 0;
     	attributeVsColumnMap = new HashMap<Long, Integer>();
     	searchResultsVO = new SearchResultsVO();
     	searchResultsVO.setResultsCount(personList.size());
@@ -359,6 +362,16 @@ public class PersonRelationService {
     			break;
     		}
     	}
+		// Add parents
+		searchResultAttributesListSize = searchResultsList.get(0).size();
+		listAdd(searchResultsList.get(0), searchResultAttributesListSize, "Parents");
+    	for (int ind = 1; ind < searchResultsList.size(); ind++) {
+			listAdd(searchResultsList.get(ind), searchResultAttributesListSize, "");
+    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_MOTHER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_LABEL))) {
+    			parentAttributeValue = relativeAttributeEntry.getValue();
+    			searchResultsList.get(ind).set(searchResultAttributesListSize, searchResultsList.get(ind).get(searchResultAttributesListSize) + "/" + parentAttributeValue.getAttributeValue());
+    		}
+    	}
     	return searchResultsVO;
     }
 
@@ -367,6 +380,41 @@ public class PersonRelationService {
     		list.add("");
     	}
     	list.set(position, value);
+    }
+    
+    private List<Map.Entry<Person, AttributeValue>> retrieveRelativesAndAttributes(Person forPerson, List<String> requiredRelationTypesList, List<Long> requiredAttributeTypesList) {
+    	Set<Person> relatedPersonSet;
+    	List<Map.Entry<Person, AttributeValue>> personAttributeValueList;
+    	
+    	relatedPersonSet = new HashSet<Person>();
+    	for (Relation relation : relationRepository.findByPerson1(forPerson)) {
+    		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
+    			if (attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 &&
+    					requiredRelationTypesList.contains(attributeValue.getAttributeValue()) &&
+    					isCurrentValidAttributeValue(attributeValue)) {
+    				relatedPersonSet.add(relation.getPerson2());
+    			}
+    		}
+    	}
+    	for (Relation relation : relationRepository.findByPerson2(forPerson)) {
+    		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
+    			if (attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 &&
+    					requiredRelationTypesList.contains(attributeValue.getAttributeValue()) &&
+    					isCurrentValidAttributeValue(attributeValue)) {
+    				relatedPersonSet.add(relation.getPerson1());
+    			}
+    		}
+    	}
+    	personAttributeValueList = new ArrayList<Map.Entry<Person, AttributeValue>>();
+    	for (Person person : relatedPersonSet) {
+    		for (AttributeValue attributeValue : person.getAttributeValueList()) {
+    			if (requiredAttributeTypesList.contains(attributeValue.getAttribute().getId()) &&
+    					isCurrentValidAttributeValue(attributeValue)) {
+    				personAttributeValueList.add(new AbstractMap.SimpleEntry<Person, AttributeValue>(person, attributeValue));
+    			}
+    		}
+    	}
+    	return personAttributeValueList;
     }
     
     public long saveRelation(RelatedPersonsVO saveRelationRequestVO) {

@@ -410,6 +410,10 @@ async function editEntityAttributes(e) {
 				s.refresh();
 				break;
 			case ACTION_SEARCH:
+				if (attributeValueVOList.length == 0) {
+					alert("Specify search criteria");
+					return;
+				}
 				searchResultsVO = await invokeService("/basic/searchPerson", attributeValueVOList);
 				searchResultsList = searchResultsVO.resultsList;
 				if (searchResultsList.length == 0) {
