@@ -196,19 +196,19 @@ async function editEntityAttributes(e) {
 	}
 	s.refresh();
 	
+	for (let attributeValueBlkElement of rightBarElement.querySelectorAll("div[attributedvid]")) {
+		attributeDvId = parseInt(attributeValueBlkElement.getAttribute("attributedvid"));
+		if (attributeDvId == RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) {
+			person1ForPerson2SelectElement = attributeValueBlkElement.querySelector("select[name=RelName]");
+		}
+		else if (attributeDvId == RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) {
+			person2ForPerson1SelectElement = attributeValueBlkElement.querySelector("select[name=RelName]");
+		}
+	}
+	
 	/* Set default value for person2ForPerson1 */
 	/* Beware: This code may go out of sync with what is configured */
 	if (!isPersonNode && person1GenderDVId != null && person2GenderDVId != null) {
-		for (let attributeValueBlkElement of rightBarElement.querySelectorAll("div[attributedvid]")) {
-			attributeDvId = parseInt(attributeValueBlkElement.getAttribute("attributedvid"));
-			if (attributeDvId == RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) {
-				person1ForPerson2SelectElement = attributeValueBlkElement.querySelector("select[name=RelName]");
-			}
-			else if (attributeDvId == RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) {
-				person2ForPerson1SelectElement = attributeValueBlkElement.querySelector("select[name=RelName]");
-			}
-		}
-		
 		person1ForPerson2SelectElement.onchange = function() {
 			person1ForPerson2RelationDVId = parseInt(person1ForPerson2SelectElement.options[person1ForPerson2SelectElement.selectedIndex].value);
 			switch(true) {

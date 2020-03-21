@@ -83,7 +83,9 @@ public class PersonRelationService {
     	RelationVO relationVO;
     	List<RelationVO> relationVOList;
     	DomainValue attributeDv;
+    	DomainValueFlags domainValueFlags;
     	
+    	domainValueFlags = new DomainValueFlags();
     	end1Person = personRepository.findById(retrieveRelationsBetweenRequestVO.getEnd1PersonId())
 				.orElseThrow(() -> new AppException("Invalid Person " + retrieveRelationsBetweenRequestVO.getEnd1PersonId(), null));
     	relationList = relationRepository.findByPerson1(end1Person);
@@ -101,13 +103,21 @@ public class PersonRelationService {
 	    		relationVO.setSize(0.5);
 	    		
 	    		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
-	        		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) &&
+	        		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 ||
+	        				attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1) &&
 	        				serviceParts.isCurrentValidAttributeValue(attributeValue)) {
-	            		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
-	            				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
-	        			relationVO.setLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
+	            		domainValueFlags.setDomainValue(attributeValue.getAttribute());
+	            		if (domainValueFlags.getAttributeDomain().equals("")) {
+		        			relationVO.buildLabel(attributeValue.getAttribute().getId(), attributeValue.getAttributeValue());
+	            		}
+	            		else {
+		            		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
+		            				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
+		        			relationVO.buildLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
+	            		}
 	        		}
 	    		}
+	    		relationVO.setLabel(relationVO.getNormalisedLabel());
     		}
     	}
     	return relationVOList;

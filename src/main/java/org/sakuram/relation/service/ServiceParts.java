@@ -13,6 +13,7 @@ import org.sakuram.relation.repository.DomainValueRepository;
 import org.sakuram.relation.repository.RelationRepository;
 import org.sakuram.relation.util.AppException;
 import org.sakuram.relation.util.Constants;
+import org.sakuram.relation.util.DomainValueFlags;
 import org.sakuram.relation.valueobject.PersonVO;
 import org.sakuram.relation.valueobject.RelationVO;
 import org.sakuram.relation.valueobject.GraphVO;
@@ -38,8 +39,10 @@ public class ServiceParts {
     	String otherPersonId;
     	DomainValue attributeDv;
     	long relationAttributeDVIdOtherForStart;
+    	DomainValueFlags domainValueFlags;
     	
     	retrieveRelationsResponseVO = new GraphVO();
+    	domainValueFlags = new DomainValueFlags();
     	personVOList = new ArrayList<PersonVO>();
     	retrieveRelationsResponseVO.setNodes(personVOList);
     	relationVOList = new ArrayList<RelationVO>();
@@ -67,6 +70,7 @@ public class ServiceParts {
         				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
         				attributeValue.getOverwrittenBy() == null) {
         			personVO.setLabel(attributeValue.getAttributeValue());
+        			// TODO: What if domainValueFlags.getAttributeDomain() not empty
         			break;
         		}
     		}
@@ -95,11 +99,18 @@ public class ServiceParts {
     			relationAttributeDVIdOtherForStart = -1;
     		}
     		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
-        		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) &&
+        		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 ||
+        				attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1) &&
         				isCurrentValidAttributeValue(attributeValue)) {
-            		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
-            				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
-        			relationVO.setLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
+            		domainValueFlags.setDomainValue(attributeValue.getAttribute());
+            		if (domainValueFlags.getAttributeDomain().equals("")) {
+	        			relationVO.buildLabel(attributeValue.getAttribute().getId(), attributeValue.getAttributeValue());
+            		}
+            		else {
+	            		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
+	            				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
+	        			relationVO.buildLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
+            		}
         			
         			if (otherPersonId != null && attributeValue.getAttribute().getId() == relationAttributeDVIdOtherForStart) {
             			for (PersonVO pVO : personVOList) {
@@ -131,6 +142,7 @@ public class ServiceParts {
         			}
         		}
     		}
+    		relationVO.setLabel(relationVO.getNormalisedLabel());
     	}
     	
     	return retrieveRelationsResponseVO;

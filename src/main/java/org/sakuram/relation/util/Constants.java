@@ -14,6 +14,8 @@ public class Constants {
 	public static final long PERSON_ATTRIBUTE_DV_ID_GENDER = 19;
 	public static final long RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 = 34;
 	public static final long RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 = 35;
+	public static final long RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2 = 61;
+	public static final long RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1 = 62;
 	
 	public static final String RELATION_NAME_FATHER = "1";
 	public static final String RELATION_NAME_MOTHER = "2";
@@ -43,4 +45,5 @@ public class Constants {
 	public static final String DEFAULT_COLOR = "rgb(1,179,255)";
 	public static final long DELETED_ATTRIBUTE_VALUE_ID = -1L;
 	public static final int SEARCH_RESULTS_MAX_COUNT = 20;
+	public static final String RELATION_LABEL_TEMPLATE = "@@34@@(@@61@@)-@@35@@(@@62@@)"; // TODO: Replace the hard-coded value with Constant
 }

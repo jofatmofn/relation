@@ -38,23 +38,20 @@ public class RelationVO {
 		return label;
 	}
 
-	public void setLabel(long attributeDvId, String attributeValue) {
-		if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) {
-			if (label == null || label.equals("")) {
-				label = attributeValue;
-			}
-			else {
-				label = attributeValue + "-" + label;
-			}
+	public String getNormalisedLabel() {
+		// Beware: Because of the ids 34, 35, 61, 62, the pattern \d\d is used below
+		return label.replaceAll("@@\\d\\d@@", "").replaceAll("\\(\\)", "");
+	}
+
+	public void setLabel(String label) {
+		this.label = label;
+	}
+
+	public void buildLabel(long attributeDvId, String attributeValue) {
+		if (label == null) {
+			label = Constants.RELATION_LABEL_TEMPLATE;
 		}
-		else if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) {
-			if (label == null || label.equals("")) {
-				label = attributeValue;
-			}
-			else {
-				label = label + "-" + attributeValue;
-			}
-		}
+		label = label.replaceAll("@@" + attributeDvId + "@@", attributeValue);
 	}
 
 	public double getSize() {
