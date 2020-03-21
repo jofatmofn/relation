@@ -96,9 +96,7 @@ public class ServiceParts {
     		}
     		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
         		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) &&
-        				(attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
-        				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
-        				attributeValue.getOverwrittenBy() == null) {
+        				isCurrentValidAttributeValue(attributeValue)) {
             		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
             				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
         			relationVO.setLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
@@ -137,4 +135,16 @@ public class ServiceParts {
     	
     	return retrieveRelationsResponseVO;
 	}
+	
+    public boolean isCurrentValidAttributeValue(AttributeValue attributeValue) {
+		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
+				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
+				attributeValue.getOverwrittenBy() == null) {
+			return true;
+		}
+		else {
+			return false;
+		}
+    }
+    
 }

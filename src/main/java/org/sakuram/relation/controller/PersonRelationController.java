@@ -7,14 +7,15 @@ import javax.servlet.http.HttpSession;
 import org.sakuram.relation.service.PersonRelationService;
 import org.sakuram.relation.util.AppException;
 import org.sakuram.relation.valueobject.AttributeValueVO;
-import org.sakuram.relation.valueobject.DomainValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
 import org.sakuram.relation.valueobject.SearchResultsVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
+import org.sakuram.relation.valueobject.RelationVO;
 import org.sakuram.relation.valueobject.RetrieveAppStartValuesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
+import org.sakuram.relation.valueobject.RetrieveRelationsBetweenRequestVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -38,6 +39,11 @@ public class PersonRelationController {
     @RequestMapping(value = "/retrieveRelations", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public GraphVO retrieveRelations(@RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	return personRelationService.retrieveRelations(retrieveRelationsRequestVO);
+    }
+    
+    @RequestMapping(value = "/retrieveRelationsBetween", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<RelationVO> retrieveRelationsBetween(@RequestBody RetrieveRelationsBetweenRequestVO retrieveRelationsBetweenRequestVO) {
+    	return personRelationService.retrieveRelationsBetween(retrieveRelationsBetweenRequestVO);
     }
     
     @RequestMapping(value = "/retrieveAppStartValues", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -85,6 +91,14 @@ public class PersonRelationController {
     	}
     	saveRelationRequestVO.setCreatorId(getCreatorId(httpSession));
     	return personRelationService.saveRelation(saveRelationRequestVO);
+    }
+    
+    @RequestMapping(value = "/deleteRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public void deleteRelation(HttpSession httpSession, @RequestBody Long relationId) {
+    	if (isAppReadOnly) {
+    		throw new AppException("Application is running in READ ONLY mode", null);
+    	}
+    	personRelationService.deleteRelation(relationId, getCreatorId(httpSession));
     }
     
     private long getCreatorId(HttpSession httpSession) {

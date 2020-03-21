@@ -236,6 +236,15 @@ async function editEntityAttributes(e) {
 	}
 	
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'>+</button><button id='actionbutton'>" + action + "</button>";
+	if (action == ACTION_SAVE && !isPersonNode) {
+		document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'>Delete Relation</button>";
+		document.getElementById("deletebutton").onclick = async function() {
+			await invokeService("/basic/deleteRelation", highlightedEntity.id);
+			s.graph.dropEdge(highlightedEntity.id);
+			s.refresh();
+			clearSidebar();
+		};
+	}
 	addButtonElement = document.getElementById("addbutton");
 	actionButtonElement = document.getElementById("actionbutton");
 	
@@ -288,6 +297,7 @@ async function editEntityAttributes(e) {
 		var ind1, ind2, attributeValueNBlkList, searchedPersonId, entityId;
 		var attributeValueId, relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
 		var searchResultsWindowElement, searchResultsTableElement, searchCloseButtonElement, searchReturnButtonElement, searchResultsVO, searchResultsList, srInputElement, srRowNo, searchMessageElement;
+		var relationVO, personIdsList;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
@@ -471,7 +481,7 @@ async function editEntityAttributes(e) {
 					searchCloseButtonElement.onclick = function() {
 						searchResultsWindowElement.style.display = "none";
 					}
-					searchReturnButtonElement.onclick = function() {
+					searchReturnButtonElement.onclick = async function() {
 						searchedPersonId = document.querySelector('input[type="radio"][name="searchresultradio"]:checked').value;
 						searchResultsWindowElement.style.display = "none";
 						s.graph.dropNode(SEARCH_ENTITY_ID);
@@ -480,7 +490,30 @@ async function editEntityAttributes(e) {
 							s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(searchedPersonId)});
 						}
 						else {
-							addPerson(searchedPersonId);
+							personIdsList = [];
+							for (let node of s.graph.nodes()) {
+								if (node.id != NEW_ENTITY_ID) {
+									personIdsList.push(node.id);
+								}
+							}
+							s.graph.addNode({
+								id: searchedPersonId,
+								size: 5.0,
+								x: Math.random(),
+								y: Math.random(),
+								type: 'goo'
+							});
+							for (let relationVO of await invokeService("/basic/retrieveRelationsBetween", {end1PersonId : searchedPersonId, end2PersonIdsList : personIdsList})) {
+								s.graph.addEdge({
+									id: relationVO.id,
+									source: relationVO.source,
+									target: relationVO.target,
+									label: relationVO.label,
+									size: relationVO.size,
+									type: 'goo'
+								});
+							}
+							s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(searchedPersonId)});
 						}
 					}
 				}
@@ -659,6 +692,10 @@ function searchPerson() {
 function clearGraph() {
 	s.graph.clear();
 	s.refresh();
+	clearSidebar();
+}
+
+function clearSidebar() {
 	document.getElementById("sidebartitle").innerHTML = "";
 	document.getElementById("sidebarbuttons").innerHTML = "";
 	document.getElementById("sidebarbody").innerHTML = "";

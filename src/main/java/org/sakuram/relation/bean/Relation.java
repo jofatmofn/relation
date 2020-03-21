@@ -16,6 +16,8 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
@@ -24,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @EnableAutoConfiguration
 @ComponentScan
 @Entity
+@Audited
 @Table(name="relation")
 public class Relation {
 
@@ -35,14 +38,17 @@ public class Relation {
 	
 	@ManyToOne
 	@JoinColumn(name="person_1_fk", nullable=true)
+	@NotAudited
 	private Person person1;
 	
 	@ManyToOne
 	@JoinColumn(name="person_2_fk", nullable=true)
+	@NotAudited
 	private Person person2;
 	
 	@ManyToOne
 	@JoinColumn(name="creator_fk", nullable=false)
+	@NotAudited
 	private Person creator;
 	
 	@Column(name="created_at", nullable=false, updatable=false)
@@ -51,6 +57,7 @@ public class Relation {
 
 	@JsonIgnore
 	@OneToMany(mappedBy="relation", cascade=CascadeType.ALL)
+	@NotAudited
 	private List<AttributeValue> attributeValueList;
 
 	public long getId() {

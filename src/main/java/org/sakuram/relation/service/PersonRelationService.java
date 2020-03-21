@@ -1,6 +1,5 @@
 package org.sakuram.relation.service;
 
-import java.time.LocalDate;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,8 +28,10 @@ import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
 import org.sakuram.relation.valueobject.SearchResultsVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
+import org.sakuram.relation.valueobject.RelationVO;
 import org.sakuram.relation.valueobject.RetrieveAppStartValuesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
+import org.sakuram.relation.valueobject.RetrieveRelationsBetweenRequestVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -74,6 +75,42 @@ public class PersonRelationService {
     	}
     	
     	return serviceParts.buildGraph(relatedPersonSet, startPerson);
+    }
+	
+	public List<RelationVO> retrieveRelationsBetween(RetrieveRelationsBetweenRequestVO retrieveRelationsBetweenRequestVO) {
+    	Person end1Person;
+    	List<Relation> relationList;
+    	RelationVO relationVO;
+    	List<RelationVO> relationVOList;
+    	DomainValue attributeDv;
+    	
+    	end1Person = personRepository.findById(retrieveRelationsBetweenRequestVO.getEnd1PersonId())
+				.orElseThrow(() -> new AppException("Invalid Person " + retrieveRelationsBetweenRequestVO.getEnd1PersonId(), null));
+    	relationList = relationRepository.findByPerson1(end1Person);
+    	relationList.addAll(relationRepository.findByPerson2(end1Person));
+    	relationVOList = new ArrayList<RelationVO>();
+    	for (Relation relation : relationList) {
+    		if (relation.getPerson1().getId() == retrieveRelationsBetweenRequestVO.getEnd1PersonId() && retrieveRelationsBetweenRequestVO.getEnd2PersonIdsList().contains(relation.getPerson2().getId()) ||
+    				relation.getPerson2().getId() == retrieveRelationsBetweenRequestVO.getEnd1PersonId() && retrieveRelationsBetweenRequestVO.getEnd2PersonIdsList().contains(relation.getPerson1().getId())) {
+	    		relationVO = new RelationVO();
+	    		relationVOList.add(relationVO);
+	    		
+	    		relationVO.setId(String.valueOf(relation.getId()));
+	    		relationVO.setSource(String.valueOf(relation.getPerson1().getId()));
+	    		relationVO.setTarget(String.valueOf(relation.getPerson2().getId()));
+	    		relationVO.setSize(0.5);
+	    		
+	    		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
+	        		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) &&
+	        				serviceParts.isCurrentValidAttributeValue(attributeValue)) {
+	            		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
+	            				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
+	        			relationVO.setLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
+	        		}
+	    		}
+    		}
+    	}
+    	return relationVOList;
     }
 	
 	public RetrieveAppStartValuesResponseVO retrieveAppStartValues() {
@@ -136,13 +173,13 @@ public class PersonRelationService {
 		
     	retrieveRelationAttributesResponseVO = new RetrieveRelationAttributesResponseVO();
     	for(AttributeValue attributeValue : relation.getPerson1().getAttributeValueList()) {
-    		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER && isCurrentValidAttributeValue(attributeValue)) {
+    		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER && serviceParts.isCurrentValidAttributeValue(attributeValue)) {
     	    	retrieveRelationAttributesResponseVO.setPerson1GenderDVId(Long.valueOf(attributeValue.getAttributeValue()));
     	    	break;
     		}
     	}
     	for(AttributeValue attributeValue : relation.getPerson2().getAttributeValueList()) {
-    		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER && isCurrentValidAttributeValue(attributeValue)) {
+    		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER && serviceParts.isCurrentValidAttributeValue(attributeValue)) {
     	    	retrieveRelationAttributesResponseVO.setPerson2GenderDVId(Long.valueOf(attributeValue.getAttributeValue()));
     	    	break;
     		}
@@ -162,7 +199,7 @@ public class PersonRelationService {
     	for(AttributeValue attributeValue : attributeValueList) {
     		
     		domainValueFlags.setDomainValue(attributeValue.getAttribute());
-    		if (isCurrentValidAttributeValue(attributeValue) && domainValueFlags.isInputAsAttribute()) {
+    		if (serviceParts.isCurrentValidAttributeValue(attributeValue) && domainValueFlags.isInputAsAttribute()) {
         		attributeValueVO = new AttributeValueVO();
         		attributeValueVOList.add(attributeValueVO);
         		attributeValueVO.setId(attributeValue.getId());
@@ -175,17 +212,6 @@ public class PersonRelationService {
     		}
     	}
     	return attributeValueVOList;
-    }
-    
-    private boolean isCurrentValidAttributeValue(AttributeValue attributeValue) {
-		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
-				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
-				attributeValue.getOverwrittenBy() == null) {
-			return true;
-		}
-		else {
-			return false;
-		}
     }
     
     public long savePersonAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
@@ -338,7 +364,7 @@ public class PersonRelationService {
     		searchResultsList.add(personAttributesList);
     		personAttributesList.add(String.valueOf(person.getId()));
     		for (AttributeValue attributeValue : person.getAttributeValueList()) {
-    			if(isCurrentValidAttributeValue(attributeValue)) {
+    			if(serviceParts.isCurrentValidAttributeValue(attributeValue)) {
     				domainValueFlags.setDomainValue(attributeValue.getAttribute());
     				if (domainValueFlags.getAttributeDomain().equals("")) {
     					attrVal = attributeValue.getAttributeValue();
@@ -391,7 +417,7 @@ public class PersonRelationService {
     		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
     			if (attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 &&
     					requiredRelationTypesList.contains(attributeValue.getAttributeValue()) &&
-    					isCurrentValidAttributeValue(attributeValue)) {
+    					serviceParts.isCurrentValidAttributeValue(attributeValue)) {
     				relatedPersonSet.add(relation.getPerson2());
     			}
     		}
@@ -400,7 +426,7 @@ public class PersonRelationService {
     		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
     			if (attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 &&
     					requiredRelationTypesList.contains(attributeValue.getAttributeValue()) &&
-    					isCurrentValidAttributeValue(attributeValue)) {
+    					serviceParts.isCurrentValidAttributeValue(attributeValue)) {
     				relatedPersonSet.add(relation.getPerson1());
     			}
     		}
@@ -409,7 +435,7 @@ public class PersonRelationService {
     	for (Person person : relatedPersonSet) {
     		for (AttributeValue attributeValue : person.getAttributeValueList()) {
     			if (requiredAttributeTypesList.contains(attributeValue.getAttribute().getId()) &&
-    					isCurrentValidAttributeValue(attributeValue)) {
+    					serviceParts.isCurrentValidAttributeValue(attributeValue)) {
     				personAttributeValueList.add(new AbstractMap.SimpleEntry<Person, AttributeValue>(person, attributeValue));
     			}
     		}
@@ -439,5 +465,11 @@ public class PersonRelationService {
     	relation.setCreator(creator);
     	relation = relationRepository.save(relation);
     	return relation.getId();
+    }
+    
+    public void deleteRelation(long relationId, long deletorId) {
+    	if (relationRepository.existsById(relationId)) {
+        	relationRepository.deleteById(relationId);
+    	}
     }
 }
