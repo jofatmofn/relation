@@ -343,21 +343,23 @@ public class PersonRelationService {
     	
     	personList = personRepository.executeDynamicQuery(querySB.toString());
     	
+    	searchResultsVO = new SearchResultsVO();
+    	searchResultsVO.setResultsCount(personList.size());
+    	if (personList.size() == 0) {
+    		return searchResultsVO;
+    	}
+    	
     	domainValueFlags = new DomainValueFlags();
     	searchResultsCount = 0;
     	searchResultAttributesListSize = 0;
     	attributeVsColumnMap = new HashMap<Long, Integer>();
-    	searchResultsVO = new SearchResultsVO();
-    	searchResultsVO.setResultsCount(personList.size());
     	searchResultsListSize = (personList.size() > Constants.SEARCH_RESULTS_MAX_COUNT?
     			Constants.SEARCH_RESULTS_MAX_COUNT : (int)personList.size());
     	searchResultsList = new ArrayList<List<String>>(searchResultsListSize + 1);
     	searchResultsVO.setResultsList(searchResultsList);
-    	if (searchResultsListSize > 0) {
-    		personAttributesList = new ArrayList<String>(); // For Header
-    		searchResultsList.add(personAttributesList);
-    		personAttributesList.add("Id");
-    	}
+    	personAttributesList = new ArrayList<String>(); // For Header
+    	searchResultsList.add(personAttributesList);
+    	personAttributesList.add("Id");
     	for(Person person : personList) {
     		searchResultsCount++;
     		personAttributesList = new ArrayList<String>();

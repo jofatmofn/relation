@@ -425,8 +425,7 @@ async function editEntityAttributes(e) {
 					return;
 				}
 				searchResultsVO = await invokeService("/basic/searchPerson", attributeValueVOList);
-				searchResultsList = searchResultsVO.resultsList;
-				if (searchResultsList.length == 0) {
+				if (searchResultsVO.resultsCount == 0) {
 					searchedPersonId = NEW_ENTITY_ID;
 				}
 				
@@ -434,6 +433,7 @@ async function editEntityAttributes(e) {
 					alert("Person with the specified properties could not be found");
 				}
 				else {
+					searchResultsList = searchResultsVO.resultsList;
 					searchResultsWindowElement = document.getElementById("searchresultswindow");
 					searchMessageElement = document.getElementById("searchMessage");
 					searchResultsTableElement = document.getElementById("searchresultstable");
