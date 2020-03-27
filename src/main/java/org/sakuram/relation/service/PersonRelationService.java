@@ -209,7 +209,7 @@ public class PersonRelationService {
     	for(AttributeValue attributeValue : attributeValueList) {
     		
     		domainValueFlags.setDomainValue(attributeValue.getAttribute());
-    		if (serviceParts.isCurrentValidAttributeValue(attributeValue) && domainValueFlags.isInputAsAttribute()) {
+    		if (attributeValue.getOverwrittenBy() == null && domainValueFlags.isInputAsAttribute()) {
         		attributeValueVO = new AttributeValueVO();
         		attributeValueVOList.add(attributeValueVO);
         		attributeValueVO.setId(attributeValue.getId());

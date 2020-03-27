@@ -624,7 +624,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 		startDateElement = document.createElement("input");
 		attributeValueBlockElement.appendChild(startDateElement);
 		startDateElement.setAttribute("type","text");
-		startDatePicker = new Pikaday({field: startDateElement, theme: "dark-theme", minDate: new Date(1, 1, 1)});
+		startDatePicker = new Pikaday({field: startDateElement, theme: "dark-theme", minDate: new Date(1001, 0, 1)});
 		if (attributeValueVO.startDate != undefined) {
 			startDateElement.setAttribute("value", isoToPikadayFormat(attributeValueVO.startDate));
 		}
@@ -635,7 +635,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 		endDateElement = document.createElement("input");
 		attributeValueBlockElement.appendChild(endDateElement);
 		endDateElement.setAttribute("type","text");
-		endDatePicker = new Pikaday({field: endDateElement, theme: "dark-theme"});
+		endDatePicker = new Pikaday({field: endDateElement, theme: "dark-theme", minDate: new Date(1001, 0, 1)});
 		if (attributeValueVO.endDate != undefined) {
 			endDateElement.setAttribute("value", isoToPikadayFormat(attributeValueVO.endDate));
 		}
