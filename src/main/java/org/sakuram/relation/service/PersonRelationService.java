@@ -18,6 +18,7 @@ import org.sakuram.relation.repository.AttributeValueRepository;
 import org.sakuram.relation.repository.DomainValueRepository;
 import org.sakuram.relation.repository.PersonRepository;
 import org.sakuram.relation.repository.RelationRepository;
+import org.sakuram.relation.service.ServiceParts.RelatedPerson1VO;
 import org.sakuram.relation.util.AppException;
 import org.sakuram.relation.util.Constants;
 import org.sakuram.relation.util.DomainValueFlags;
@@ -25,6 +26,7 @@ import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.DomainValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
+import org.sakuram.relation.valueobject.PersonVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
 import org.sakuram.relation.valueobject.SearchResultsVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
@@ -60,7 +62,15 @@ public class PersonRelationService {
     	Person startPerson;
     	List<Relation> participatingRelationList;
     	Set<Person> relatedPersonSet;
+    	int childCount;
     	
+    	GraphVO retrieveRelationsResponseVO;
+    	Map<Long, PersonVO> personVOMap;
+    	List<Relation> relationList;
+    	List<RelationVO> relationVOList;
+    	RelatedPerson1VO relatedPerson1VO;
+    	PersonVO personVO;
+    	    	
     	relatedPersonSet = new HashSet<Person>();
     	startPerson = personRepository.findById(retrieveRelationsRequestVO.getStartPersonId())
 				.orElseThrow(() -> new AppException("Invalid Person " + retrieveRelationsRequestVO.getStartPersonId(), null));
@@ -74,53 +84,153 @@ public class PersonRelationService {
     		relatedPersonSet.add(relation.getPerson1());
     	}
     	
-    	return serviceParts.buildGraph(relatedPersonSet, startPerson);
+    	retrieveRelationsResponseVO = new GraphVO();
+    	personVOMap = new HashMap<Long, PersonVO>();
+    	relationVOList = new ArrayList<RelationVO>();
+    	retrieveRelationsResponseVO.setEdges(relationVOList);
+    	relationList = new ArrayList<Relation>();
+    	
+    	for (Person person : relatedPersonSet) {
+    		personVO = serviceParts.addToPersonVOMap(personVOMap, person);
+    		if (person.equals(startPerson)) {
+        		personVO.setX(265);
+        		personVO.setY(260);
+    		}
+    	}
+    	
+    	childCount = 0;
+    	relationList = relationRepository.findByPerson1InAndPerson2In(relatedPersonSet, relatedPersonSet);
+    	for (Relation relation : relationList) {
+    		relatedPerson1VO = serviceParts.addToRelationVOList(relationVOList, relation, startPerson);
+    		if (relatedPerson1VO.person != null) {	// Ignore Husband-Wife relation between parents
+	    		personVO = personVOMap.get(relatedPerson1VO.person.getId());
+	    		
+				switch(relatedPerson1VO.relationDvId) {
+				case Constants.RELATION_NAME_FATHER:
+					personVO.setX(265);
+					personVO.setY(160);
+		    		break;
+				case Constants.RELATION_NAME_MOTHER:
+					personVO.setX(530);
+					personVO.setY(160);
+		    		break;
+				case Constants.RELATION_NAME_HUSBAND:
+				case Constants.RELATION_NAME_WIFE:
+					personVO.setX(530);
+					personVO.setY(260);
+		    		break;
+				case Constants.RELATION_NAME_SON:
+				case Constants.RELATION_NAME_DAUGHTER:
+			    	childCount++;
+			    	personVO.setX(260 + childCount * 50);
+			    	personVO.setY(360);
+		    		break;
+				}
+    		}
+    	}
+    	
+    	retrieveRelationsResponseVO.setNodes(new ArrayList<PersonVO>(personVOMap.values()));
+    	return retrieveRelationsResponseVO;
     }
 	
 	public List<RelationVO> retrieveRelationsBetween(RetrieveRelationsBetweenRequestVO retrieveRelationsBetweenRequestVO) {
     	Person end1Person;
     	List<Relation> relationList;
-    	RelationVO relationVO;
     	List<RelationVO> relationVOList;
-    	DomainValue attributeDv;
-    	DomainValueFlags domainValueFlags;
     	
-    	domainValueFlags = new DomainValueFlags();
     	end1Person = personRepository.findById(retrieveRelationsBetweenRequestVO.getEnd1PersonId())
 				.orElseThrow(() -> new AppException("Invalid Person " + retrieveRelationsBetweenRequestVO.getEnd1PersonId(), null));
     	relationList = relationRepository.findByPerson1(end1Person);
     	relationList.addAll(relationRepository.findByPerson2(end1Person));
+    	
     	relationVOList = new ArrayList<RelationVO>();
     	for (Relation relation : relationList) {
     		if (relation.getPerson1().getId() == retrieveRelationsBetweenRequestVO.getEnd1PersonId() && retrieveRelationsBetweenRequestVO.getEnd2PersonIdsList().contains(relation.getPerson2().getId()) ||
     				relation.getPerson2().getId() == retrieveRelationsBetweenRequestVO.getEnd1PersonId() && retrieveRelationsBetweenRequestVO.getEnd2PersonIdsList().contains(relation.getPerson1().getId())) {
-	    		relationVO = new RelationVO();
-	    		relationVOList.add(relationVO);
-	    		
-	    		relationVO.setId(String.valueOf(relation.getId()));
-	    		relationVO.setSource(String.valueOf(relation.getPerson1().getId()));
-	    		relationVO.setTarget(String.valueOf(relation.getPerson2().getId()));
-	    		relationVO.setSize(0.5);
-	    		
-	    		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
-	        		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 ||
-	        				attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1) &&
-	        				serviceParts.isCurrentValidAttributeValue(attributeValue)) {
-	            		domainValueFlags.setDomainValue(attributeValue.getAttribute());
-	            		if (domainValueFlags.getAttributeDomain().equals("")) {
-		        			relationVO.buildLabel(attributeValue.getAttribute().getId(), attributeValue.getAttributeValue());
-	            		}
-	            		else {
-		            		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
-		            				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
-		        			relationVO.buildLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
-	            		}
-	        		}
-	    		}
-	    		relationVO.setLabel(relationVO.getNormalisedLabel());
+    			serviceParts.addToRelationVOList(relationVOList, relation, null);
     		}
     	}
     	return relationVOList;
+    }
+	
+	public GraphVO retrieveTree(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+    	Person startPerson, currentPerson;
+    	Set<Long> relatedPersonIdSet, relatedRelationIdSet;
+    	List<RelatedPerson2VO> relatedPerson2VOList;
+    	RelatedPerson2VO relatedPerson2VO;
+    	int level, sequence, readInd;
+    	List<Integer> seqAtLevel;
+    	
+    	GraphVO retrieveRelationsResponseVO;
+    	Map<Long, PersonVO> personVOMap;
+    	PersonVO relatedPersonVO, currentPersonVO;
+    	List<RelationVO> relationVOList;
+    	
+    	retrieveRelationsResponseVO = new GraphVO();
+    	personVOMap = new HashMap<Long, PersonVO>();
+    	relationVOList = new ArrayList<RelationVO>();
+    	retrieveRelationsResponseVO.setEdges(relationVOList);
+    	relatedPersonIdSet = new HashSet<Long>();
+    	relatedRelationIdSet = new HashSet<Long>();
+		relatedPerson2VOList = new ArrayList<RelatedPerson2VO>();
+    	startPerson = personRepository.findById(retrieveRelationsRequestVO.getStartPersonId())
+				.orElseThrow(() -> new AppException("Invalid Person " + retrieveRelationsRequestVO.getStartPersonId(), null));
+		relatedPersonIdSet.add(startPerson.getId());
+		currentPersonVO = serviceParts.addToPersonVOMap(personVOMap, startPerson);
+		currentPersonVO.setX(1);
+		currentPersonVO.setY(1);
+		
+		relatedPerson2VO =  new RelatedPerson2VO();
+		relatedPerson2VOList.add(relatedPerson2VO);
+		relatedPerson2VO.person = startPerson;
+		relatedPerson2VO.level = 0;
+		seqAtLevel = new ArrayList<Integer>();
+		seqAtLevel.add(0);
+		readInd = 0;
+		// TODO: Should the depth be limited?
+		while (true) {
+			currentPerson = relatedPerson2VOList.get(readInd).person;
+			level = relatedPerson2VOList.get(readInd).level;
+			currentPersonVO = personVOMap.get(currentPerson.getId());
+	    	for (RelatedPerson1VO relatedPerson1VO : retrieveRelatives(currentPerson, Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE, Constants.RELATION_NAME_SON, Constants.RELATION_NAME_DAUGHTER))) {
+				if (relatedPersonIdSet.add(relatedPerson1VO.person.getId())) {
+					relatedPerson2VO =  new RelatedPerson2VO();
+					relatedPerson2VOList.add(relatedPerson2VO);
+					relatedPerson2VO.person = relatedPerson1VO.person;
+		    		relatedPersonVO = serviceParts.addToPersonVOMap(personVOMap, relatedPerson1VO.person);
+		    		if (relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_HUSBAND) || relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_WIFE)) {
+		    			relatedPerson2VO.level = relatedPerson2VOList.get(readInd).level;
+						relatedPersonVO.setX(currentPersonVO.getX() + 10);
+						relatedPersonVO.setY(currentPersonVO.getY());
+		    		}
+		    		else {
+		    			level = relatedPerson2VOList.get(readInd).level + 1;
+		    			relatedPerson2VO.level = level;
+		    			if (seqAtLevel.size() > level) {
+		    				sequence = seqAtLevel.get(level);
+			    			sequence++;
+		    			}
+		    			else {
+		    				seqAtLevel.add(0);
+		    				sequence = 0;
+		    			}
+		    			seqAtLevel.set(level, sequence);
+						relatedPersonVO.setX(sequence * 20 + 1);
+						relatedPersonVO.setY(level * 10 + 1);
+		    		}
+				}
+				if (relatedRelationIdSet.add(relatedPerson1VO.relation.getId())) {
+					serviceParts.addToRelationVOList(relationVOList, relatedPerson1VO.relation, currentPerson);
+				}
+			}
+	    	readInd++;
+	    	if (readInd == relatedPerson2VOList.size()) {
+	    		break;
+	    	}
+		}
+    	
+    	retrieveRelationsResponseVO.setNodes(new ArrayList<PersonVO>(personVOMap.values()));
+    	return retrieveRelationsResponseVO;
     }
 	
 	public RetrieveAppStartValuesResponseVO retrieveAppStartValues() {
@@ -421,38 +531,59 @@ public class PersonRelationService {
     }
     
     private List<Map.Entry<Person, AttributeValue>> retrieveRelativesAndAttributes(Person forPerson, List<String> requiredRelationTypesList, List<Long> requiredAttributeTypesList) {
-    	Set<Person> relatedPersonSet;
     	List<Map.Entry<Person, AttributeValue>> personAttributeValueList;
     	
-    	relatedPersonSet = new HashSet<Person>();
-    	for (Relation relation : relationRepository.findByPerson1(forPerson)) {
-    		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
-    			if (attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 &&
-    					requiredRelationTypesList.contains(attributeValue.getAttributeValue()) &&
-    					serviceParts.isCurrentValidAttributeValue(attributeValue)) {
-    				relatedPersonSet.add(relation.getPerson2());
-    			}
-    		}
-    	}
-    	for (Relation relation : relationRepository.findByPerson2(forPerson)) {
-    		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
-    			if (attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 &&
-    					requiredRelationTypesList.contains(attributeValue.getAttributeValue()) &&
-    					serviceParts.isCurrentValidAttributeValue(attributeValue)) {
-    				relatedPersonSet.add(relation.getPerson1());
-    			}
-    		}
-    	}
     	personAttributeValueList = new ArrayList<Map.Entry<Person, AttributeValue>>();
-    	for (Person person : relatedPersonSet) {
-    		for (AttributeValue attributeValue : person.getAttributeValueList()) {
+    	for (RelatedPerson1VO relatedPerson1VO : retrieveRelatives(forPerson, requiredRelationTypesList)) {
+    		for (AttributeValue attributeValue : relatedPerson1VO.person.getAttributeValueList()) {
     			if (requiredAttributeTypesList.contains(attributeValue.getAttribute().getId()) &&
     					serviceParts.isCurrentValidAttributeValue(attributeValue)) {
-    				personAttributeValueList.add(new AbstractMap.SimpleEntry<Person, AttributeValue>(person, attributeValue));
+    				personAttributeValueList.add(new AbstractMap.SimpleEntry<Person, AttributeValue>(relatedPerson1VO.person, attributeValue));
     			}
     		}
     	}
     	return personAttributeValueList;
+    }
+    
+    private List<RelatedPerson1VO> retrieveRelatives(Person forPerson, List<String> requiredRelationTypesList) {
+    	List<RelatedPerson1VO> relatedPersonVO2List;
+    	List<Relation> relationList;
+    	RelatedPerson1VO relatedPerson1VO;
+    	
+    	relatedPersonVO2List = new ArrayList<RelatedPerson1VO>();
+    	relationList = relationRepository.findByPerson1(forPerson);
+    	relationList.addAll(relationRepository.findByPerson2(forPerson));
+    	for (Relation relation : relationList) {
+    		relatedPerson1VO = getOtherPerson(relation, forPerson);
+			if (requiredRelationTypesList.contains(relatedPerson1VO.relationDvId)) {
+				relatedPerson1VO.relation = relation;
+   				relatedPersonVO2List.add(relatedPerson1VO);
+    		}
+    	}
+    	return relatedPersonVO2List;
+    }
+    
+    private RelatedPerson1VO getOtherPerson(Relation relation, Person forPerson) {
+    	long reqdAttributeDvId;
+    	RelatedPerson1VO relatedPerson1VO;
+    	
+    	relatedPerson1VO = serviceParts.new RelatedPerson1VO();
+    	if (relation.getPerson1().equals(forPerson)) {
+    		relatedPerson1VO.person = relation.getPerson2();
+    		reqdAttributeDvId = Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1;
+    	}
+    	else {
+    		relatedPerson1VO.person = relation.getPerson1();
+    		reqdAttributeDvId = Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2;
+    	}
+		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
+			if (attributeValue.getAttribute().getId() == reqdAttributeDvId &&
+					serviceParts.isCurrentValidAttributeValue(attributeValue)) {
+				relatedPerson1VO.relationDvId = attributeValue.getAttributeValue();
+				return relatedPerson1VO;
+			}
+		}
+		throw new AppException("Relation type could not be ascertained", null);
     }
     
     public long saveRelation(RelatedPersonsVO saveRelationRequestVO) {
@@ -483,5 +614,10 @@ public class PersonRelationService {
     	if (relationRepository.existsById(relationId)) {
         	relationRepository.deleteById(relationId);
     	}
+    }
+    
+    protected class RelatedPerson2VO {
+    	Person person;
+    	int level;
     }
 }

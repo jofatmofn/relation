@@ -15,7 +15,7 @@ async function drawGraph() {
 	domainValueVOList = retrieveAppStartValuesResponseVO.domainValueVOList;
 	isAppReadOnly = retrieveAppStartValuesResponseVO.appReadOnly;
 	if (isAppReadOnly) {
-		for (let buttonElement of document.querySelectorAll("div#leftbarbody > button[rel-modify-data]")) {
+		for (let buttonElement of document.querySelectorAll("div#leftbarbuttons > button[rel-modify-data]")) {
 			buttonElement.disabled = true;
 		}
 	}
@@ -93,7 +93,7 @@ async function drawGraph() {
 		console.log(e.type, e.data.node.label, e.data.captor);
 		if (e.data.node.id != NEW_ENTITY_ID && e.data.node.id != SEARCH_ENTITY_ID) {
 			s.graph.clear();
-			s.graph.read(await invokeService("/basic/retrieveRelations", {startPersonId : e.data.node.id}));
+			s.graph.read(await invokeService((document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "drel" ? "/basic/retrieveRelations" : "/basic/retrieveTree"), {startPersonId : e.data.node.id}));
 			s.refresh();
 		}
 		document.getElementById("sidebarbody").innerHTML = "";
@@ -406,8 +406,8 @@ async function editEntityAttributes(e) {
 					s.graph.addNode({
 						id: entityId,
 						size: 5.0,
-						x: Math.random() / 10,
-						y: Math.random() / 10,
+						x: Math.random() * 100,
+						y: Math.random() * 100,
 						dX: 0,
 						dY: 0,
 						type: 'goo'
@@ -499,8 +499,8 @@ async function editEntityAttributes(e) {
 							s.graph.addNode({
 								id: searchedPersonId,
 								size: 5.0,
-								x: Math.random(),
-								y: Math.random(),
+								x: Math.random() * 100,
+								y: Math.random() * 100,
 								type: 'goo'
 							});
 							for (let relationVO of await invokeService("/basic/retrieveRelationsBetween", {end1PersonId : searchedPersonId, end2PersonIdsList : personIdsList})) {
@@ -664,8 +664,8 @@ function addPerson(personId = NEW_ENTITY_ID) {
 		s.graph.addNode({
 			id: personId,
 			size: 5.0,
-			x: Math.random(),
-			y: Math.random(),
+			x: Math.random() * 100,
+			y: Math.random() * 100,
 			type: 'goo'
 		});
 	}
@@ -680,8 +680,8 @@ function searchPerson() {
 		s.graph.addNode({
 			id: SEARCH_ENTITY_ID,
 			size: 5.0,
-			x: Math.random(),
-			y: Math.random(),
+			x: Math.random() * 100,
+			y: Math.random() * 100,
 			type: 'goo'
 		});
 	}

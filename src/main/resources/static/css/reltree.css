@@ -30,6 +30,12 @@
 	position: absolute;
 	background-color: Beige;
 }
+#leftbarbuttons {
+	height: 50%;
+}
+#leftbarconfig {
+	height: 50%;
+}
 .attrValError {
 	border: 5px solid Brown;
 }

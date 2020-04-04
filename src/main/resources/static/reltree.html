@@ -26,12 +26,20 @@
 			<div id="topbar"></div>
 			<div id="leftbar">
 				<div id="leftbartitle">Functions</div>
-				<div id="leftbarbody">
+				<div id="leftbarbuttons">
 					<button onclick="clearGraph()">Clear Graph</button><br/>
 					<button onclick="searchPerson()">Search Person</button><br/>
 					<button onclick="ascertainRelation()">Ascertain Relation</button><br/><br/>
 					<button onclick="addPerson()" rel-modify-data>Add Person</button><br/>
 					<button onclick="relatePersons()" rel-modify-data>Relate Persons</button><br/>
+				</div>
+				<hr/>
+				<div id="leftbarconfig">
+					<span>On double click of a person, show</span><br/>
+					<input type="radio" id="drel" name="cfgPersonDblClk" value="drel" checked>
+					<label for="drel">Direct Relations</label><br>
+					<input type="radio" id="ftree" name="cfgPersonDblClk" value="ftree">
+					<label for="ftree">Full Tree</label><br>
 				</div>
 			</div>
 			<div id="graph-container"></div>
