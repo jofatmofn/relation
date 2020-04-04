@@ -105,27 +105,33 @@ public class PersonRelationService {
     		if (relatedPerson1VO.person != null) {	// Ignore Husband-Wife relation between parents
 	    		personVO = personVOMap.get(relatedPerson1VO.person.getId());
 	    		
-				switch(relatedPerson1VO.relationDvId) {
-				case Constants.RELATION_NAME_FATHER:
-					personVO.setX(265);
-					personVO.setY(160);
-		    		break;
-				case Constants.RELATION_NAME_MOTHER:
-					personVO.setX(530);
-					personVO.setY(160);
-		    		break;
-				case Constants.RELATION_NAME_HUSBAND:
-				case Constants.RELATION_NAME_WIFE:
-					personVO.setX(530);
-					personVO.setY(260);
-		    		break;
-				case Constants.RELATION_NAME_SON:
-				case Constants.RELATION_NAME_DAUGHTER:
-			    	childCount++;
-			    	personVO.setX(260 + childCount * 50);
-			    	personVO.setY(360);
-		    		break;
-				}
+	    		if (relatedPerson1VO.relationDvId == null) {
+	        		personVO.setX(Math.random() * 100);
+	        		personVO.setY(Math.random() * 100);
+	    		}
+	    		else {
+					switch(relatedPerson1VO.relationDvId) {
+					case Constants.RELATION_NAME_FATHER:
+						personVO.setX(265);
+						personVO.setY(160);
+			    		break;
+					case Constants.RELATION_NAME_MOTHER:
+						personVO.setX(530);
+						personVO.setY(160);
+			    		break;
+					case Constants.RELATION_NAME_HUSBAND:
+					case Constants.RELATION_NAME_WIFE:
+						personVO.setX(530);
+						personVO.setY(260);
+			    		break;
+					case Constants.RELATION_NAME_SON:
+					case Constants.RELATION_NAME_DAUGHTER:
+				    	childCount++;
+				    	personVO.setX(260 + childCount * 50);
+				    	personVO.setY(360);
+			    		break;
+					}
+	    		}
     		}
     	}
     	
@@ -580,10 +586,10 @@ public class PersonRelationService {
 			if (attributeValue.getAttribute().getId() == reqdAttributeDvId &&
 					serviceParts.isCurrentValidAttributeValue(attributeValue)) {
 				relatedPerson1VO.relationDvId = attributeValue.getAttributeValue();
-				return relatedPerson1VO;
+				break;
 			}
 		}
-		throw new AppException("Relation type could not be ascertained", null);
+		return relatedPerson1VO;
     }
     
     public long saveRelation(RelatedPersonsVO saveRelationRequestVO) {

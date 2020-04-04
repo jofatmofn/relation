@@ -93,11 +93,10 @@ public class ServiceParts {
             				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
         			relationVO.buildLabel(attributeValue.getAttribute().getId(), attributeDv.getValue());
         		}
+    			if (otherPersonId != null && attributeValue.getAttribute().getId() == relationAttributeDVIdOtherForStart) {
+    				relatedPerson1VO.relationDvId = attributeValue.getAttributeValue();
+    			}
     		}
-    		
-			if (otherPersonId != null && attributeValue.getAttribute().getId() == relationAttributeDVIdOtherForStart) {
-				relatedPerson1VO.relationDvId = attributeValue.getAttributeValue();
-			}
 		}
 		relationVO.setLabel(relationVO.getNormalisedLabel());
 		return relatedPerson1VO;
