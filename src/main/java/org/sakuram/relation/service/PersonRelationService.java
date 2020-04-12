@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
 import org.sakuram.relation.bean.AttributeValue;
 import org.sakuram.relation.bean.DomainValue;
 import org.sakuram.relation.bean.Person;
@@ -22,6 +23,7 @@ import org.sakuram.relation.service.ServiceParts.RelatedPerson1VO;
 import org.sakuram.relation.util.AppException;
 import org.sakuram.relation.util.Constants;
 import org.sakuram.relation.util.DomainValueFlags;
+import org.sakuram.relation.util.UtilFuncs;
 import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.DomainValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
@@ -164,7 +166,7 @@ public class PersonRelationService {
     	Set<Long> relatedPersonIdSet, relatedRelationIdSet;
     	List<RelatedPerson2VO> relatedPerson2VOList;
     	RelatedPerson2VO relatedPerson2VO;
-    	int level, sequence, readInd;
+    	int level, sequence, readInd, currentLevel;
     	List<Integer> seqAtLevel;
     	
     	GraphVO retrieveRelationsResponseVO;
@@ -193,24 +195,30 @@ public class PersonRelationService {
 		seqAtLevel = new ArrayList<Integer>();
 		seqAtLevel.add(0);
 		readInd = 0;
-		// TODO: Should the depth be limited?
 		while (true) {
 			currentPerson = relatedPerson2VOList.get(readInd).person;
-			level = relatedPerson2VOList.get(readInd).level;
+			currentLevel = relatedPerson2VOList.get(readInd).level;
+			LogManager.getLogger().debug("Current person: " + currentPerson.getId() + " at level " + currentLevel);
+			if (currentLevel == retrieveRelationsRequestVO.getMaxDepth()) {
+				break;
+			}
 			currentPersonVO = personVOMap.get(currentPerson.getId());
 	    	for (RelatedPerson1VO relatedPerson1VO : retrieveRelatives(currentPerson, Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE, Constants.RELATION_NAME_SON, Constants.RELATION_NAME_DAUGHTER))) {
+				if (relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_HUSBAND) ||
+						relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_WIFE) ||
+						currentLevel < retrieveRelationsRequestVO.getMaxDepth() - 1) {
 				if (relatedPersonIdSet.add(relatedPerson1VO.person.getId())) {
 					relatedPerson2VO =  new RelatedPerson2VO();
 					relatedPerson2VOList.add(relatedPerson2VO);
 					relatedPerson2VO.person = relatedPerson1VO.person;
 		    		relatedPersonVO = serviceParts.addToPersonVOMap(personVOMap, relatedPerson1VO.person);
 		    		if (relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_HUSBAND) || relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_WIFE)) {
-		    			relatedPerson2VO.level = relatedPerson2VOList.get(readInd).level;
+		    			relatedPerson2VO.level = currentLevel;
 						relatedPersonVO.setX(currentPersonVO.getX() + 10);
 						relatedPersonVO.setY(currentPersonVO.getY());
 		    		}
-		    		else {
-		    			level = relatedPerson2VOList.get(readInd).level + 1;
+		    		else if (currentLevel < retrieveRelationsRequestVO.getMaxDepth() - 1) {
+		    			level = currentLevel + 1;
 		    			relatedPerson2VO.level = level;
 		    			if (seqAtLevel.size() > level) {
 		    				sequence = seqAtLevel.get(level);
@@ -224,10 +232,15 @@ public class PersonRelationService {
 						relatedPersonVO.setX(sequence * 20 + 1);
 						relatedPersonVO.setY(level * 10 + 1);
 		    		}
+		    		LogManager.getLogger().debug("Added person: " + relatedPerson2VO.person.getId() + " at level " + relatedPerson2VO.level);
+
 				}
+				else LogManager.getLogger().debug("Skipped (due to duplicate) person: " + relatedPerson1VO.person.getId());
 				if (relatedRelationIdSet.add(relatedPerson1VO.relation.getId())) {
 					serviceParts.addToRelationVOList(relationVOList, relatedPerson1VO.relation, currentPerson);
 				}
+				}
+				else LogManager.getLogger().debug("Skipped (due to higher depth) person: " + relatedPerson1VO.person.getId());
 			}
 	    	readInd++;
 	    	if (readInd == relatedPerson2VOList.size()) {
@@ -503,12 +516,12 @@ public class PersonRelationService {
     					attrVal = attributeDv.getValue();
     				}
 	    			if (attributeVsColumnMap.containsKey(attributeValue.getAttribute().getId())) {
-	    				listAdd(personAttributesList, attributeVsColumnMap.get(attributeValue.getAttribute().getId()), attrVal);
+	    				UtilFuncs.listSet(personAttributesList, attributeVsColumnMap.get(attributeValue.getAttribute().getId()), attrVal, "");
 	    			}
 	    			else {
 	    				attributeVsColumnMap.put(attributeValue.getAttribute().getId(), attributeVsColumnMap.size() + 1);
-	    				listAdd(searchResultsList.get(0), attributeVsColumnMap.size(), attributeValue.getAttribute().getValue());
-	    				listAdd(personAttributesList, attributeVsColumnMap.size(), attrVal);
+	    				UtilFuncs.listSet(searchResultsList.get(0), attributeVsColumnMap.size(), attributeValue.getAttribute().getValue(), "");
+	    				UtilFuncs.listSet(personAttributesList, attributeVsColumnMap.size(), attrVal, "");
 	    			}
     			}
     		}
@@ -518,9 +531,9 @@ public class PersonRelationService {
     	}
 		// Add parents
 		searchResultAttributesListSize = searchResultsList.get(0).size();
-		listAdd(searchResultsList.get(0), searchResultAttributesListSize, "Parents");
+		UtilFuncs.listSet(searchResultsList.get(0), searchResultAttributesListSize, "Parents", "");
     	for (int ind = 1; ind < searchResultsList.size(); ind++) {
-			listAdd(searchResultsList.get(ind), searchResultAttributesListSize, "");
+			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize, "", "");
     		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_MOTHER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_LABEL))) {
     			parentAttributeValue = relativeAttributeEntry.getValue();
     			searchResultsList.get(ind).set(searchResultAttributesListSize, searchResultsList.get(ind).get(searchResultAttributesListSize) + "/" + parentAttributeValue.getAttributeValue());
@@ -529,13 +542,6 @@ public class PersonRelationService {
     	return searchResultsVO;
     }
 
-    private void listAdd(List<String> list, int position, String value) {
-    	for (int i = list.size(); i <= position; i++) {
-    		list.add("");
-    	}
-    	list.set(position, value);
-    }
-    
     private List<Map.Entry<Person, AttributeValue>> retrieveRelativesAndAttributes(Person forPerson, List<String> requiredRelationTypesList, List<Long> requiredAttributeTypesList) {
     	List<Map.Entry<Person, AttributeValue>> personAttributeValueList;
     	

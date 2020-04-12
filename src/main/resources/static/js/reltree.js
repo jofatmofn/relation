@@ -93,7 +93,13 @@ async function drawGraph() {
 		console.log(e.type, e.data.node.label, e.data.captor);
 		if (e.data.node.id != NEW_ENTITY_ID && e.data.node.id != SEARCH_ENTITY_ID) {
 			s.graph.clear();
-			s.graph.read(await invokeService((document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "drel" ? "/basic/retrieveRelations" : "/basic/retrieveTree"), {startPersonId : e.data.node.id}));
+			if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "drel") {
+				s.graph.read(await invokeService("/basic/retrieveRelations", {startPersonId : e.data.node.id}));
+			}
+			else {
+				s.graph.read(await invokeService("/basic/retrieveTree", {startPersonId : e.data.node.id, 
+					maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
+			}
 			s.refresh();
 		}
 		document.getElementById("sidebarbody").innerHTML = "";
@@ -785,4 +791,17 @@ function getPersonsPair() {
 	person2Element.setAttribute("id", "person2");
 	rightBarElement.appendChild(person2Element);
 	
+}
+
+function printGraph() {
+	s.toSVG({download: true, filename: 'familytree.svg', labels: true, size: 1000});
+}
+
+function enDisableDepth(clickedRadioElement) {
+	if (clickedRadioElement.value == "ftree") {
+		document.getElementById("depth").removeAttribute("disabled");
+	}
+	else {
+		document.getElementById("depth").setAttribute("disabled","");
+	}
 }

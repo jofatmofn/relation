@@ -10,6 +10,8 @@
 		<script src="sigmajs/plugins/sigma.layout.noverlap.min.js"></script>
 		<script src="sigmajs/plugins/sigma.plugins.animate.min.js"></script>
 
+		<script src="sigmajs/plugins/sigma.exporters.svg.min.js"></script>
+		
 		<script src="pikaday/pikaday.js"></script>
 		<link rel="stylesheet" type="text/css" href="pikaday/css/pikaday.css"/>
 		<link rel="stylesheet" type="text/css" href="pikaday/css/theme.css"/>
@@ -29,17 +31,28 @@
 				<div id="leftbarbuttons">
 					<button onclick="clearGraph()">Clear Graph</button><br/>
 					<button onclick="searchPerson()">Search Person</button><br/>
-					<button onclick="ascertainRelation()">Ascertain Relation</button><br/><br/>
+					<button onclick="ascertainRelation()">Ascertain Relation</button><br/>
+					<button onclick="printGraph()">Print Graph</button><br/>
+					<hr/>
 					<button onclick="addPerson()" rel-modify-data>Add Person</button><br/>
 					<button onclick="relatePersons()" rel-modify-data>Relate Persons</button><br/>
 				</div>
 				<hr/>
 				<div id="leftbarconfig">
 					<span>On double click of a person, show</span><br/>
-					<input type="radio" id="drel" name="cfgPersonDblClk" value="drel" checked>
-					<label for="drel">Direct Relations</label><br>
-					<input type="radio" id="ftree" name="cfgPersonDblClk" value="ftree">
-					<label for="ftree">Full Tree</label><br>
+					<input type="radio" id="drel" name="cfgPersonDblClk" value="drel" checked onclick="enDisableDepth(this);">
+					<label for="drel">Direct Relations</label><br/>
+					<input type="radio" id="ftree" name="cfgPersonDblClk" value="ftree" onclick="enDisableDepth(this);">
+					<label for="ftree">Full Tree</label>
+					&nbsp;&nbsp;&nbsp(
+					<label for="depth">Max Depth</label>
+					<select id="depth" name="depth" disabled>
+						<option value="2">2</option>
+						<option value="3" selected>3</option>
+						<option value="4">4</option>
+					</select>
+					)
+					<br/>
 				</div>
 			</div>
 			<div id="graph-container"></div>
