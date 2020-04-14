@@ -3,6 +3,7 @@ package org.sakuram.relation.service;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -166,12 +167,14 @@ public class PersonRelationService {
     	Set<Long> relatedPersonIdSet, relatedRelationIdSet;
     	List<RelatedPerson2VO> relatedPerson2VOList;
     	RelatedPerson2VO relatedPerson2VO;
-    	int level, sequence, readInd, currentLevel;
+    	int level, sequence, readInd, currentLevel, ind;
+    	double lastY;
     	List<Integer> seqAtLevel;
     	
     	GraphVO retrieveRelationsResponseVO;
     	Map<Long, PersonVO> personVOMap;
     	PersonVO relatedPersonVO, currentPersonVO;
+    	List<PersonVO> personVOList;
     	List<RelationVO> relationVOList;
     	
     	retrieveRelationsResponseVO = new GraphVO();
@@ -248,7 +251,24 @@ public class PersonRelationService {
 	    	}
 		}
     	
-    	retrieveRelationsResponseVO.setNodes(new ArrayList<PersonVO>(personVOMap.values()));
+		/* Compact unutilised space reserved for spouse */
+		/* TODO: There should be a better (performance) way of doing this */
+		personVOList = new ArrayList<PersonVO>(personVOMap.values());
+		Collections.sort(personVOList);
+		lastY = -1;
+		sequence = 0;
+		for (ind = 0; ind < personVOList.size(); ind++) {
+			currentPersonVO = personVOList.get(ind);
+			if (currentPersonVO.getY() == lastY) {
+				sequence++;
+			}
+			else {
+				lastY = currentPersonVO.getY();
+				sequence = 0;
+			}
+			currentPersonVO.setX(sequence * 20 + 1);
+		}
+    	retrieveRelationsResponseVO.setNodes(personVOList);
     	return retrieveRelationsResponseVO;
     }
 	

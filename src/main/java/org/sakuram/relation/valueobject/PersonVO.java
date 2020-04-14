@@ -1,6 +1,6 @@
 package org.sakuram.relation.valueobject;
 
-public class PersonVO {
+public class PersonVO implements Comparable<PersonVO>{
 	
 	private String id;
 	private String label;
@@ -57,4 +57,7 @@ public class PersonVO {
 		this.y = y;
 	}
 
+	public int compareTo(PersonVO personVO) {
+		return (this.getY() < personVO.getY() ? -1 : this.getY() > personVO.getY() ? 1 : this.getX() < personVO.getX() ? -1 : this.getX() == personVO.getX() ? 0 : 1);
+	}
 }
