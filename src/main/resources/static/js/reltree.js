@@ -22,8 +22,10 @@ async function drawGraph() {
 	domainValueVOMap = new Map();
 	paSelectElement = document.createElement("select");
 	paSelectElement.setAttribute("name","attributenames");
+	paSelectElement.classList.add("propdrop");
 	raSelectElement = document.createElement("select");
 	raSelectElement.setAttribute("name","attributenames");
+	raSelectElement.classList.add("propdrop");
 	selectElementMap = new Map();
 	paDomainValueVOList = [];
 	raDomainValueVOList = [];
@@ -51,6 +53,7 @@ async function drawGraph() {
 			else {
 				selectElement = document.createElement("select");
 				selectElement.setAttribute("name", domainValueVO.category);
+				selectElement.classList.add("propdrop");
 				selectElementMap.set(domainValueVO.category, selectElement);
 			}
 			selectElement.appendChild(optionElement);
@@ -732,7 +735,7 @@ function relatePersons() {
 			source: person1Id,
 			target: person2Id,
 			label: '',
-			size: 5.0,
+			size: 0.5,
 			type: 'goo'
 		});
 		s.renderers[0].dispatchEvent('clickEdge', {edge: s.graph.edges(relationId)});
@@ -769,6 +772,7 @@ function getPersonsPair() {
 	
 	selectElement = document.createElement("select");
 	selectElement.setAttribute("name","persons");
+	selectElement.classList.add("propdrop");
 	for (let node of s.graph.nodes()) {
 		if (node.id != NEW_ENTITY_ID && node.id != SEARCH_ENTITY_ID) {
 			optionElement = document.createElement("option");
