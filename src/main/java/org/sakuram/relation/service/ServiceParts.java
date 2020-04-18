@@ -81,9 +81,7 @@ public class ServiceParts {
 			relationAttributeDVIdOtherForStart = -1;
 		}
 		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
-    		if ((attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 ||
-    				attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2 || attributeValue.getAttribute().getId() == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1) &&
-    				isCurrentValidAttributeValue(attributeValue)) {
+    		if (isCurrentValidAttributeValue(attributeValue)) {
         		domainValueFlags.setDomainValue(attributeValue.getAttribute());
         		if (domainValueFlags.getAttributeDomain().equals("")) {
         			relationVO.buildLabel(attributeValue.getAttribute().getId(), attributeValue.getAttributeValue());
