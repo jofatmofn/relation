@@ -103,7 +103,7 @@ public class ServiceParts {
     public boolean isCurrentValidAttributeValue(AttributeValue attributeValue) {
 		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
 				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
-				attributeValue.getOverwrittenBy() == null) {
+				attributeValue.getOverwrittenBy() == null && attributeValue.getDeleter() == null) {
 			return true;
 		}
 		else {

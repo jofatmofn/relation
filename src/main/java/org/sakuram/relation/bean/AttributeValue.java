@@ -66,6 +66,14 @@ public class AttributeValue {
 	@JoinColumn(name="overwritten_by_fk", nullable=true)
 	private AttributeValue overwrittenBy;
 	
+	@ManyToOne
+	@JoinColumn(name="deleter_fk", nullable=true)
+	private Person deleter;
+	
+	@Column(name="deleted_at", nullable=true)
+	@CreationTimestamp
+	private Timestamp deletedAt;
+
 	public long getId() {
 		return id;
 	}
@@ -152,6 +160,22 @@ public class AttributeValue {
 
 	public void setOverwrittenBy(AttributeValue overwrittenBy) {
 		this.overwrittenBy = overwrittenBy;
+	}
+
+	public Person getDeleter() {
+		return deleter;
+	}
+
+	public void setDeleter(Person deleter) {
+		this.deleter = deleter;
+	}
+
+	public Timestamp getDeletedAt() {
+		return deletedAt;
+	}
+
+	public void setDeletedAt(Timestamp deletedAt) {
+		this.deletedAt = deletedAt;
 	}
 	
 }

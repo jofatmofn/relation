@@ -12,12 +12,11 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
@@ -26,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @EnableAutoConfiguration
 @ComponentScan
 @Entity
-@Audited
 @Table(name="relation")
 public class Relation {
 
@@ -38,26 +36,34 @@ public class Relation {
 	
 	@ManyToOne
 	@JoinColumn(name="person_1_fk", nullable=true)
-	@NotAudited
 	private Person person1;
 	
 	@ManyToOne
 	@JoinColumn(name="person_2_fk", nullable=true)
-	@NotAudited
 	private Person person2;
 	
 	@ManyToOne
 	@JoinColumn(name="creator_fk", nullable=false)
-	@NotAudited
 	private Person creator;
 	
 	@Column(name="created_at", nullable=false, updatable=false)
 	@CreationTimestamp
 	private Timestamp createdAt;
 
+	@OneToOne
+	@JoinColumn(name="overwritten_by_fk", nullable=true)
+	private Relation overwrittenBy;
+	
+	@ManyToOne
+	@JoinColumn(name="deleter_fk", nullable=true)
+	private Person deleter;
+	
+	@Column(name="deleted_at", nullable=true)
+	@CreationTimestamp
+	private Timestamp deletedAt;
+
 	@JsonIgnore
 	@OneToMany(mappedBy="relation", cascade=CascadeType.ALL)
-	@NotAudited
 	private List<AttributeValue> attributeValueList;
 
 	public long getId() {
@@ -98,6 +104,30 @@ public class Relation {
 
 	public void setCreatedAt(Timestamp createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public Relation getOverwrittenBy() {
+		return overwrittenBy;
+	}
+
+	public void setOverwrittenBy(Relation overwrittenBy) {
+		this.overwrittenBy = overwrittenBy;
+	}
+
+	public Person getDeleter() {
+		return deleter;
+	}
+
+	public void setDeleter(Person deleter) {
+		this.deleter = deleter;
+	}
+
+	public Timestamp getDeletedAt() {
+		return deletedAt;
+	}
+
+	public void setDeletedAt(Timestamp deletedAt) {
+		this.deletedAt = deletedAt;
 	}
 
 	public List<AttributeValue> getAttributeValueList() {

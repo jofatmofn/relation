@@ -12,6 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -44,6 +45,18 @@ public class Person {
 	@CreationTimestamp
 	private Timestamp createdAt;
 	
+	@OneToOne
+	@JoinColumn(name="overwritten_by_fk", nullable=true)
+	private Person overwrittenBy;
+	
+	@ManyToOne
+	@JoinColumn(name="deleter_fk", nullable=true)
+	private Person deleter;
+	
+	@Column(name="deleted_at", nullable=true)
+	@CreationTimestamp
+	private Timestamp deletedAt;
+
 	@JsonIgnore
 	@OneToMany(mappedBy="person", cascade=CascadeType.ALL)
 	private List<AttributeValue> attributeValueList;
@@ -78,6 +91,30 @@ public class Person {
 
 	public void setCreatedAt(Timestamp createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public Person getOverwrittenBy() {
+		return overwrittenBy;
+	}
+
+	public void setOverwrittenBy(Person overwrittenBy) {
+		this.overwrittenBy = overwrittenBy;
+	}
+
+	public Person getDeleter() {
+		return deleter;
+	}
+
+	public void setDeleter(Person deleter) {
+		this.deleter = deleter;
+	}
+
+	public Timestamp getDeletedAt() {
+		return deletedAt;
+	}
+
+	public void setDeletedAt(Timestamp deletedAt) {
+		this.deletedAt = deletedAt;
 	}
 
 	public List<AttributeValue> getAttributeValueList() {

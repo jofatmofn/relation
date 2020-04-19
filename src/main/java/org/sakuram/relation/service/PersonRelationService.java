@@ -1,5 +1,6 @@
 package org.sakuram.relation.service;
 
+import java.sql.Timestamp;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -374,14 +375,14 @@ public class PersonRelationService {
     }
     
     public long savePersonAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
-    	Person person, creator;
+    	Person person, userPerson;
     	
-    	creator = personRepository.findById(saveAttributesRequestVO.getCreatorId())
+    	userPerson = personRepository.findById(saveAttributesRequestVO.getCreatorId())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getCreatorId(), null));
     	
     	if (saveAttributesRequestVO.getEntityId() == Constants.NEW_ENTITY_ID) {
     		person = new Person();
-    		person.setCreator(creator);
+    		person.setCreator(userPerson);
     		person = personRepository.save(person);
     	}
     	else {
@@ -389,26 +390,26 @@ public class PersonRelationService {
     				.orElseThrow(() -> new AppException("Invalid Person " + saveAttributesRequestVO.getEntityId(), null));
     	}
     	
-    	saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), person, null, creator);
+    	saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), person, null, userPerson);
     	
 		return person.getId();
     }
     
     public void saveRelationAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
     	Relation relation = null;
-    	Person creator;
+    	Person userPerson;
     	
-    	creator = personRepository.findById(saveAttributesRequestVO.getCreatorId())
+    	userPerson = personRepository.findById(saveAttributesRequestVO.getCreatorId())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getCreatorId(), null));
     	
 		relation = relationRepository.findById(saveAttributesRequestVO.getEntityId())
 				.orElseThrow(() -> new AppException("Invalid Relation " + saveAttributesRequestVO.getEntityId(), null));
     	
-    	saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), null, relation, creator);
+    	saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), null, relation, userPerson);
     }
 
-    private void saveAttributeValue(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation, Person creator) {
-    	AttributeValue attributeValue, insertedAttributeValue, deletedAttributeValue;
+    private void saveAttributeValue(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation, Person userPerson) {
+    	AttributeValue attributeValue, insertedAttributeValue;
     	List<Long> incomingAttributeValueWithIdList, insertedAttributeValueIdList;
     	List<AttributeValue> toDeleteAttributeValueList;
     	DomainValueFlags domainValueFlags;
@@ -417,7 +418,7 @@ public class PersonRelationService {
     	insertedAttributeValueIdList = new ArrayList<Long>();
     	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
     		if (attributeValueVO.getId() == null) {
-    			insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, creator);
+    			insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, userPerson);
     			insertedAttributeValueIdList.add(insertedAttributeValue.getId());
     		}
     		else {
@@ -431,7 +432,7 @@ public class PersonRelationService {
     					!Objects.equals(attributeValueVO.isValueAccurate(), attributeValue.isValueAccurate()) ||
     					!Objects.equals(attributeValueVO.getStartDate(), attributeValue.getStartDate()) || 
     					!Objects.equals(attributeValueVO.getEndDate(), attributeValue.getEndDate())) {
-    				insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, creator);
+    				insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, userPerson);
         			insertedAttributeValueIdList.add(insertedAttributeValue.getId());
     				attributeValue.setOverwrittenBy(insertedAttributeValue);
     				attributeValueRepository.save(attributeValue);
@@ -440,14 +441,13 @@ public class PersonRelationService {
     	}
     	
     	domainValueFlags = new DomainValueFlags();
-		deletedAttributeValue = attributeValueRepository.findById(Constants.DELETED_ATTRIBUTE_VALUE_ID)
-				.orElseThrow(() -> new AppException("Invalid Attribute Value Id " + Constants.DELETED_ATTRIBUTE_VALUE_ID, null));
 		toDeleteAttributeValueList = (person != null ? person.getAttributeValueList() : relation.getAttributeValueList());
 		if (toDeleteAttributeValueList != null) {
 	    	for(AttributeValue toDeleteAttributeValue : toDeleteAttributeValueList) {
 	    		domainValueFlags.setDomainValue(toDeleteAttributeValue.getAttribute());
 	    		if (domainValueFlags.isInputAsAttribute() && !incomingAttributeValueWithIdList.contains(toDeleteAttributeValue.getId()) && toDeleteAttributeValue.getOverwrittenBy() == null) {
-	    			toDeleteAttributeValue.setOverwrittenBy(deletedAttributeValue);
+	    			toDeleteAttributeValue.setDeleter(userPerson);
+	    			toDeleteAttributeValue.setDeletedAt(new Timestamp(System.currentTimeMillis()));	// TODO: Current Timestamp from DB Server
 					attributeValueRepository.save(toDeleteAttributeValue);
 	    		}
 	    	}
@@ -642,10 +642,19 @@ public class PersonRelationService {
     	return relation.getId();
     }
     
-    public void deleteRelation(long relationId, long deletorId) {
-    	if (relationRepository.existsById(relationId)) {
-        	relationRepository.deleteById(relationId);
-    	}
+    public void deleteRelation(long relationId, long deleterId) {
+    	Relation relation;
+    	Person deleter;
+    	
+		relation = relationRepository.findById(relationId)
+				.orElseThrow(() -> new AppException("Invalid Relation " + relationId, null));
+    	
+    	deleter = personRepository.findById(deleterId)
+				.orElseThrow(() -> new AppException("Invalid Person Id " + deleterId, null));
+    	
+    	relation.setDeleter(deleter);
+    	relation.setDeletedAt(new Timestamp(System.currentTimeMillis()));	// TODO: Current Timestamp from DB Server
+    	relationRepository.save(relation);
     }
     
     protected class RelatedPerson2VO {
