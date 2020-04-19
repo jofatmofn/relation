@@ -245,14 +245,25 @@ async function editEntityAttributes(e) {
 	}
 	
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'>+</button><button id='actionbutton'>" + action + "</button>";
-	if (action == ACTION_SAVE && !isPersonNode) {
-		document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'>Delete Relation</button>";
-		document.getElementById("deletebutton").onclick = async function() {
-			await invokeService("/basic/deleteRelation", highlightedEntity.id);
-			s.graph.dropEdge(highlightedEntity.id);
-			s.refresh();
-			clearSidebar();
-		};
+	if (action == ACTION_SAVE) {
+		if (isPersonNode) {
+			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'>Delete Person</button>";
+			document.getElementById("deletebutton").onclick = async function() {
+				await invokeService("/basic/deletePerson", highlightedEntity.id);
+				s.graph.dropNode(highlightedEntity.id);	// The node and each edge that is bound to it
+				s.refresh();
+				clearSidebar();
+			};
+		}
+		else {
+			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'>Delete Relation</button>";
+			document.getElementById("deletebutton").onclick = async function() {
+				await invokeService("/basic/deleteRelation", highlightedEntity.id);
+				s.graph.dropEdge(highlightedEntity.id); // The edge
+				s.refresh();
+				clearSidebar();
+			};
+		}
 	}
 	addButtonElement = document.getElementById("addbutton");
 	actionButtonElement = document.getElementById("actionbutton");

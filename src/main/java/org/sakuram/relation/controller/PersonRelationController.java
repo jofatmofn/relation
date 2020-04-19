@@ -106,6 +106,14 @@ public class PersonRelationController {
     	personRelationService.deleteRelation(relationId, getCreatorId(httpSession));
     }
     
+    @RequestMapping(value = "/deletePerson", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public void deletePerson(HttpSession httpSession, @RequestBody Long personId) {
+    	if (isAppReadOnly) {
+    		throw new AppException("Application is running in READ ONLY mode", null);
+    	}
+    	personRelationService.deletePerson(personId, getCreatorId(httpSession));
+    }
+    
     private long getCreatorId(HttpSession httpSession) {
     	return 6L;	// TODO: After login feature, the following code is to be used
     	/* Object loggedInUserObject;

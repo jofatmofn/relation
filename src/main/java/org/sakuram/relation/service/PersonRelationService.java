@@ -77,7 +77,7 @@ public class PersonRelationService {
     	    	
     	relatedPersonSet = new HashSet<Person>();
     	startPerson = personRepository.findById(retrieveRelationsRequestVO.getStartPersonId())
-				.orElseThrow(() -> new AppException("Invalid Person " + retrieveRelationsRequestVO.getStartPersonId(), null));
+				.orElseThrow(() -> new AppException("Invalid Person Id " + retrieveRelationsRequestVO.getStartPersonId(), null));
 		relatedPersonSet.add(startPerson);
     	participatingRelationList = relationRepository.findByPerson1(startPerson);
     	for (Relation relation : participatingRelationList) {
@@ -149,7 +149,7 @@ public class PersonRelationService {
     	List<RelationVO> relationVOList;
     	
     	end1Person = personRepository.findById(retrieveRelationsBetweenRequestVO.getEnd1PersonId())
-				.orElseThrow(() -> new AppException("Invalid Person " + retrieveRelationsBetweenRequestVO.getEnd1PersonId(), null));
+				.orElseThrow(() -> new AppException("Invalid Person Id " + retrieveRelationsBetweenRequestVO.getEnd1PersonId(), null));
     	relationList = relationRepository.findByPerson1(end1Person);
     	relationList.addAll(relationRepository.findByPerson2(end1Person));
     	
@@ -186,7 +186,7 @@ public class PersonRelationService {
     	relatedRelationIdSet = new HashSet<Long>();
 		relatedPerson2VOList = new ArrayList<RelatedPerson2VO>();
     	startPerson = personRepository.findById(retrieveRelationsRequestVO.getStartPersonId())
-				.orElseThrow(() -> new AppException("Invalid Person " + retrieveRelationsRequestVO.getStartPersonId(), null));
+				.orElseThrow(() -> new AppException("Invalid Person Id " + retrieveRelationsRequestVO.getStartPersonId(), null));
 		relatedPersonIdSet.add(startPerson.getId());
 		currentPersonVO = serviceParts.addToPersonVOMap(personVOMap, startPerson);
 		currentPersonVO.setX(1);
@@ -316,7 +316,7 @@ public class PersonRelationService {
     	List<AttributeValue> attributeValueList;
     	
 		person = personRepository.findById(entityId)
-				.orElseThrow(() -> new AppException("Invalid Person " + entityId, null));
+				.orElseThrow(() -> new AppException("Invalid Person Id " + entityId, null));
 		attributeValueList = person.getAttributeValueList();
 		
 		return attributeValuesEntityToVo(attributeValueList);
@@ -328,7 +328,7 @@ public class PersonRelationService {
     	RetrieveRelationAttributesResponseVO retrieveRelationAttributesResponseVO;
     	
 		relation = relationRepository.findById(entityId)
-				.orElseThrow(() -> new AppException("Invalid Relation " + entityId, null));
+				.orElseThrow(() -> new AppException("Invalid Relation Id " + entityId, null));
 		attributeValueList = relation.getAttributeValueList();
 		
     	retrieveRelationAttributesResponseVO = new RetrieveRelationAttributesResponseVO();
@@ -387,7 +387,7 @@ public class PersonRelationService {
     	}
     	else {
     		person = personRepository.findById(saveAttributesRequestVO.getEntityId())
-    				.orElseThrow(() -> new AppException("Invalid Person " + saveAttributesRequestVO.getEntityId(), null));
+    				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getEntityId(), null));
     	}
     	
     	saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), person, null, userPerson);
@@ -403,7 +403,7 @@ public class PersonRelationService {
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getCreatorId(), null));
     	
 		relation = relationRepository.findById(saveAttributesRequestVO.getEntityId())
-				.orElseThrow(() -> new AppException("Invalid Relation " + saveAttributesRequestVO.getEntityId(), null));
+				.orElseThrow(() -> new AppException("Invalid Relation Id " + saveAttributesRequestVO.getEntityId(), null));
     	
     	saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), null, relation, userPerson);
     }
@@ -447,7 +447,7 @@ public class PersonRelationService {
 	    		domainValueFlags.setDomainValue(toDeleteAttributeValue.getAttribute());
 	    		if (domainValueFlags.isInputAsAttribute() && !incomingAttributeValueWithIdList.contains(toDeleteAttributeValue.getId())) {
 	    			toDeleteAttributeValue.setDeleter(userPerson);
-	    			toDeleteAttributeValue.setDeletedAt(new Timestamp(System.currentTimeMillis()));	// TODO: Current Timestamp from DB Server
+	    			toDeleteAttributeValue.setDeletedAt(new Timestamp(System.currentTimeMillis()));
 					attributeValueRepository.save(toDeleteAttributeValue);
 	    		}
 	    	}
@@ -578,21 +578,21 @@ public class PersonRelationService {
     }
     
     private List<RelatedPerson1VO> retrieveRelatives(Person forPerson, List<String> requiredRelationTypesList) {
-    	List<RelatedPerson1VO> relatedPersonVO2List;
+    	List<RelatedPerson1VO> relatedPerson1VOList;
     	List<Relation> relationList;
     	RelatedPerson1VO relatedPerson1VO;
     	
-    	relatedPersonVO2List = new ArrayList<RelatedPerson1VO>();
+    	relatedPerson1VOList = new ArrayList<RelatedPerson1VO>();
     	relationList = relationRepository.findByPerson1(forPerson);
     	relationList.addAll(relationRepository.findByPerson2(forPerson));
     	for (Relation relation : relationList) {
     		relatedPerson1VO = getOtherPerson(relation, forPerson);
 			if (requiredRelationTypesList.contains(relatedPerson1VO.relationDvId)) {
 				relatedPerson1VO.relation = relation;
-   				relatedPersonVO2List.add(relatedPerson1VO);
+   				relatedPerson1VOList.add(relatedPerson1VO);
     		}
     	}
-    	return relatedPersonVO2List;
+    	return relatedPerson1VOList;
     }
     
     private RelatedPerson1VO getOtherPerson(Relation relation, Person forPerson) {
@@ -645,18 +645,59 @@ public class PersonRelationService {
     public void deleteRelation(long relationId, long deleterId) {
     	Relation relation;
     	Person deleter;
+    	Timestamp deletedAt;
     	
 		relation = relationRepository.findById(relationId)
-				.orElseThrow(() -> new AppException("Invalid Relation " + relationId, null));
+				.orElseThrow(() -> new AppException("Invalid Relation Id " + relationId, null));
     	
     	deleter = personRepository.findById(deleterId)
 				.orElseThrow(() -> new AppException("Invalid Person Id " + deleterId, null));
     	
+    	deletedAt = new Timestamp(System.currentTimeMillis());
+		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
+			attributeValue.setDeleter(deleter);
+			attributeValue.setDeletedAt(deletedAt);
+		}
     	relation.setDeleter(deleter);
-    	relation.setDeletedAt(new Timestamp(System.currentTimeMillis()));	// TODO: Current Timestamp from DB Server
+    	relation.setDeletedAt(deletedAt);
     	relationRepository.save(relation);
     }
-    
+        
+    public void deletePerson(long personId, long deleterId) {
+    	Person person, deleter;
+    	List<Relation> relationList;
+    	Timestamp deletedAt;
+    	
+		person = personRepository.findById(personId)
+				.orElseThrow(() -> new AppException("Invalid Person Id " + personId, null));
+    	
+    	deleter = personRepository.findById(deleterId)
+				.orElseThrow(() -> new AppException("Invalid Person Id " + deleterId, null));
+    	deletedAt = new Timestamp(System.currentTimeMillis());
+    	
+    	relationList = relationRepository.findByPerson1(person);
+    	relationList.addAll(relationRepository.findByPerson2(person));
+    	for (Relation relation : relationList) {
+    		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
+    			attributeValue.setDeleter(deleter);
+    			attributeValue.setDeletedAt(deletedAt);
+    			attributeValueRepository.save(attributeValue);
+    		}
+    		relation.setDeleter(deleter);
+    		relation.setDeletedAt(deletedAt);
+        	relationRepository.save(relation);
+		}
+    	
+		for (AttributeValue attributeValue : person.getAttributeValueList()) {
+			attributeValue.setDeleter(deleter);
+			attributeValue.setDeletedAt(deletedAt);
+			attributeValueRepository.save(attributeValue);
+		}
+    	person.setDeleter(deleter);
+    	person.setDeletedAt(deletedAt);
+    	personRepository.save(person);
+    }
+        
     protected class RelatedPerson2VO {
     	Person person;
     	int level;
