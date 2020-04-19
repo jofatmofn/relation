@@ -15,12 +15,14 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Where;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
 @EnableAutoConfiguration
 @ComponentScan
 @Entity
+@Where(clause="overwritten_by_fk is null and deleter_fk is null")
 @Table(name="attribute_value")
 public class AttributeValue {
 
@@ -71,7 +73,6 @@ public class AttributeValue {
 	private Person deleter;
 	
 	@Column(name="deleted_at", nullable=true)
-	@CreationTimestamp
 	private Timestamp deletedAt;
 
 	public long getId() {

@@ -38,8 +38,7 @@ public class ServiceParts {
 		for (AttributeValue attributeValue : person.getAttributeValueList()) {
     		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_LABEL &&
     				(attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
-    				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
-    				attributeValue.getOverwrittenBy() == null) {
+    				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now()))) {
     			personVO.setLabel(attributeValue.getAttributeValue());
     			// TODO: What if domainValueFlags.getAttributeDomain() not empty
     			break;
@@ -102,8 +101,7 @@ public class ServiceParts {
 	
     public boolean isCurrentValidAttributeValue(AttributeValue attributeValue) {
 		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
-				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now())) &&
-				attributeValue.getOverwrittenBy() == null && attributeValue.getDeleter() == null) {
+				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now()))) {
 			return true;
 		}
 		else {

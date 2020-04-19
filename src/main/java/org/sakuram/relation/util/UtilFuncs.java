@@ -1,5 +1,6 @@
 package org.sakuram.relation.util;
 
+import java.sql.Date;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,5 +35,13 @@ public class UtilFuncs {
     	else {
     		return fillValue;
     	}
+    }
+    
+    public static boolean dateEquals(Date date1, Date date2) {
+    	if (date1 == null && date2 == null) return true;
+    	if (date1 == null && date2 != null || date1 != null && date2 == null) return false;
+    	// java.sql.Date toString() return format: yyyy-mm-dd
+    	if (date1.toString().equals(date2.toString())) return true;
+    	return false;
     }
 }

@@ -359,7 +359,7 @@ public class PersonRelationService {
     	for(AttributeValue attributeValue : attributeValueList) {
     		
     		domainValueFlags.setDomainValue(attributeValue.getAttribute());
-    		if (attributeValue.getOverwrittenBy() == null && domainValueFlags.isInputAsAttribute()) {
+    		if (domainValueFlags.isInputAsAttribute()) {
         		attributeValueVO = new AttributeValueVO();
         		attributeValueVOList.add(attributeValueVO);
         		attributeValueVO.setId(attributeValue.getId());
@@ -430,8 +430,8 @@ public class PersonRelationService {
     			}
     			if (!Objects.equals(attributeValueVO.getAttributeValue(), attributeValue.getAttributeValue()) ||
     					!Objects.equals(attributeValueVO.isValueAccurate(), attributeValue.isValueAccurate()) ||
-    					!Objects.equals(attributeValueVO.getStartDate(), attributeValue.getStartDate()) || 
-    					!Objects.equals(attributeValueVO.getEndDate(), attributeValue.getEndDate())) {
+    					!UtilFuncs.dateEquals(attributeValueVO.getStartDate(), attributeValue.getStartDate()) ||
+    					!UtilFuncs.dateEquals(attributeValueVO.getEndDate(), attributeValue.getEndDate())) {
     				insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, userPerson);
         			insertedAttributeValueIdList.add(insertedAttributeValue.getId());
     				attributeValue.setOverwrittenBy(insertedAttributeValue);
@@ -445,7 +445,7 @@ public class PersonRelationService {
 		if (toDeleteAttributeValueList != null) {
 	    	for(AttributeValue toDeleteAttributeValue : toDeleteAttributeValueList) {
 	    		domainValueFlags.setDomainValue(toDeleteAttributeValue.getAttribute());
-	    		if (domainValueFlags.isInputAsAttribute() && !incomingAttributeValueWithIdList.contains(toDeleteAttributeValue.getId()) && toDeleteAttributeValue.getOverwrittenBy() == null) {
+	    		if (domainValueFlags.isInputAsAttribute() && !incomingAttributeValueWithIdList.contains(toDeleteAttributeValue.getId())) {
 	    			toDeleteAttributeValue.setDeleter(userPerson);
 	    			toDeleteAttributeValue.setDeletedAt(new Timestamp(System.currentTimeMillis()));	// TODO: Current Timestamp from DB Server
 					attributeValueRepository.save(toDeleteAttributeValue);
