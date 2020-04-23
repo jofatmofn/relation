@@ -11,7 +11,7 @@ async function drawGraph() {
 	});
 	
 	loginUserPersonId = 6;	// TODO: After integration with login, this should be user's person id
-	retrieveAppStartValuesResponseVO = await invokeService("/basic/retrieveAppStartValues", "");
+	retrieveAppStartValuesResponseVO = await invokeService("basic/retrieveAppStartValues", "");
 	domainValueVOList = retrieveAppStartValuesResponseVO.domainValueVOList;
 	isAppReadOnly = retrieveAppStartValuesResponseVO.appReadOnly;
 	if (isAppReadOnly) {
@@ -62,7 +62,7 @@ async function drawGraph() {
 
 	// Instantiate sigma
 	s = new sigma({
-		graph: await invokeService("/basic/retrieveRelations", {startPersonId : loginUserPersonId}),
+		graph: await invokeService("basic/retrieveRelations", {startPersonId : loginUserPersonId}),
 		renderer: {
 			container: "graph-container",
 			type: "canvas"
@@ -97,10 +97,10 @@ async function drawGraph() {
 		if (e.data.node.id != NEW_ENTITY_ID && e.data.node.id != SEARCH_ENTITY_ID) {
 			s.graph.clear();
 			if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "drel") {
-				s.graph.read(await invokeService("/basic/retrieveRelations", {startPersonId : e.data.node.id}));
+				s.graph.read(await invokeService("basic/retrieveRelations", {startPersonId : e.data.node.id}));
 			}
 			else {
-				s.graph.read(await invokeService("/basic/retrieveTree", {startPersonId : e.data.node.id, 
+				s.graph.read(await invokeService("basic/retrieveTree", {startPersonId : e.data.node.id, 
 					maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
 			}
 			s.refresh();
@@ -158,7 +158,7 @@ async function editEntityAttributes(e) {
 			action = ACTION_SEARCH;
 		}
 		if (e.data.node.id > 0) {
-			attributeValueVOList = await invokeService("/basic/retrievePersonAttributes", e.data.node.id);
+			attributeValueVOList = await invokeService("basic/retrievePersonAttributes", e.data.node.id);
 		}
 	}
 	else {
@@ -166,7 +166,7 @@ async function editEntityAttributes(e) {
 		highlightedEntity = e.data.edge;
 		console.log(e.type, e.data.edge.label, e.data.captor);
 		if (e.data.edge.id > 0) {
-			retrieveRelationAttributesResponseVO = await invokeService("/basic/retrieveRelationAttributes", e.data.edge.id);
+			retrieveRelationAttributesResponseVO = await invokeService("basic/retrieveRelationAttributes", e.data.edge.id);
 			attributeValueVOList = retrieveRelationAttributesResponseVO.attributeValueVOList;
 			person1GenderDVId = retrieveRelationAttributesResponseVO.person1GenderDVId;
 			person2GenderDVId = retrieveRelationAttributesResponseVO.person2GenderDVId;
@@ -249,7 +249,7 @@ async function editEntityAttributes(e) {
 		if (isPersonNode) {
 			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'>Delete Person</button>";
 			document.getElementById("deletebutton").onclick = async function() {
-				await invokeService("/basic/deletePerson", highlightedEntity.id);
+				await invokeService("basic/deletePerson", highlightedEntity.id);
 				s.graph.dropNode(highlightedEntity.id);	// The node and each edge that is bound to it
 				s.refresh();
 				clearSidebar();
@@ -258,7 +258,7 @@ async function editEntityAttributes(e) {
 		else {
 			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'>Delete Relation</button>";
 			document.getElementById("deletebutton").onclick = async function() {
-				await invokeService("/basic/deleteRelation", highlightedEntity.id);
+				await invokeService("basic/deleteRelation", highlightedEntity.id);
 				s.graph.dropEdge(highlightedEntity.id); // The edge
 				s.refresh();
 				clearSidebar();
@@ -419,7 +419,7 @@ async function editEntityAttributes(e) {
 		}
 		switch(action) {
 			case ACTION_SAVE:
-				entityId = await invokeService((isPersonNode ? "/basic/savePersonAttributes" : "/basic/saveRelationAttributes"), saveAttributesRequestVO);
+				entityId = await invokeService((isPersonNode ? "basic/savePersonAttributes" : "basic/saveRelationAttributes"), saveAttributesRequestVO);
 				alert("Saved");
 				if (isPersonNode && highlightedEntity.id == NEW_ENTITY_ID) {
 					s.graph.dropNode(NEW_ENTITY_ID);
@@ -444,7 +444,7 @@ async function editEntityAttributes(e) {
 					alert("Specify search criteria");
 					return;
 				}
-				searchResultsVO = await invokeService("/basic/searchPerson", attributeValueVOList);
+				searchResultsVO = await invokeService("basic/searchPerson", attributeValueVOList);
 				if (searchResultsVO.resultsCount == 0) {
 					searchedPersonId = NEW_ENTITY_ID;
 				}
@@ -523,7 +523,7 @@ async function editEntityAttributes(e) {
 								y: Math.random() * 100,
 								type: 'goo'
 							});
-							for (let relationVO of await invokeService("/basic/retrieveRelationsBetween", {end1PersonId : searchedPersonId, end2PersonIdsList : personIdsList})) {
+							for (let relationVO of await invokeService("basic/retrieveRelationsBetween", {end1PersonId : searchedPersonId, end2PersonIdsList : personIdsList})) {
 								s.graph.addEdge({
 									id: relationVO.id,
 									source: relationVO.source,
@@ -599,7 +599,8 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 	attributeValueBlockElement.appendChild(deleteBlockImageElement);
 	deleteBlockImageElement.setAttribute("src","img/delete.png");
 	deleteBlockImageElement.setAttribute("alt","Delete Property");
-	deleteBlockImageElement.setAttribute("style","width='50%';height='50%'");
+	deleteBlockImageElement.setAttribute("width","5%");
+	deleteBlockImageElement.setAttribute("height","3%");
 	deleteBlockImageElement.onclick = async function() {
 		attributeValueBlockElement.remove();
 	};
@@ -644,6 +645,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 		startDateElement = document.createElement("input");
 		attributeValueBlockElement.appendChild(startDateElement);
 		startDateElement.setAttribute("type","text");
+		startDateElement.classList.add("startenddate");
 		startDatePicker = new Pikaday({field: startDateElement, theme: "dark-theme", minDate: new Date(1001, 0, 1)});
 		if (attributeValueVO.startDate != undefined) {
 			startDateElement.setAttribute("value", isoToPikadayFormat(attributeValueVO.startDate));
@@ -655,6 +657,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 		endDateElement = document.createElement("input");
 		attributeValueBlockElement.appendChild(endDateElement);
 		endDateElement.setAttribute("type","text");
+		endDateElement.classList.add("startenddate");
 		endDatePicker = new Pikaday({field: endDateElement, theme: "dark-theme", minDate: new Date(1001, 0, 1)});
 		if (attributeValueVO.endDate != undefined) {
 			endDateElement.setAttribute("value", isoToPikadayFormat(attributeValueVO.endDate));
@@ -740,7 +743,7 @@ function relatePersons() {
 			alert("Same person cannot be part of a relation");
 			return;
 		}
-		relationId = await invokeService("/basic/saveRelation", {person1Id: person1Id, person2Id: person2Id});
+		relationId = await invokeService("basic/saveRelation", {person1Id: person1Id, person2Id: person2Id});
 		s.graph.addEdge({
 			id: relationId,
 			source: person1Id,
@@ -773,7 +776,7 @@ function ascertainRelation() {
 			return;
 		}
 		s.graph.clear();
-		s.graph.read(await invokeService("/algo/retrieveRelationPath", {person1Id: person1Id, person2Id: person2Id}));
+		s.graph.read(await invokeService("algo/retrieveRelationPath", {person1Id: person1Id, person2Id: person2Id}));
 		s.refresh();
 	}
 }
@@ -795,13 +798,13 @@ function getPersonsPair() {
 	rightBarElement = document.getElementById("sidebarbody");
 	
 	rightBarElement.innerHTML = "";
-	rightBarElement.appendChild(document.createTextNode("Person 1"));
+	rightBarElement.appendChild(document.createTextNode("Person 1: "));
 	person1Element = selectElement.cloneNode(true);
 	person1Element.setAttribute("id", "person1");
 	rightBarElement.appendChild(person1Element);
 	
 	rightBarElement.appendChild(document.createElement("br"));
-	rightBarElement.appendChild(document.createTextNode("Person 2"));
+	rightBarElement.appendChild(document.createTextNode("Person 2: "));
 	person2Element = selectElement.cloneNode(true);
 	person2Element.setAttribute("id", "person2");
 	rightBarElement.appendChild(person2Element);

@@ -485,7 +485,6 @@ public class PersonRelationService {
     	DomainValueFlags domainValueFlags;
     	String attrVal;
     	DomainValue attributeDv;
-    	AttributeValue parentAttributeValue;
     	
     	firstTime = true;
     	querySB = new StringBuilder();
@@ -549,14 +548,18 @@ public class PersonRelationService {
     			break;
     		}
     	}
-		// Add parents
+		// Add parents & spouses
 		searchResultAttributesListSize = searchResultsList.get(0).size();
 		UtilFuncs.listSet(searchResultsList.get(0), searchResultAttributesListSize, "Parents", "");
+		UtilFuncs.listSet(searchResultsList.get(0), searchResultAttributesListSize + 1, "Spouses", "");
     	for (int ind = 1; ind < searchResultsList.size(); ind++) {
 			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize, "", "");
+			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize + 1, "", "");
     		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_MOTHER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_LABEL))) {
-    			parentAttributeValue = relativeAttributeEntry.getValue();
-    			searchResultsList.get(ind).set(searchResultAttributesListSize, searchResultsList.get(ind).get(searchResultAttributesListSize) + "/" + parentAttributeValue.getAttributeValue());
+    			searchResultsList.get(ind).set(searchResultAttributesListSize, searchResultsList.get(ind).get(searchResultAttributesListSize) + "/" + relativeAttributeEntry.getValue().getAttributeValue());
+    		}
+    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_LABEL))) {
+    			searchResultsList.get(ind).set(searchResultAttributesListSize + 1, searchResultsList.get(ind).get(searchResultAttributesListSize + 1) + "/" + relativeAttributeEntry.getValue().getAttributeValue());
     		}
     	}
     	return searchResultsVO;

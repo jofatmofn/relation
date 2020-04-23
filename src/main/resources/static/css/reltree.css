@@ -43,5 +43,8 @@
 	border: 5px solid Green;
 }
 .propdrop {
-	width: 240px;
+	width: 180px;
+}
+.startenddate {
+	width: 150px;
 }

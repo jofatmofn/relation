@@ -30,7 +30,7 @@ async function invokeService(serviceUrl, requestVO)
 				}
 			}
 		};
-		httpRequest.open('POST', (serviceUrl.startsWith("http") ? "" : "http://localhost:8080/relation") + serviceUrl);
+		httpRequest.open('POST', serviceUrl);
 		httpRequest.setRequestHeader('Content-Type', 'application/json');
 		if (requestVO == null) {
 			httpRequest.send();
