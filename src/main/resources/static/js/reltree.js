@@ -732,7 +732,7 @@ function relatePersons() {
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Relate</button>";
 	document.getElementById("sidebartitle").textContent = "Related Persons";
 
-	getPersonsPair();
+	getPersonsPair(false);
 	
 	actionButtonElement = document.getElementById("actionbutton");
 	actionButtonElement.onclick = async function() {
@@ -764,27 +764,31 @@ function ascertainRelation() {
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Ascertain</button>";
 	document.getElementById("sidebartitle").textContent = "Ascertain Relation";
 
-	getPersonsPair();
+	getPersonsPair(true);
 	
 	actionButtonElement = document.getElementById("actionbutton");
 	actionButtonElement.onclick = async function() {
 		var person1Id, person2Id, relationId, person1Element, person2Element;
+		var exclrelElement, excludeRelationIdCsv;
 		person1Element = document.getElementById("person1");
 		person2Element = document.getElementById("person2");
+		exclrelElement = document.getElementById("exclrelids");
 		person1Id = parseInt(person1Element.options[person1Element.selectedIndex].value);
 		person2Id = parseInt(person2Element.options[person2Element.selectedIndex].value);
+		excludeRelationIdCsv = exclrelElement.value;
 		if (person1Id == person2Id) {
 			alert("Same person cannot be part of a relation");
 			return;
 		}
 		s.graph.clear();
-		s.graph.read(await invokeService("algo/retrieveRelationPath", {person1Id: person1Id, person2Id: person2Id}));
+		s.graph.read(await invokeService("algo/retrieveRelationPath", {person1Id: person1Id, person2Id: person2Id, excludeRelationIdCsv: excludeRelationIdCsv}));
 		s.refresh();
 	}
 }
 
-function getPersonsPair() {
+function getPersonsPair(toIncludeExclude) {
 	var selectElement, optionElement, node, rightBarElement, person1Element, person2Element;
+	var exclrelElement;
 	
 	selectElement = document.createElement("select");
 	selectElement.setAttribute("name","persons");
@@ -810,6 +814,15 @@ function getPersonsPair() {
 	person2Element = selectElement.cloneNode(true);
 	person2Element.setAttribute("id", "person2");
 	rightBarElement.appendChild(person2Element);
+	
+	if (toIncludeExclude) {
+		rightBarElement.appendChild(document.createElement("br"));
+		rightBarElement.appendChild(document.createTextNode("Exclude Relations: "));
+		exclrelElement = document.createElement("input");
+		exclrelElement.setAttribute("type","text");
+		exclrelElement.setAttribute("id", "exclrelids");
+		rightBarElement.appendChild(exclrelElement);
+	}
 	
 }
 

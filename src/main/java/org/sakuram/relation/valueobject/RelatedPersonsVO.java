@@ -4,6 +4,7 @@ public class RelatedPersonsVO {
 	private long person1Id;
 	private long person2Id;
 	private long creatorId;
+	private String excludeRelationIdCsv;
 	
 	public long getPerson1Id() {
 		return person1Id;
@@ -28,5 +29,13 @@ public class RelatedPersonsVO {
 	public void setCreatorId(long creatorId) {
 		this.creatorId = creatorId;
 	}
-	
+
+	public String getExcludeRelationIdCsv() {
+		return excludeRelationIdCsv;
+	}
+
+	public void setExcludeRelationIdCsv(String excludeRelationIdCsv) {
+		this.excludeRelationIdCsv = excludeRelationIdCsv;
+	}
+
 }

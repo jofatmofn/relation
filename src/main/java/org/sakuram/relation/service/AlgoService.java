@@ -1,6 +1,7 @@
 package org.sakuram.relation.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -40,20 +41,22 @@ public class AlgoService {
     	Map<Long, Person> allPersonsMap;
     	LinkedList<Person> relatedPersonList;
     	Set<Person> relatedPersonSet;
+    	List<String> excludeRelationIdList;
     	
     	GraphVO retrieveRelationsResponseVO;
     	Map<Long, PersonVO> personVOMap;
     	List<Relation> relationList;
     	List<RelationVO> relationVOList;
     	PersonVO personVO;
-    	    	
+    	
+    	excludeRelationIdList = Arrays.asList(relatedPersonsVO.getExcludeRelationIdCsv().split(", *"));
     	personList = personRepository.findAll();
     	allPersonsMap = new HashMap<Long, Person>(personList.size());
     	for (Person person : personList) {
     		allPersonsMap.put(person.getId(), person);
     	}
     	
-    	relatedPersonList = shortestPathBreadthFirst.findPathBiBFS(allPersonsMap, relatedPersonsVO.getPerson1Id(), relatedPersonsVO.getPerson2Id());
+    	relatedPersonList = shortestPathBreadthFirst.findPathBiBFS(allPersonsMap, relatedPersonsVO.getPerson1Id(), relatedPersonsVO.getPerson2Id(), excludeRelationIdList);
     	relatedPersonSet = new HashSet<Person>(relatedPersonList);
     	
     	retrieveRelationsResponseVO = new GraphVO();
@@ -70,7 +73,9 @@ public class AlgoService {
     	
     	relationList = relationRepository.findByPerson1InAndPerson2In(relatedPersonSet, relatedPersonSet);
     	for (Relation relation : relationList) {
-    		serviceParts.addToRelationVOList(relationVOList, relation, null);
+    		if (!excludeRelationIdList.contains(String.valueOf(relation.getId()))) {
+    			serviceParts.addToRelationVOList(relationVOList, relation, null);
+    		}
     	}
     	
     	retrieveRelationsResponseVO.setNodes(new ArrayList<PersonVO>(personVOMap.values()));
