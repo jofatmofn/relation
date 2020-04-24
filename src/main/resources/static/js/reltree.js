@@ -4,7 +4,7 @@ var action, selectElementMap;
 
 async function drawGraph() {
 	
-	var selectElement, retrieveAppStartValuesResponseVO, buttonElement;
+	var selectElement, retrieveAppStartValuesResponseVO, buttonElement, urlParams, startPersonId;
 	window.addEventListener("unhandledrejection", event =>
 	{
 		alert(event.reason);
@@ -61,8 +61,10 @@ async function drawGraph() {
 	}
 
 	// Instantiate sigma
+	urlParams = new URLSearchParams(window.location.search);
+	startPersonId = urlParams.get('startPersonId');
 	s = new sigma({
-		graph: await invokeService("basic/retrieveRelations", {startPersonId : loginUserPersonId}),
+		graph: await invokeService("basic/retrieveRelations", {startPersonId : (startPersonId == null ? loginUserPersonId : startPersonId)}),
 		renderer: {
 			container: "graph-container",
 			type: "canvas"
