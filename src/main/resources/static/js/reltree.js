@@ -783,10 +783,11 @@ function ascertainRelation() {
 		s.graph.clear();
 		s.graph.read(await invokeService("algo/retrieveRelationPath", {person1Id: person1Id, person2Id: person2Id, excludeRelationIdCsv: excludeRelationIdCsv}));
 		s.refresh();
+		getPersonsPair(true, person1Id, person2Id, excludeRelationIdCsv);
 	}
 }
 
-function getPersonsPair(toIncludeExclude) {
+function getPersonsPair(toIncludeExclude, person1Id, person2Id, excludeRelationIdCsv) {
 	var selectElement, optionElement, node, rightBarElement, person1Element, person2Element;
 	var exclrelElement;
 	
@@ -807,12 +808,18 @@ function getPersonsPair(toIncludeExclude) {
 	rightBarElement.appendChild(document.createTextNode("Person 1: "));
 	person1Element = selectElement.cloneNode(true);
 	person1Element.setAttribute("id", "person1");
+	if (person1Id != null) {
+		person1Element.value = person1Id;
+	}
 	rightBarElement.appendChild(person1Element);
 	
 	rightBarElement.appendChild(document.createElement("br"));
 	rightBarElement.appendChild(document.createTextNode("Person 2: "));
 	person2Element = selectElement.cloneNode(true);
 	person2Element.setAttribute("id", "person2");
+	if (person2Id != null) {
+		person2Element.value = person2Id;
+	}
 	rightBarElement.appendChild(person2Element);
 	
 	if (toIncludeExclude) {
@@ -821,6 +828,9 @@ function getPersonsPair(toIncludeExclude) {
 		exclrelElement = document.createElement("input");
 		exclrelElement.setAttribute("type","text");
 		exclrelElement.setAttribute("id", "exclrelids");
+		if (excludeRelationIdCsv != null) {
+			exclrelElement.value = excludeRelationIdCsv;
+		}
 		rightBarElement.appendChild(exclrelElement);
 	}
 	
