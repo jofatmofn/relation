@@ -48,7 +48,7 @@ public class ServiceParts {
 		return personVO;
 	}
 	
-	public RelatedPerson1VO addToRelationVOList(List<RelationVO> relationVOList, Relation relation, Person startPerson) {
+	public RelatedPerson1VO addToRelationVOList(List<RelationVO> relationVOList, Relation relation, Person startPerson, boolean toIncludeRelationId) {
 		RelationVO relationVO;
     	DomainValueFlags domainValueFlags;
     	DomainValue attributeDv;
@@ -95,7 +95,7 @@ public class ServiceParts {
     			}
     		}
 		}
-		relationVO.setLabel(relationVO.getNormalisedLabel());
+		relationVO.setLabel(relationVO.getNormalisedLabel(toIncludeRelationId));
 		return relatedPerson1VO;
 	}
 	

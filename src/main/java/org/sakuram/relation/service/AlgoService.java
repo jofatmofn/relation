@@ -74,7 +74,7 @@ public class AlgoService {
     	relationList = relationRepository.findByPerson1InAndPerson2In(relatedPersonSet, relatedPersonSet);
     	for (Relation relation : relationList) {
     		if (!excludeRelationIdList.contains(String.valueOf(relation.getId()))) {
-    			serviceParts.addToRelationVOList(relationVOList, relation, null);
+    			serviceParts.addToRelationVOList(relationVOList, relation, null, true);
     		}
     	}
     	

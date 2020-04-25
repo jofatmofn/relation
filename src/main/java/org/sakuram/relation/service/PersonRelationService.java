@@ -105,7 +105,7 @@ public class PersonRelationService {
     	childCount = 0;
     	relationList = relationRepository.findByPerson1InAndPerson2In(relatedPersonSet, relatedPersonSet);
     	for (Relation relation : relationList) {
-    		relatedPerson1VO = serviceParts.addToRelationVOList(relationVOList, relation, startPerson);
+    		relatedPerson1VO = serviceParts.addToRelationVOList(relationVOList, relation, startPerson, false);
     		if (relatedPerson1VO.person != null) {	// Ignore Husband-Wife relation between parents
 	    		personVO = personVOMap.get(relatedPerson1VO.person.getId());
 	    		
@@ -157,7 +157,7 @@ public class PersonRelationService {
     	for (Relation relation : relationList) {
     		if (relation.getPerson1().getId() == retrieveRelationsBetweenRequestVO.getEnd1PersonId() && retrieveRelationsBetweenRequestVO.getEnd2PersonIdsList().contains(relation.getPerson2().getId()) ||
     				relation.getPerson2().getId() == retrieveRelationsBetweenRequestVO.getEnd1PersonId() && retrieveRelationsBetweenRequestVO.getEnd2PersonIdsList().contains(relation.getPerson1().getId())) {
-    			serviceParts.addToRelationVOList(relationVOList, relation, null);
+    			serviceParts.addToRelationVOList(relationVOList, relation, null, false);
     		}
     	}
     	return relationVOList;
@@ -241,7 +241,7 @@ public class PersonRelationService {
 				}
 				else LogManager.getLogger().debug("Skipped (due to duplicate) person: " + relatedPerson1VO.person.getId());
 				if (relatedRelationIdSet.add(relatedPerson1VO.relation.getId())) {
-					serviceParts.addToRelationVOList(relationVOList, relatedPerson1VO.relation, currentPerson);
+					serviceParts.addToRelationVOList(relationVOList, relatedPerson1VO.relation, currentPerson, false);
 				}
 				}
 				else LogManager.getLogger().debug("Skipped (due to higher depth) person: " + relatedPerson1VO.person.getId());
@@ -474,7 +474,6 @@ public class PersonRelationService {
     
     public SearchResultsVO searchPerson(List<AttributeValueVO> attributeValueVOList) {
     	StringBuilder querySB;
-    	boolean firstTime;
     	List<Person> personList;
     	long searchResultsCount;
     	int searchResultsListSize, searchResultAttributesListSize;
@@ -486,15 +485,13 @@ public class PersonRelationService {
     	String attrVal;
     	DomainValue attributeDv;
     	
-    	firstTime = true;
     	querySB = new StringBuilder();
-    	querySB.append("SELECT * FROM person p ");
+    	querySB.append("SELECT * FROM person p WHERE p.overwritten_by_fk IS NULL AND p.deleter_fk IS NULL ");
     	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
-    		querySB.append((firstTime ? "WHERE " : "AND "));
-    		firstTime = false;
-    		querySB.append("EXISTS (SELECT 1 FROM attribute_value WHERE person_fk = p.id AND attribute_fk = ");
+    		querySB.append("AND ");
+    		querySB.append("EXISTS (SELECT 1 FROM attribute_value av WHERE av.overwritten_by_fk IS NULL AND av.deleter_fk IS NULL AND av.person_fk = p.id AND av.attribute_fk = ");
     		querySB.append(attributeValueVO.getAttributeDvId());
-    		querySB.append(" AND LOWER(attribute_value) LIKE '%");	// Beware: PostgreSQL specific syntax
+    		querySB.append(" AND LOWER(av.attribute_value) LIKE '%");	// Beware: PostgreSQL specific syntax
     		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
     		querySB.append("%') ");
     	}

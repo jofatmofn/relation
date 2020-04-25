@@ -278,7 +278,13 @@ async function editEntityAttributes(e) {
 		
 		selectElement = (isPersonNode ? paSelectElement : raSelectElement).cloneNode(true);
 		attributeValueBlockElement.appendChild(selectElement);
-		createAttributeBlock(attributeValueBlockElement, {attributeDvId: parseInt(selectElement.options[0].value)});
+		if (isPersonNode && action == ACTION_SEARCH) {
+			selectElement.value = PERSON_ATTRIBUTE_DV_ID_LABEL;
+			createAttributeBlock(attributeValueBlockElement, {attributeDvId: PERSON_ATTRIBUTE_DV_ID_LABEL});
+		}
+		else {
+			createAttributeBlock(attributeValueBlockElement, {attributeDvId: parseInt(selectElement.options[0].value)});
+		}
 		selectElement.onchange = function() {
 			var avbChildNodeList, skippedNodeCount, avbChildNode;
 			avbChildNodeList = selectElement.parentElement.childNodes;

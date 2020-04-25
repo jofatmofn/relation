@@ -38,9 +38,9 @@ public class RelationVO {
 		return label;
 	}
 
-	public String getNormalisedLabel() {
+	public String getNormalisedLabel(boolean toIncludeRelationId) {
 		// Beware: Because of the ids 34, 35, 36, 61, 62, the pattern \d\d is used below
-		return (label == null ? null : "<" + id + ">" + label.replaceAll("@@\\d\\d@@", "").replaceAll("\\(\\)", ""));
+		return (label == null ? null : (toIncludeRelationId ? "<" + id + ">" : "") + label.replaceAll("@@\\d\\d@@", "").replaceAll("\\(\\)", ""));
 	}
 
 	public void setLabel(String label) {
