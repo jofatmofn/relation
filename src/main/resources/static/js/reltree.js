@@ -322,14 +322,15 @@ async function editEntityAttributes(e) {
 	actionButtonElement.onclick = async function() {
 		var attributeValueVOList, attributeValueVO, saveAttributesRequestVO, inputElements;
 		var attributeVsValueListMap, attributeDvId, attributeDomainValueVO;
-		var ind1, ind2, attributeValueNBlkList, searchedPersonId, entityId;
-		var attributeValueId, relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
+		var ind1, ind2, attributeValueNBlkList, searchedPersonId, saveAttributesResponseVO;
+		var toInsertAttributeValueDummyId, relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
 		var searchResultsWindowElement, searchResultsTableElement, searchCloseButtonElement, searchReturnButtonElement, searchResultsVO, searchResultsList, srInputElement, srRowNo, searchMessageElement;
 		var relationVO, personIdsList;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
 		saveAttributesRequestVO = {entityId: highlightedEntity.id, attributeValueVOList: attributeValueVOList};
+		toInsertAttributeValueDummyId = 1;
 		
 		for (let attributeValueBlkElement of rightBarElement.querySelectorAll("div[attributedvid]")) {
 			inputElements = attributeValueBlkElement.querySelectorAll("input,select:not([name=attributenames])");
@@ -338,6 +339,11 @@ async function editEntityAttributes(e) {
 			if (action == ACTION_SAVE) {
 				if (attributeValueBlkElement.hasAttribute("attributevalueid")) {
 					attributeValueVO.id = parseInt(attributeValueBlkElement.getAttribute("attributevalueid"));
+				}
+				else {
+					toInsertAttributeValueDummyId--;
+					attributeValueVO.id = toInsertAttributeValueDummyId;
+					attributeValueBlkElement.setAttribute("attributevalueid", toInsertAttributeValueDummyId);
 				}
 				attributeValueVO.valueAccurate = inputElements[1].checked;
 				if (inputElements.length > 2) {
@@ -427,12 +433,22 @@ async function editEntityAttributes(e) {
 		}
 		switch(action) {
 			case ACTION_SAVE:
-				entityId = await invokeService((isPersonNode ? "basic/savePersonAttributes" : "basic/saveRelationAttributes"), saveAttributesRequestVO);
+				saveAttributesResponseVO = await invokeService((isPersonNode ? "basic/savePersonAttributes" : "basic/saveRelationAttributes"), saveAttributesRequestVO);
+				toInsertAttributeValueDummyId = 1;
+				for (let insertedAttributeValueId of saveAttributesResponseVO.insertedAttributeValueIdList) {
+					toInsertAttributeValueDummyId--;
+					attributeValueBlkElement = rightBarElement.querySelector("div[attributedvid][attributevalueid='" + toInsertAttributeValueDummyId + "']");
+					if (attributeValueBlkElement == null) {
+						alert("Saved values are not properly refreshed on the screen. Please click on the " + (isPersonNode ? "node" : "edge") + " again.");
+						return;
+					}
+					attributeValueBlkElement.setAttribute("attributevalueid", insertedAttributeValueId);
+				}
 				alert("Saved");
 				if (isPersonNode && highlightedEntity.id == NEW_ENTITY_ID) {
 					s.graph.dropNode(NEW_ENTITY_ID);
 					s.graph.addNode({
-						id: entityId,
+						id: saveAttributesResponseVO.entityId,
 						size: 5.0,
 						x: Math.random() * 100,
 						y: Math.random() * 100,
@@ -440,7 +456,7 @@ async function editEntityAttributes(e) {
 						dY: 0,
 						type: 'goo'
 					});
-					highlightedEntity = s.graph.nodes(entityId);
+					highlightedEntity = s.graph.nodes(saveAttributesResponseVO.entityId);
 					highlightedEntity.color = HIGHLIGHT_COLOR;
 				}
 				highlightedEntity.label = (isPersonNode ? attributeVsValueListMap.get(PERSON_ATTRIBUTE_DV_ID_LABEL)[0].attributeValueVO.attributeValue :

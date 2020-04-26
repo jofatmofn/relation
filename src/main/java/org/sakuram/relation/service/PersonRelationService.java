@@ -32,6 +32,7 @@ import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.PersonVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
+import org.sakuram.relation.valueobject.SaveAttributesResponseVO;
 import org.sakuram.relation.valueobject.SearchResultsVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
 import org.sakuram.relation.valueobject.RelationVO;
@@ -374,8 +375,9 @@ public class PersonRelationService {
     	return attributeValueVOList;
     }
     
-    public long savePersonAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
+    public SaveAttributesResponseVO savePersonAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
     	Person person, userPerson;
+    	SaveAttributesResponseVO saveAttributesResponseVO;
     	
     	userPerson = personRepository.findById(saveAttributesRequestVO.getCreatorId())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getCreatorId(), null));
@@ -390,14 +392,16 @@ public class PersonRelationService {
     				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getEntityId(), null));
     	}
     	
-    	saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), person, null, userPerson);
-    	
-		return person.getId();
+		saveAttributesResponseVO = new SaveAttributesResponseVO();
+		saveAttributesResponseVO.setEntityId(person.getId());
+		saveAttributesResponseVO.setInsertedAttributeValueIdList(saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), person, null, userPerson));
+    	return saveAttributesResponseVO;
     }
     
-    public void saveRelationAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
+    public SaveAttributesResponseVO saveRelationAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
     	Relation relation = null;
     	Person userPerson;
+    	SaveAttributesResponseVO saveAttributesResponseVO;
     	
     	userPerson = personRepository.findById(saveAttributesRequestVO.getCreatorId())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getCreatorId(), null));
@@ -405,10 +409,13 @@ public class PersonRelationService {
 		relation = relationRepository.findById(saveAttributesRequestVO.getEntityId())
 				.orElseThrow(() -> new AppException("Invalid Relation Id " + saveAttributesRequestVO.getEntityId(), null));
     	
-    	saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), null, relation, userPerson);
+		saveAttributesResponseVO = new SaveAttributesResponseVO();
+		saveAttributesResponseVO.setEntityId(saveAttributesRequestVO.getEntityId());
+		saveAttributesResponseVO.setInsertedAttributeValueIdList(saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), null, relation, userPerson));
+    	return saveAttributesResponseVO;
     }
 
-    private void saveAttributeValue(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation, Person userPerson) {
+    private List<Long> saveAttributeValue(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation, Person userPerson) {
     	AttributeValue attributeValue, insertedAttributeValue;
     	List<Long> incomingAttributeValueWithIdList, insertedAttributeValueIdList;
     	List<AttributeValue> toDeleteAttributeValueList;
@@ -418,6 +425,9 @@ public class PersonRelationService {
     	insertedAttributeValueIdList = new ArrayList<Long>();
     	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
     		if (attributeValueVO.getId() == null) {
+    			throw new AppException("System error: Attribute with null id", null);
+    		}
+    		else if (attributeValueVO.getId() < 1) {
     			insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, userPerson);
     			insertedAttributeValueIdList.add(insertedAttributeValue.getId());
     		}
@@ -452,6 +462,8 @@ public class PersonRelationService {
 	    		}
 	    	}
 		}
+		
+		return insertedAttributeValueIdList;
     }
 
     private AttributeValue insertAttributeValue(AttributeValueVO attributeValueVO, Person person, Relation relation, Person creator) {

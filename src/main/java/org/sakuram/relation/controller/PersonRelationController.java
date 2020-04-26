@@ -10,6 +10,7 @@ import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
+import org.sakuram.relation.valueobject.SaveAttributesResponseVO;
 import org.sakuram.relation.valueobject.SearchResultsVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
 import org.sakuram.relation.valueobject.RelationVO;
@@ -67,7 +68,7 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/savePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public long savePersonAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
+    public SaveAttributesResponseVO savePersonAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
     	if (isAppReadOnly) {
     		throw new AppException("Application is running in READ ONLY mode", null);
     	}
@@ -76,12 +77,12 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/saveRelationAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void saveRelationAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
+    public SaveAttributesResponseVO saveRelationAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
     	if (isAppReadOnly) {
     		throw new AppException("Application is running in READ ONLY mode", null);
     	}
     	saveAttributesRequestVO.setCreatorId(getCreatorId(httpSession));
-    	personRelationService.saveRelationAttributes(saveAttributesRequestVO);
+    	return personRelationService.saveRelationAttributes(saveAttributesRequestVO);
     }
     
     @RequestMapping(value = "/searchPerson", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
