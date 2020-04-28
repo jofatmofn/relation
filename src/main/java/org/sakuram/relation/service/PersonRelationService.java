@@ -67,7 +67,8 @@ public class PersonRelationService {
     	Person startPerson;
     	List<Relation> participatingRelationList;
     	Set<Person> relatedPersonSet;
-    	int childCount;
+    	int ind;
+    	List<RelatedPerson3VO> fatherRelatedPerson3VOList, motherRelatedPerson3VOList, spouseRelatedPerson3VOList, childRelatedPerson3VOList;
     	
     	GraphVO retrieveRelationsResponseVO;
     	Map<Long, PersonVO> personVOMap;
@@ -98,12 +99,15 @@ public class PersonRelationService {
     	for (Person person : relatedPersonSet) {
     		personVO = serviceParts.addToPersonVOMap(personVOMap, person);
     		if (person.equals(startPerson)) {
-        		personVO.setX(265);
-        		personVO.setY(260);
+        		personVO.setX(10);
+        		personVO.setY(60);
     		}
     	}
     	
-    	childCount = 0;
+    	fatherRelatedPerson3VOList = new ArrayList<RelatedPerson3VO>();
+    	motherRelatedPerson3VOList = new ArrayList<RelatedPerson3VO>();
+    	spouseRelatedPerson3VOList = new ArrayList<RelatedPerson3VO>();
+    	childRelatedPerson3VOList = new ArrayList<RelatedPerson3VO>();
     	relationList = relationRepository.findByPerson1InAndPerson2In(relatedPersonSet, relatedPersonSet);
     	for (Relation relation : relationList) {
     		relatedPerson1VO = serviceParts.addToRelationVOList(relationVOList, relation, startPerson, false);
@@ -117,27 +121,51 @@ public class PersonRelationService {
 	    		else {
 					switch(relatedPerson1VO.relationDvId) {
 					case Constants.RELATION_NAME_FATHER:
-						personVO.setX(265);
-						personVO.setY(160);
+						fatherRelatedPerson3VOList.add(new RelatedPerson3VO(relatedPerson1VO.person.getId(), relatedPerson1VO.seqNo));
+						personVO.setX(25);
 			    		break;
 					case Constants.RELATION_NAME_MOTHER:
-						personVO.setX(530);
-						personVO.setY(160);
+						motherRelatedPerson3VOList.add(new RelatedPerson3VO(relatedPerson1VO.person.getId(), relatedPerson1VO.seqNo));
+						personVO.setX(85);
 			    		break;
 					case Constants.RELATION_NAME_HUSBAND:
 					case Constants.RELATION_NAME_WIFE:
-						personVO.setX(530);
-						personVO.setY(260);
+						spouseRelatedPerson3VOList.add(new RelatedPerson3VO(relatedPerson1VO.person.getId(), relatedPerson1VO.seqNo));
+						personVO.setX(100);
 			    		break;
 					case Constants.RELATION_NAME_SON:
 					case Constants.RELATION_NAME_DAUGHTER:
-				    	childCount++;
-				    	personVO.setX(260 + childCount * 50);
-				    	personVO.setY(360);
+						childRelatedPerson3VOList.add(new RelatedPerson3VO(relatedPerson1VO.person.getId(), relatedPerson1VO.seqNo));
+				    	personVO.setY(120);
 			    		break;
 					}
 	    		}
     		}
+    	}
+
+    	Collections.sort(fatherRelatedPerson3VOList);
+    	ind = 0;
+    	for (RelatedPerson3VO relatedPerson3VO : fatherRelatedPerson3VOList) {
+    		ind++;
+    		personVOMap.get(relatedPerson3VO.personId).setY(ind * 10);
+    	}
+    	Collections.sort(motherRelatedPerson3VOList);
+    	ind = 0;
+    	for (RelatedPerson3VO relatedPerson3VO : motherRelatedPerson3VOList) {
+    		ind++;
+    		personVOMap.get(relatedPerson3VO.personId).setY(ind * 10);
+    	}
+    	Collections.sort(spouseRelatedPerson3VOList);
+    	ind = -1;
+    	for (RelatedPerson3VO relatedPerson3VO : spouseRelatedPerson3VOList) {
+    		ind++;
+    		personVOMap.get(relatedPerson3VO.personId).setY(60 + ind * 10);
+    	}
+    	Collections.sort(childRelatedPerson3VOList);
+    	ind = 0;
+    	for (RelatedPerson3VO relatedPerson3VO : childRelatedPerson3VOList) {
+    		ind++;
+    		personVOMap.get(relatedPerson3VO.personId).setX(ind * 10);
     	}
     	
     	retrieveRelationsResponseVO.setNodes(new ArrayList<PersonVO>(personVOMap.values()));
@@ -714,4 +742,19 @@ public class PersonRelationService {
     	Person person;
     	int level;
     }
+    
+    protected class RelatedPerson3VO  implements Comparable<RelatedPerson3VO> {
+    	long personId;
+    	int seqNo;
+
+    	public RelatedPerson3VO(long personId, int seqNo) {
+    		this.personId = personId;
+    		this.seqNo = seqNo;
+    	}
+    	
+    	public int compareTo(RelatedPerson3VO relatedPerson3VO) {
+    		return (this.seqNo < relatedPerson3VO.seqNo ? -1 : this.seqNo == relatedPerson3VO.seqNo ? 0 : 1);
+    	}
+    }
+    
 }

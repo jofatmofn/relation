@@ -54,7 +54,7 @@ public class ServiceParts {
     	DomainValue attributeDv;
     	String otherPersonId;
     	RelatedPerson1VO relatedPerson1VO;
-    	long relationAttributeDVIdOtherForStart;
+    	long relationAttributeDVIdOtherForStart, relationSeqNoAttributeDVIdOtherForStart;
     	
 		relationVO = new RelationVO();
 		relationVOList.add(relationVO);
@@ -69,15 +69,18 @@ public class ServiceParts {
 			relatedPerson1VO.person = relation.getPerson2();
 			otherPersonId = String.valueOf(relation.getPerson2().getId());
 			relationAttributeDVIdOtherForStart = Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1;
+			relationSeqNoAttributeDVIdOtherForStart = Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1;
 		}
 		else if (relation.getPerson2().equals(startPerson)){
 			relatedPerson1VO.person = relation.getPerson1();
 			otherPersonId = String.valueOf(relation.getPerson1().getId());
 			relationAttributeDVIdOtherForStart = Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2;
+			relationSeqNoAttributeDVIdOtherForStart = Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2;
 		}
 		else {
 			otherPersonId = null;
 			relationAttributeDVIdOtherForStart = -1;
+			relationSeqNoAttributeDVIdOtherForStart = -1;
 		}
 		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
     		if (isCurrentValidAttributeValue(attributeValue)) {
@@ -92,6 +95,9 @@ public class ServiceParts {
         		}
     			if (otherPersonId != null && attributeValue.getAttribute().getId() == relationAttributeDVIdOtherForStart) {
     				relatedPerson1VO.relationDvId = attributeValue.getAttributeValue();
+    			}
+    			else if (otherPersonId != null && attributeValue.getAttribute().getId() == relationSeqNoAttributeDVIdOtherForStart) {
+    				relatedPerson1VO.seqNo = Integer.parseInt(attributeValue.getAttributeValue());
     			}
     		}
 		}
@@ -113,6 +119,7 @@ public class ServiceParts {
     	Person person;
     	Relation relation;
     	String relationDvId;
+    	int seqNo;
     }
 
 }
