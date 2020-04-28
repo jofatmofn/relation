@@ -14,11 +14,14 @@ import org.sakuram.relation.bean.Person;
 import org.sakuram.relation.bean.Relation;
 import org.sakuram.relation.repository.PersonRepository;
 import org.sakuram.relation.repository.RelationRepository;
+import org.sakuram.relation.util.PatternBasedXY;
+import org.sakuram.relation.util.PatternBasedXY.XY;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
 import org.sakuram.relation.valueobject.RelationVO;
 import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.PersonVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +38,11 @@ public class AlgoService {
 	ShortestPathBreadthFirst shortestPathBreadthFirst;
 	@Autowired
 	ServiceParts serviceParts;
+	@Autowired
+	PatternBasedXY patternBasedXY;
+	
+	@Value("${relation.application.ascertain.relation.graph.pattern}")
+	String ASCERTAIN_RELATION_GRAPH_PATTERN;
 	
 	public GraphVO retrieveRelationPath(RelatedPersonsVO relatedPersonsVO) {
     	List<Person> personList;
@@ -42,6 +50,7 @@ public class AlgoService {
     	LinkedList<Person> relatedPersonList;
     	Set<Person> relatedPersonSet;
     	List<String> excludeRelationIdList;
+    	XY xy;
     	
     	GraphVO retrieveRelationsResponseVO;
     	Map<Long, PersonVO> personVOMap;
@@ -65,10 +74,12 @@ public class AlgoService {
     	retrieveRelationsResponseVO.setEdges(relationVOList);
     	relationList = new ArrayList<Relation>();
     	
-    	for (Person person : relatedPersonSet) {
+    	patternBasedXY.init(ASCERTAIN_RELATION_GRAPH_PATTERN, 10, 10, 20);
+    	for (Person person : relatedPersonList) {
     		personVO = serviceParts.addToPersonVOMap(personVOMap, person);
-    		personVO.setX(Math.random() * 100);
-    		personVO.setY(Math.random() * 100);
+    		xy = patternBasedXY.getNextXY();
+    		personVO.setX(xy.x);
+    		personVO.setY(xy.y);
     	}
     	
     	relationList = relationRepository.findByPerson1InAndPerson2In(relatedPersonSet, relatedPersonSet);
