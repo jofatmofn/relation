@@ -3,11 +3,13 @@ async function invokeService(serviceUrl, requestVO)
 	return new Promise(function(resolve, reject) 
 	{
 		var httpRequest;
+		blockPage();
 		httpRequest = new XMLHttpRequest();
 		httpRequest.onreadystatechange = function()
 		{
 			if(this.readyState == 4)
 			{
+				unblockPage();
 				if(this.status == 200)
 				{
 					if (httpRequest.response == null) {
@@ -43,4 +45,23 @@ async function invokeService(serviceUrl, requestVO)
 		}
 	});
 	
+}
+
+function blockPage() {
+	var blockingElement;
+	blockingElement = document.querySelector(".blockPage");
+	if (blockingElement == null) {
+		blockingElement = document.createElement("div");
+		blockingElement.classList.add("blockPage");
+		blockingElement.innerHTML = "<span>Please wait...<span>";
+		document.getElementsByTagName("body")[0].appendChild(blockingElement);
+	}
+}
+
+function unblockPage() {
+	var blockingElement;
+	blockingElement = document.querySelector(".blockPage");
+	if (blockingElement != null) {
+		blockingElement.remove();
+	}
 }

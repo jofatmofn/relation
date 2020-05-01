@@ -14,6 +14,7 @@ import org.sakuram.relation.bean.Person;
 import org.sakuram.relation.bean.Relation;
 import org.sakuram.relation.repository.PersonRepository;
 import org.sakuram.relation.repository.RelationRepository;
+import org.sakuram.relation.util.AppException;
 import org.sakuram.relation.util.PatternBasedXY;
 import org.sakuram.relation.util.PatternBasedXY.XY;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
@@ -66,6 +67,9 @@ public class AlgoService {
     	}
     	
     	relatedPersonList = shortestPathBreadthFirst.findPathBiBFS(allPersonsMap, relatedPersonsVO.getPerson1Id(), relatedPersonsVO.getPerson2Id(), excludeRelationIdList);
+    	if (relatedPersonList == null) {
+    		throw new AppException("No relation could be established between the two!", null);
+    	}
     	relatedPersonSet = new HashSet<Person>(relatedPersonList);
     	
     	retrieveRelationsResponseVO = new GraphVO();

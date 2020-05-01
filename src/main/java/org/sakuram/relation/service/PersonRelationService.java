@@ -471,7 +471,6 @@ public class PersonRelationService {
     					!UtilFuncs.dateEquals(attributeValueVO.getStartDate(), attributeValue.getStartDate()) ||
     					!UtilFuncs.dateEquals(attributeValueVO.getEndDate(), attributeValue.getEndDate())) {
     				insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, userPerson);
-        			insertedAttributeValueIdList.add(insertedAttributeValue.getId());
     				attributeValue.setOverwrittenBy(insertedAttributeValue);
     				attributeValueRepository.save(attributeValue);
     			}

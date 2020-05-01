@@ -15,7 +15,8 @@ public class PersonRepositoryCustomImpl implements PersonRepositoryCustom {
     @PersistenceContext
     EntityManager entityManager;
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
 	public List<Person> executeDynamicQuery(String queryString) {
     	LogManager.getLogger().debug(queryString);
     	Query query;

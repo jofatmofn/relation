@@ -187,27 +187,25 @@ async function editEntityAttributes(e) {
 		if (attributeValueVO.attributeDvId == PERSON_ATTRIBUTE_DV_ID_LABEL) {
 			highlightedEntity.label = attributeValueVO.attributeValue;
 		}
-		attributeValueBlockElement = document.createElement("div");
+		attributeValueBlockElement = document.createElement("fieldset");
 		rightBarElement.appendChild(attributeValueBlockElement);
-		attributeValueBlockElement.className = "attrVal";
 		attributeValueBlockElement.appendChild(document.createTextNode(attributeValueVO.attributeName));
-		createAttributeBlock(attributeValueBlockElement, attributeValueVO);
+		createAttributeBlock(attributeValueBlockElement, attributeValueVO, action);
 	}
 	/* Mandatory attributes for new entity */
 	if (action == ACTION_SAVE && attributeValueVOList.length == 0) {
 		for (let attributeDomainValueVO of (isPersonNode ? paDomainValueVOList : raDomainValueVOList)) {
 			if (attributeDomainValueVO.inputMandatory) {
-				attributeValueBlockElement = document.createElement("div");
+				attributeValueBlockElement = document.createElement("fieldset");
 				rightBarElement.appendChild(attributeValueBlockElement);
-				attributeValueBlockElement.className = "attrVal";
 				attributeValueBlockElement.appendChild(document.createTextNode(attributeDomainValueVO.value));
-				createAttributeBlock(attributeValueBlockElement, {attributeDvId: attributeDomainValueVO.id});
+				createAttributeBlock(attributeValueBlockElement, {attributeDvId: attributeDomainValueVO.id}, action);
 			}
 		}
 	}
 	s.refresh();
 	
-	for (let attributeValueBlkElement of rightBarElement.querySelectorAll("div[attributedvid]")) {
+	for (let attributeValueBlkElement of rightBarElement.querySelectorAll("fieldset[attributedvid]")) {
 		attributeDvId = parseInt(attributeValueBlkElement.getAttribute("attributedvid"));
 		if (attributeDvId == RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) {
 			person1ForPerson2SelectElement = attributeValueBlkElement.querySelector("select[name=RelName]");
@@ -246,10 +244,10 @@ async function editEntityAttributes(e) {
 		}
 	}
 	
-	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'>+</button><button id='actionbutton'>" + action + "</button>";
+	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">+</button><button id='actionbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">" + action + "</button>";
 	if (action == ACTION_SAVE) {
 		if (isPersonNode) {
-			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'>Delete Person</button>";
+			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly ? " disabled" : "") + ">Delete Person</button>";
 			document.getElementById("deletebutton").onclick = async function() {
 				await invokeService("basic/deletePerson", highlightedEntity.id);
 				s.graph.dropNode(highlightedEntity.id);	// The node and each edge that is bound to it
@@ -258,7 +256,7 @@ async function editEntityAttributes(e) {
 			};
 		}
 		else {
-			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'>Delete Relation</button>";
+			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly ? " disabled" : "") + ">Delete Relation</button>";
 			document.getElementById("deletebutton").onclick = async function() {
 				await invokeService("basic/deleteRelation", highlightedEntity.id);
 				s.graph.dropEdge(highlightedEntity.id); // The edge
@@ -272,18 +270,17 @@ async function editEntityAttributes(e) {
 	
 	addButtonElement.onclick = function() {
 		var selectElement, optionElement;
-		attributeValueBlockElement = document.createElement("div");
+		attributeValueBlockElement = document.createElement("fieldset");
 		rightBarElement.appendChild(attributeValueBlockElement);
-		attributeValueBlockElement.className = "attrVal";
 		
 		selectElement = (isPersonNode ? paSelectElement : raSelectElement).cloneNode(true);
 		attributeValueBlockElement.appendChild(selectElement);
 		if (isPersonNode && action == ACTION_SEARCH) {
 			selectElement.value = PERSON_ATTRIBUTE_DV_ID_LABEL;
-			createAttributeBlock(attributeValueBlockElement, {attributeDvId: PERSON_ATTRIBUTE_DV_ID_LABEL});
+			createAttributeBlock(attributeValueBlockElement, {attributeDvId: PERSON_ATTRIBUTE_DV_ID_LABEL}, action);
 		}
 		else {
-			createAttributeBlock(attributeValueBlockElement, {attributeDvId: parseInt(selectElement.options[0].value)});
+			createAttributeBlock(attributeValueBlockElement, {attributeDvId: parseInt(selectElement.options[0].value)}, action);
 		}
 		selectElement.onchange = function() {
 			var avbChildNodeList, skippedNodeCount, avbChildNode;
@@ -298,7 +295,7 @@ async function editEntityAttributes(e) {
 					skippedNodeCount = skippedNodeCount + 1;
 				}
 			}
-			createAttributeBlock(selectElement.parentElement, {attributeDvId: parseInt(selectElement.options[selectElement.selectedIndex].value)});
+			createAttributeBlock(selectElement.parentElement, {attributeDvId: parseInt(selectElement.options[selectElement.selectedIndex].value)}, action);
 		};
 		
 	};
@@ -332,7 +329,7 @@ async function editEntityAttributes(e) {
 		saveAttributesRequestVO = {entityId: highlightedEntity.id, attributeValueVOList: attributeValueVOList};
 		toInsertAttributeValueDummyId = 1;
 		
-		for (let attributeValueBlkElement of rightBarElement.querySelectorAll("div[attributedvid]")) {
+		for (let attributeValueBlkElement of rightBarElement.querySelectorAll("fieldset[attributedvid]")) {
 			inputElements = attributeValueBlkElement.querySelectorAll("input,select:not([name=attributenames])");
 			attributeDvId = parseInt(attributeValueBlkElement.getAttribute("attributedvid"));
 			attributeValueVO = {attributeDvId: attributeDvId, id: null, attributeValue: (inputElements[0].tagName == "INPUT" ? inputElements[0].value : inputElements[0].options[inputElements[0].selectedIndex].value), valueAccurate: null, startDate: null, endDate: null};
@@ -437,7 +434,7 @@ async function editEntityAttributes(e) {
 				toInsertAttributeValueDummyId = 1;
 				for (let insertedAttributeValueId of saveAttributesResponseVO.insertedAttributeValueIdList) {
 					toInsertAttributeValueDummyId--;
-					attributeValueBlkElement = rightBarElement.querySelector("div[attributedvid][attributevalueid='" + toInsertAttributeValueDummyId + "']");
+					attributeValueBlkElement = rightBarElement.querySelector("fieldset[attributedvid][attributevalueid='" + toInsertAttributeValueDummyId + "']");
 					if (attributeValueBlkElement == null) {
 						alert("Saved values are not properly refreshed on the screen. Please click on the " + (isPersonNode ? "node" : "edge") + " again.");
 						return;
@@ -607,7 +604,7 @@ function areOverlappingDates(startDate1Str, endDate1Str, startDate2Str, endDate2
 	return false;
 }
 
-function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
+function createAttributeBlock(attributeValueBlockElement, attributeValueVO, action) {
 	var valueElement, isAccurateElement, startDateElement, endDateElement;
 	var startDatePicker, endDatePicker, attributeDomainValueVO;
 	var deleteBlockImageElement;
@@ -617,17 +614,21 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO) {
 	if (attributeValueVO.id != undefined) {
 		attributeValueBlockElement.setAttribute("attributevalueid", attributeValueVO.id);
 	}
-	
-	attributeValueBlockElement.appendChild(document.createTextNode("     "));
-	deleteBlockImageElement = document.createElement("img");
-	attributeValueBlockElement.appendChild(deleteBlockImageElement);
-	deleteBlockImageElement.setAttribute("src","img/delete.png");
-	deleteBlockImageElement.setAttribute("alt","Delete Property");
-	deleteBlockImageElement.setAttribute("width","5%");
-	deleteBlockImageElement.setAttribute("height","3%");
-	deleteBlockImageElement.onclick = async function() {
-		attributeValueBlockElement.remove();
-	};
+	if (action == ACTION_SAVE && isAppReadOnly) {
+		attributeValueBlockElement.setAttribute("disabled", "");
+	}
+	else {
+		attributeValueBlockElement.appendChild(document.createTextNode("     "));
+		deleteBlockImageElement = document.createElement("img");
+		attributeValueBlockElement.appendChild(deleteBlockImageElement);
+		deleteBlockImageElement.setAttribute("src","img/delete.png");
+		deleteBlockImageElement.setAttribute("alt","Delete Property");
+		deleteBlockImageElement.setAttribute("width","5%");
+		deleteBlockImageElement.setAttribute("height","3%");
+		deleteBlockImageElement.onclick = async function() {
+			attributeValueBlockElement.remove();
+		};
+	}
 	
 	attributeValueBlockElement.appendChild(document.createElement("br"));
 	
