@@ -52,6 +52,11 @@ public class PersonRelationController {
     	return personRelationService.retrieveTree(retrieveRelationsRequestVO);
     }
     
+    @RequestMapping(value = "/retrieveParceners", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public GraphVO retrieveParceners(@RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+    	return personRelationService.retrieveParceners(retrieveRelationsRequestVO);
+    }
+    
     @RequestMapping(value = "/retrieveAppStartValues", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public RetrieveAppStartValuesResponseVO retrieveAppStartValues() {
     	return personRelationService.retrieveAppStartValues();

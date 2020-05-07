@@ -200,6 +200,7 @@ public class PersonRelationService {
     	int level, sequence, readInd, currentLevel, ind;
     	double lastY;
     	List<Integer> seqAtLevel;
+    	List<String> requiredRelationsList;
     	
     	GraphVO retrieveRelationsResponseVO;
     	Map<Long, PersonVO> personVOMap;
@@ -221,6 +222,7 @@ public class PersonRelationService {
 		currentPersonVO.setX(1);
 		currentPersonVO.setY(1);
 		
+		requiredRelationsList = Objects.equals(retrieveRelationsRequestVO.getIsSonOnly(), true) ? Arrays.asList(Constants.RELATION_NAME_SON) : Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE, Constants.RELATION_NAME_SON, Constants.RELATION_NAME_DAUGHTER);
 		relatedPerson2VO =  new RelatedPerson2VO();
 		relatedPerson2VOList.add(relatedPerson2VO);
 		relatedPerson2VO.person = startPerson;
@@ -236,7 +238,7 @@ public class PersonRelationService {
 				break;
 			}
 			currentPersonVO = personVOMap.get(currentPerson.getId());
-	    	for (RelatedPerson1VO relatedPerson1VO : retrieveRelatives(currentPerson, Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE, Constants.RELATION_NAME_SON, Constants.RELATION_NAME_DAUGHTER))) {
+	    	for (RelatedPerson1VO relatedPerson1VO : retrieveRelatives(currentPerson, requiredRelationsList)) {
 				if (relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_HUSBAND) ||
 						relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_WIFE) ||
 						currentLevel < retrieveRelationsRequestVO.getMaxDepth() - 1) {
@@ -301,6 +303,26 @@ public class PersonRelationService {
     	retrieveRelationsResponseVO.setNodes(personVOList);
     	return retrieveRelationsResponseVO;
     }
+	
+	public GraphVO retrieveParceners(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+		Person startPerson;
+		List<RelatedPerson1VO> relatedPerson1VOList;
+		RetrieveRelationsRequestVO retrieveRelationsRequestVO2;
+		short depth;
+		
+    	startPerson = personRepository.findById(retrieveRelationsRequestVO.getStartPersonId())
+				.orElseThrow(() -> new AppException("Invalid Person Id " + retrieveRelationsRequestVO.getStartPersonId(), null));
+    	depth = 1;
+    	while((relatedPerson1VOList = retrieveRelatives(startPerson, Arrays.asList(Constants.RELATION_NAME_FATHER))).size() == 1) {
+    		startPerson = relatedPerson1VOList.get(0).person;
+    		depth++;
+    	}
+    	retrieveRelationsRequestVO2 = new RetrieveRelationsRequestVO();
+    	retrieveRelationsRequestVO2.setStartPersonId(startPerson.getId());
+    	retrieveRelationsRequestVO2.setMaxDepth(depth);
+    	retrieveRelationsRequestVO2.setIsSonOnly(true);
+		return retrieveTree(retrieveRelationsRequestVO2);
+	}
 	
 	public RetrieveAppStartValuesResponseVO retrieveAppStartValues() {
 		RetrieveAppStartValuesResponseVO retrieveAppStartValuesResponseVO;

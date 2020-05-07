@@ -1,13 +1,19 @@
 var domainValueVOList, isAppReadOnly, highlightedEntity, loginUserPersonId, domainValueVOMap;
 var paSelectElement, raSelectElement, paDomainValueVOList, raDomainValueVOList, isPersonNode;
-var action, selectElementMap;
+var action, selectElementMap, doubleClick;
 
 async function drawGraph() {
 	
 	var selectElement, retrieveAppStartValuesResponseVO, buttonElement, urlParams, startPersonId;
 	window.addEventListener("unhandledrejection", event =>
 	{
-		alert(event.reason);
+		if (event.reason.stack != undefined && event.reason.stack.startsWith("sigma.")) {
+			console.log(event);
+			alert("System ran into trouble. Kindly refresh the screen, by pressing F5.");
+		}
+		else {
+			alert(event.type);
+		}
 	});
 	
 	loginUserPersonId = 6;	// TODO: After integration with login, this should be user's person id
@@ -90,16 +96,32 @@ async function drawGraph() {
 	  s.settings('doubleClickEnabled', true);
 	}); */
 	
-	s.bind('clickNode', editEntityAttributes);
+	doubleClick = 0; // https://github.com/jacomyal/sigma.js/issues/506
+						// To avoid double click also firing single click.
+						// However, this is causing some delays!
+	
+	s.bind('clickNode', function(e) {
+		window.setTimeout(function () {
+			if(doubleClick) {
+				doubleClick--;
+				return;
+			}
+			editEntityAttributes(e);
+		}, sigma.settings.doubleClickTimeout + 100);
+	});
 	
 	s.bind('clickEdge', editEntityAttributes);
 	
 	s.bind('doubleClickNode', async function(e) {
 		console.log(e.type, e.data.node.label, e.data.captor);
+		doubleClick = 2;
 		if (e.data.node.id != NEW_ENTITY_ID && e.data.node.id != SEARCH_ENTITY_ID) {
 			s.graph.clear();
 			if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "drel") {
 				s.graph.read(await invokeService("basic/retrieveRelations", {startPersonId : e.data.node.id}));
+			}
+			else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "parceners") {
+				s.graph.read(await invokeService("basic/retrieveParceners", {startPersonId : e.data.node.id}));
 			}
 			else {
 				s.graph.read(await invokeService("basic/retrieveTree", {startPersonId : e.data.node.id, 
@@ -107,7 +129,7 @@ async function drawGraph() {
 			}
 			s.refresh();
 		}
-		document.getElementById("sidebarbody").innerHTML = "";
+		clearSidebar();
 	});
 
 	// *** sigma.layout.noverlap ***

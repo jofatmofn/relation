@@ -3,6 +3,7 @@ package org.sakuram.relation.valueobject;
 public class RetrieveRelationsRequestVO {
 	private long startPersonId;
 	private Short maxDepth;
+	private Boolean isSonOnly;
 
 	public long getStartPersonId() {
 		return startPersonId;
@@ -18,5 +19,13 @@ public class RetrieveRelationsRequestVO {
 
 	public void setMaxDepth(Short maxDepth) {
 		this.maxDepth = maxDepth;
+	}
+
+	public Boolean getIsSonOnly() {
+		return isSonOnly;
+	}
+
+	public void setIsSonOnly(Boolean isSonOnly) {
+		this.isSonOnly = isSonOnly;
 	}
 }
