@@ -537,47 +537,56 @@ public class PersonRelationService {
     	StringBuilder querySB;
     	List<Person> personList;
     	long searchResultsCount;
-    	int searchResultsListSize, searchResultAttributesListSize;
+    	int searchResultAttributesListSize;
     	SearchResultsVO searchResultsVO;
     	Map<Long, Integer> attributeVsColumnMap;
-    	List<List<String>> searchResultsList;
+    	List<List<String>> searchResultsList, searchResultsPostXtraFilterList;
     	List<String> personAttributesList;
     	DomainValueFlags domainValueFlags;
-    	String attrVal;
+    	String attrVal, parentNamesSsv, spouseNamesSsv, parentsCriteria, spousesCriteria;
     	DomainValue attributeDv;
     	
+    	parentsCriteria = null;
+    	spousesCriteria = null;
     	querySB = new StringBuilder();
-    	querySB.append("SELECT * FROM person p WHERE p.overwritten_by_fk IS NULL AND p.deleter_fk IS NULL ");
+    	querySB.append("SELECT * FROM person p WHERE p.overwritten_by_fk IS NULL AND p.deleter_fk IS NULL");
     	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
-    		querySB.append("AND ");
-    		querySB.append("EXISTS (SELECT 1 FROM attribute_value av WHERE av.overwritten_by_fk IS NULL AND av.deleter_fk IS NULL AND av.person_fk = p.id AND av.attribute_fk = ");
-    		querySB.append(attributeValueVO.getAttributeDvId());
-    		querySB.append(" AND LOWER(av.attribute_value) LIKE '%");	// Beware: PostgreSQL specific syntax
-    		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
-    		querySB.append("%') ");
+    		if (attributeValueVO.getAttributeDvId() > 0) {
+	    		querySB.append(" AND ");
+	    		querySB.append("EXISTS (SELECT 1 FROM attribute_value av WHERE av.overwritten_by_fk IS NULL AND av.deleter_fk IS NULL AND av.person_fk = p.id AND av.attribute_fk = ");
+	    		querySB.append(attributeValueVO.getAttributeDvId());
+	    		querySB.append(" AND LOWER(av.attribute_value) LIKE '%");	// Beware: PostgreSQL specific syntax
+	    		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
+	    		querySB.append("%')");
+    		}
+    		else if (attributeValueVO.getAttributeDvId() == -1) {
+	    		querySB.append(" AND p.id = ");
+	    		querySB.append(attributeValueVO.getAttributeValue());
+    		}
+    		else if (attributeValueVO.getAttributeDvId() == -2) {
+    			parentsCriteria = attributeValueVO.getAttributeValue().toLowerCase();
+    		}
+    		else if (attributeValueVO.getAttributeDvId() == -3) {
+    			spousesCriteria = attributeValueVO.getAttributeValue().toLowerCase();
+    		}
     	}
+		querySB.append(" ORDER BY p.id;");
     	
     	personList = personRepository.executeDynamicQuery(querySB.toString());
     	
     	searchResultsVO = new SearchResultsVO();
-    	searchResultsVO.setResultsCount(personList.size());
     	if (personList.size() == 0) {
     		return searchResultsVO;
     	}
     	
     	domainValueFlags = new DomainValueFlags();
-    	searchResultsCount = 0;
     	searchResultAttributesListSize = 0;
     	attributeVsColumnMap = new HashMap<Long, Integer>();
-    	searchResultsListSize = (personList.size() > Constants.SEARCH_RESULTS_MAX_COUNT?
-    			Constants.SEARCH_RESULTS_MAX_COUNT : (int)personList.size());
-    	searchResultsList = new ArrayList<List<String>>(searchResultsListSize + 1);
-    	searchResultsVO.setResultsList(searchResultsList);
+    	searchResultsList = new ArrayList<List<String>>(personList.size());
     	personAttributesList = new ArrayList<String>(); // For Header
     	searchResultsList.add(personAttributesList);
     	personAttributesList.add("Id");
     	for(Person person : personList) {
-    		searchResultsCount++;
     		personAttributesList = new ArrayList<String>();
     		searchResultsList.add(personAttributesList);
     		personAttributesList.add(String.valueOf(person.getId()));
@@ -602,23 +611,45 @@ public class PersonRelationService {
 	    			}
     			}
     		}
-    		if (searchResultsCount == Constants.SEARCH_RESULTS_MAX_COUNT) {
-    			break;
-    		}
     	}
-		// Add parents & spouses
+		// Add parents & spouses; Also apply search criteria based on parents & spouses
+    	searchResultsPostXtraFilterList = new ArrayList<List<String>>(searchResultsList.size());
 		searchResultAttributesListSize = searchResultsList.get(0).size();
 		UtilFuncs.listSet(searchResultsList.get(0), searchResultAttributesListSize, "Parents", "");
 		UtilFuncs.listSet(searchResultsList.get(0), searchResultAttributesListSize + 1, "Spouses", "");
+    	searchResultsCount = 0;
     	for (int ind = 1; ind < searchResultsList.size(); ind++) {
-			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize, "", "");
-			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize + 1, "", "");
+			parentNamesSsv = "";
+			spouseNamesSsv = "";
     		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_MOTHER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_LABEL))) {
-    			searchResultsList.get(ind).set(searchResultAttributesListSize, searchResultsList.get(ind).get(searchResultAttributesListSize) + "/" + relativeAttributeEntry.getValue().getAttributeValue());
+    			parentNamesSsv += "/" + relativeAttributeEntry.getValue().getAttributeValue();
+    		}
+    		if (parentsCriteria != null && (parentNamesSsv.equals("") || !parentNamesSsv.toLowerCase().contains(parentsCriteria))) {
+    			continue;
     		}
     		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_LABEL))) {
-    			searchResultsList.get(ind).set(searchResultAttributesListSize + 1, searchResultsList.get(ind).get(searchResultAttributesListSize + 1) + "/" + relativeAttributeEntry.getValue().getAttributeValue());
+    			spouseNamesSsv += "/" + relativeAttributeEntry.getValue().getAttributeValue();
     		}
+    		if (spousesCriteria != null && (spouseNamesSsv.equals("") || !spouseNamesSsv.toLowerCase().contains(spousesCriteria))) {
+    			continue;
+    		}
+			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize, parentNamesSsv, "");
+			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize + 1, spouseNamesSsv, "");
+			searchResultsPostXtraFilterList.add(searchResultsList.get(ind));
+    		searchResultsCount++;
+    		if (searchResultsCount == Constants.SEARCH_RESULTS_MAX_COUNT) {
+    			if (ind == searchResultsList.size() - 1) {
+    		    	searchResultsVO.setMorePresentInDb(false);
+    			}
+    			else {
+    		    	searchResultsVO.setMorePresentInDb(true);
+    			}
+    			break;
+    		}
+    	}
+    	if (searchResultsCount > 0) {
+    		searchResultsPostXtraFilterList.add(0, searchResultsList.get(0));
+    		searchResultsVO.setResultsList(searchResultsPostXtraFilterList);
     	}
     	return searchResultsVO;
     }

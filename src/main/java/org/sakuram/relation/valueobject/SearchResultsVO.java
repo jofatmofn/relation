@@ -3,17 +3,17 @@ package org.sakuram.relation.valueobject;
 import java.util.List;
 
 public class SearchResultsVO {
-	long resultsCount;
+	Boolean isMorePresentInDb;
 	List<List<String>> resultsList;
 	
-	public long getResultsCount() {
-		return resultsCount;
+	public Boolean isMorePresentInDb() {
+		return isMorePresentInDb;
 	}
-	
-	public void setResultsCount(long resultsCount) {
-		this.resultsCount = resultsCount;
+
+	public void setMorePresentInDb(Boolean isMorePresentInDb) {
+		this.isMorePresentInDb = isMorePresentInDb;
 	}
-	
+
 	public List<List<String>> getResultsList() {
 		return resultsList;
 	}

@@ -1,10 +1,12 @@
 var domainValueVOList, isAppReadOnly, highlightedEntity, loginUserPersonId, domainValueVOMap;
 var paSelectElement, raSelectElement, paDomainValueVOList, raDomainValueVOList, isPersonNode;
-var action, selectElementMap, doubleClick;
+var action, selectElementMap, doubleClick, paSearchXtraOptions;
 
 async function drawGraph() {
 	
 	var selectElement, retrieveAppStartValuesResponseVO, buttonElement, urlParams, startPersonId;
+	var ind;
+	
 	window.addEventListener("unhandledrejection", event =>
 	{
 		if (event.reason.stack != undefined && event.reason.stack.startsWith("sigma.")) {
@@ -12,7 +14,7 @@ async function drawGraph() {
 			alert("System ran into trouble. Kindly refresh the screen, by pressing F5.");
 		}
 		else {
-			alert(event.type);
+			alert(event.reason);
 		}
 	});
 	
@@ -66,6 +68,15 @@ async function drawGraph() {
 		}
 	}
 
+	paSearchXtraOptions = [];
+	ind = 0;
+	for (label of ["Person Id", "Parents", "Spouses"]) {
+		optionElement = document.createElement("option");
+		optionElement.setAttribute("value", --ind);
+		optionElement.appendChild(document.createTextNode(label));
+		paSearchXtraOptions.push(optionElement);
+	}
+	
 	// Instantiate sigma
 	urlParams = new URLSearchParams(window.location.search);
 	startPersonId = urlParams.get('startPersonId');
@@ -78,7 +89,7 @@ async function drawGraph() {
 		settings: {
 			doubleClickEnabled: false,
 			minEdgeSize: 0.5,
-			maxEdgeSize: 4,
+			maxEdgeSize: 2,
 			enableEdgeHovering: true,
 			edgeHoverColor: 'edge',
 			defaultEdgeHoverColor: '#000',
@@ -296,6 +307,11 @@ async function editEntityAttributes(e) {
 		rightBarElement.appendChild(attributeValueBlockElement);
 		
 		selectElement = (isPersonNode ? paSelectElement : raSelectElement).cloneNode(true);
+		if (action == ACTION_SEARCH) {
+			for (optionElement of paSearchXtraOptions) {
+				selectElement.appendChild(optionElement);
+			}
+		}
 		attributeValueBlockElement.appendChild(selectElement);
 		if (isPersonNode && action == ACTION_SEARCH) {
 			selectElement.value = PERSON_ATTRIBUTE_DV_ID_LABEL;
@@ -488,7 +504,7 @@ async function editEntityAttributes(e) {
 					return;
 				}
 				searchResultsVO = await invokeService("basic/searchPerson", attributeValueVOList);
-				if (searchResultsVO.resultsCount == 0) {
+				if (searchResultsVO.resultsList == null) {
 					searchedPersonId = NEW_ENTITY_ID;
 				}
 				
@@ -511,8 +527,8 @@ async function editEntityAttributes(e) {
 						}
 					} */
 					searchResultsTableElement.innerHTML = "";
-					if (searchResultsVO.resultsCount > searchResultsList.length) {
-						searchMessageElement.innerText = "Actual persons found: " + searchResultsVO.resultsCount + ". Showing only " + (searchResultsList.length - 1) + ". Provide more restricting search criteria."
+					if (searchResultsVO.morePresentInDb) {
+						searchMessageElement.innerText = "Showing partial result of " + (searchResultsList.length - 1) + " persons. Provide more restricting criteria to limit the results."
 					}
 					else {
 						searchMessageElement.innerText = "Showing " + (searchResultsList.length - 1) + " persons."
@@ -631,7 +647,12 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	var startDatePicker, endDatePicker, attributeDomainValueVO;
 	var deleteBlockImageElement;
 	
-	attributeDomainValueVO = domainValueVOMap.get(attributeValueVO.attributeDvId);
+	if (attributeValueVO.attributeDvId > 0) {
+		attributeDomainValueVO = domainValueVOMap.get(attributeValueVO.attributeDvId);
+	}
+	else {
+		attributeDomainValueVO = {attributeDomain: ""}
+	}
 	attributeValueBlockElement.setAttribute("attributedvid", attributeValueVO.attributeDvId);
 	if (attributeValueVO.id != undefined) {
 		attributeValueBlockElement.setAttribute("attributevalueid", attributeValueVO.id);
