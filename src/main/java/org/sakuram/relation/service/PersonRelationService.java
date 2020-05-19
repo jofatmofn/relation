@@ -201,6 +201,7 @@ public class PersonRelationService {
     	double lastY;
     	List<Integer> seqAtLevel;
     	List<String> requiredRelationsList;
+    	List<Person> excludeSpouseList;
     	
     	GraphVO retrieveRelationsResponseVO;
     	Map<Long, PersonVO> personVOMap;
@@ -214,6 +215,7 @@ public class PersonRelationService {
     	retrieveRelationsResponseVO.setEdges(relationVOList);
     	relatedPersonIdSet = new HashSet<Long>();
     	relatedRelationIdSet = new HashSet<Long>();
+    	excludeSpouseList = new ArrayList<Person>();
 		relatedPerson2VOList = new ArrayList<RelatedPerson2VO>();
     	startPerson = personRepository.findById(retrieveRelationsRequestVO.getStartPersonId())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + retrieveRelationsRequestVO.getStartPersonId(), null));
@@ -237,6 +239,10 @@ public class PersonRelationService {
 			if (currentLevel == retrieveRelationsRequestVO.getMaxDepth()) {
 				break;
 			}
+			if (currentLevel == 0 && !currentPerson.equals(startPerson)) {
+				excludeSpouseList.add(currentPerson);
+			}
+			else {
 			currentPersonVO = personVOMap.get(currentPerson.getId());
 	    	for (RelatedPerson1VO relatedPerson1VO : retrieveRelatives(currentPerson, requiredRelationsList)) {
 				if (relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_HUSBAND) ||
@@ -277,9 +283,18 @@ public class PersonRelationService {
 				}
 				else LogManager.getLogger().debug("Skipped (due to higher depth) person: " + relatedPerson1VO.person.getId());
 			}
+			}
 	    	readInd++;
 	    	if (readInd == relatedPerson2VOList.size()) {
 	    		break;
+	    	}
+		}
+		
+		for (Person spouse : excludeSpouseList) {
+	    	for (RelatedPerson1VO relatedPerson1VO : retrieveRelatives(spouse, requiredRelationsList)) {
+				if (relatedPersonIdSet.contains(relatedPerson1VO.person.getId()) && relatedRelationIdSet.add(relatedPerson1VO.relation.getId())) {
+					serviceParts.addToRelationVOList(relationVOList, relatedPerson1VO.relation, spouse, false);
+				}
 	    	}
 		}
     	
