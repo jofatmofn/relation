@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/basic")
 public class PersonRelationController {
 	
+	@SuppressWarnings("unused")
 	private final String SESSION_ATTRIBUTE_LOGGED_IN_USER = "loggedInUser";
 	
     @Autowired

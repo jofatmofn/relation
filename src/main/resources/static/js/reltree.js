@@ -207,7 +207,10 @@ async function editEntityAttributes(e) {
 			person2GenderDVId = retrieveRelationAttributesResponseVO.person2GenderDVId;
 		}
 		else {
-			alert("Debug: Scenario when e.data.edge.id equals 0!");
+			if (!e.data.edge.id.startsWith("S")) {
+				alert("Debug: Scenario when e.data.edge.id equals 0!");
+			}
+			return;
 		}
 	}
 	

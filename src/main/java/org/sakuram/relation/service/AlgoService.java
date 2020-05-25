@@ -3,12 +3,11 @@ package org.sakuram.relation.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
 import org.sakuram.relation.algo.ShortestPathBreadthFirst;
 import org.sakuram.relation.bean.Person;
 import org.sakuram.relation.bean.Relation;
@@ -41,6 +40,8 @@ public class AlgoService {
 	ServiceParts serviceParts;
 	@Autowired
 	PatternBasedXY patternBasedXY;
+	@Autowired
+	RelationSimplification relationSimplification;
 	
 	@Value("${relation.application.ascertain.relation.graph.pattern}")
 	String ASCERTAIN_RELATION_GRAPH_PATTERN;
@@ -49,13 +50,13 @@ public class AlgoService {
     	List<Person> personList;
     	Map<Long, Person> allPersonsMap;
     	LinkedList<Person> relatedPersonList;
-    	Set<Person> relatedPersonSet;
     	List<String> excludeRelationIdList;
     	XY xy;
+    	int ind;
+    	Relation relation;
     	
     	GraphVO retrieveRelationsResponseVO;
     	Map<Long, PersonVO> personVOMap;
-    	List<Relation> relationList;
     	List<RelationVO> relationVOList;
     	PersonVO personVO;
     	
@@ -70,30 +71,33 @@ public class AlgoService {
     	if (relatedPersonList == null) {
     		throw new AppException("No relation could be established between the two!", null);
     	}
-    	relatedPersonSet = new HashSet<Person>(relatedPersonList);
-    	
     	retrieveRelationsResponseVO = new GraphVO();
     	personVOMap = new HashMap<Long, PersonVO>();
     	relationVOList = new ArrayList<RelationVO>();
     	retrieveRelationsResponseVO.setEdges(relationVOList);
-    	relationList = new ArrayList<Relation>();
-    	
     	patternBasedXY.init(ASCERTAIN_RELATION_GRAPH_PATTERN, 10, 10, 20);
-    	for (Person person : relatedPersonList) {
-    		personVO = serviceParts.addToPersonVOMap(personVOMap, person);
+    	for (ind = 0; ind < relatedPersonList.size(); ind++) {
+			LogManager.getLogger().debug("Person: " + relatedPersonList.get(ind).getId());
+    		personVO = serviceParts.addToPersonVOMap(personVOMap, relatedPersonList.get(ind));
     		xy = patternBasedXY.getNextXY();
     		personVO.setX(xy.x);
     		personVO.setY(xy.y);
-    	}
-    	
-    	relationList = relationRepository.findByPerson1InAndPerson2In(relatedPersonSet, relatedPersonSet);
-    	for (Relation relation : relationList) {
-    		if (!excludeRelationIdList.contains(String.valueOf(relation.getId()))) {
-    			serviceParts.addToRelationVOList(relationVOList, relation, null, true);
+    		if (ind < relatedPersonList.size() - 1) {
+    			relation = relationRepository.findByPerson1AndPerson2(relatedPersonList.get(ind), relatedPersonList.get(ind+1));
+    			if (relation == null) {
+        			relation = relationRepository.findByPerson1AndPerson2(relatedPersonList.get(ind+1), relatedPersonList.get(ind));
+        			if (relation == null) {
+        				throw new AppException("No relation between " + relatedPersonList.get(ind).getId() + " and " + relatedPersonList.get(ind+1).getId() + "!", null);
+        			}
+    			}
+	    		if (!excludeRelationIdList.contains(String.valueOf(relation.getId()))) {
+	    			serviceParts.addToRelationVOList(relationVOList, relation, relatedPersonList.get(ind), true);
+	    		}
     		}
     	}
     	
     	retrieveRelationsResponseVO.setNodes(new ArrayList<PersonVO>(personVOMap.values()));
+    	relationSimplification.addSimplifiedRelationPaths(retrieveRelationsResponseVO);
     	return retrieveRelationsResponseVO;
 	}
 

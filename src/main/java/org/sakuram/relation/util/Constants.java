@@ -1,5 +1,9 @@
 package org.sakuram.relation.util;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 public class Constants {
 	
 	public static final byte ENTITY_TYPE_PERSON = (byte)1;
@@ -24,7 +28,38 @@ public class Constants {
 	public static final String RELATION_NAME_WIFE = "4";
 	public static final String RELATION_NAME_SON = "5";
 	public static final String RELATION_NAME_DAUGHTER = "6";
-	
+	public static final String RELATION_NAME_BROTHER = "316";
+	public static final String RELATION_NAME_SISTER = "317";
+	public static final String RELATION_NAME_FATHER_IN_LAW = "318";
+	public static final String RELATION_NAME_MOTHER_IN_LAW = "319";
+	public static final String RELATION_NAME_SON_IN_LAW = "320";
+	public static final String RELATION_NAME_DAUGHTER_IN_LAW = "321";
+	public static final String RELATION_NAME_UNCLE = "324";
+	public static final String RELATION_NAME_AUNT = "325";
+	public static final String RELATION_NAME_NEPHEW = "326";
+	public static final String RELATION_NAME_NIECE = "327";
+	public static final String RELATION_NAME_COUSIN_BROTHER = "328";
+	public static final String RELATION_NAME_COUSIN_SISTER = "329";
+	public static Map<String, String> RELATION_NAME_TO_ID_MAP = Stream.of(new String[][] {
+		  { "Father", "1" },
+		  { "Mother", "2" },
+		  { "Husband", "3" },
+		  { "Wife", "4" },
+		  { "Son", "5" },
+		  { "Daughter", "6" },
+		  { "Brother", "316" },
+		  { "Sister", "317" },
+		  { "Father-in-law", "318" },
+		  { "Mother-in-law", "319" },
+		  { "Son-in-law", "320" },
+		  { "Daughter-in-law", "321" },
+		  { "Uncle", "324" },
+		  { "Aunt", "325" },
+		  { "Nephew", "326" },
+		  { "Niece", "327" },
+		  { "Cousin-brother", "328" },
+		  { "Cousin-sister", "329" },
+		  }).collect(Collectors.toMap(data -> data[0], data -> data[1]));	// TODO: Read it from DB?
 	public static final String FLAG_RELATION_TYPE_PARENT_CHILD = "PC";
 	public static final String FLAG_RELATION_TYPE_SPOUSE = "Sp";
 	
@@ -40,6 +75,9 @@ public class Constants {
 	public static final int FLAG_POSITION_REPETITION = 1;
 	public static final int FLAG_POSITION_DOMAIN = 2;
 	public static final int FLAG_POSITION_INPUT_MANDATORY = 3;
+
+	public static final String EDGE_TYPE_DIRECT_RELATION = "line";
+	public static final String EDGE_TYPE_SIMPLIFIED_RELATION = "dotCurve";
 	
 	public static final String CSV_SEPARATOR = ",";
 	public static final long NEW_ENTITY_ID = -1L;
