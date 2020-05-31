@@ -18,8 +18,9 @@ import org.sakuram.relation.valueobject.RetrieveAppStartValuesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsBetweenRequestVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -29,15 +30,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/basic")
 public class PersonRelationController {
 	
-	@SuppressWarnings("unused")
-	private final String SESSION_ATTRIBUTE_LOGGED_IN_USER = "loggedInUser";
-	
     @Autowired
     PersonRelationService personRelationService;
     
-	@Value("${relation.application.readonly}")
-	boolean isAppReadOnly;
-	
     @RequestMapping(value = "/retrieveRelations", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public GraphVO retrieveRelations(@RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	return personRelationService.retrieveRelations(retrieveRelationsRequestVO);
@@ -59,8 +54,16 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/retrieveAppStartValues", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public RetrieveAppStartValuesResponseVO retrieveAppStartValues() {
-    	return personRelationService.retrieveAppStartValues();
+    public RetrieveAppStartValuesResponseVO retrieveAppStartValues(@AuthenticationPrincipal OAuth2User principal) {
+    	RetrieveAppStartValuesResponseVO retrieveAppStartValuesResponseVO;
+    	retrieveAppStartValuesResponseVO = personRelationService.retrieveAppStartValues();
+    	if (principal == null) {
+    		retrieveAppStartValuesResponseVO.setAppReadOnly(true);
+    	}
+    	else {
+    		retrieveAppStartValuesResponseVO.setLoggedInUser(principal.getAttribute("name"));
+    	}
+    	return retrieveAppStartValuesResponseVO;
     }
     
     @RequestMapping(value = "/retrievePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -74,8 +77,8 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/savePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public SaveAttributesResponseVO savePersonAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
-    	if (isAppReadOnly) {
+    public SaveAttributesResponseVO savePersonAttributes(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
+    	if (principal == null) {
     		throw new AppException("Application is running in READ ONLY mode", null);
     	}
     	saveAttributesRequestVO.setCreatorId(getCreatorId(httpSession));
@@ -83,8 +86,8 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/saveRelationAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public SaveAttributesResponseVO saveRelationAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
-    	if (isAppReadOnly) {
+    public SaveAttributesResponseVO saveRelationAttributes(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
+    	if (principal == null) {
     		throw new AppException("Application is running in READ ONLY mode", null);
     	}
     	saveAttributesRequestVO.setCreatorId(getCreatorId(httpSession));
@@ -97,8 +100,8 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/saveRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public long saveRelation(HttpSession httpSession, @RequestBody RelatedPersonsVO saveRelationRequestVO) {
-    	if (isAppReadOnly) {
+    public long saveRelation(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal, @RequestBody RelatedPersonsVO saveRelationRequestVO) {
+    	if (principal == null) {
     		throw new AppException("Application is running in READ ONLY mode", null);
     	}
     	saveRelationRequestVO.setCreatorId(getCreatorId(httpSession));
@@ -106,16 +109,16 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/deleteRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public void deleteRelation(HttpSession httpSession, @RequestBody Long relationId) {
-    	if (isAppReadOnly) {
+    public void deleteRelation(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal, @RequestBody Long relationId) {
+    	if (principal == null) {
     		throw new AppException("Application is running in READ ONLY mode", null);
     	}
     	personRelationService.deleteRelation(relationId, getCreatorId(httpSession));
     }
     
     @RequestMapping(value = "/deletePerson", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public void deletePerson(HttpSession httpSession, @RequestBody Long personId) {
-    	if (isAppReadOnly) {
+    public void deletePerson(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal, @RequestBody Long personId) {
+    	if (principal == null) {
     		throw new AppException("Application is running in READ ONLY mode", null);
     	}
     	personRelationService.deletePerson(personId, getCreatorId(httpSession));

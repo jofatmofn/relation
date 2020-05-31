@@ -20,6 +20,11 @@ async function drawGraph() {
 	
 	loginUserPersonId = 6;	// TODO: After integration with login, this should be user's person id
 	retrieveAppStartValuesResponseVO = await invokeService("basic/retrieveAppStartValues", "");
+	if (retrieveAppStartValuesResponseVO.loggedInUser != null) {
+		document.getElementById("user").textContent = retrieveAppStartValuesResponseVO.loggedInUser;
+		document.getElementsByClassName("unauthenticated")[0].style.display = "none";
+		document.getElementsByClassName("authenticated")[0].style.display = "block";
+	}
 	domainValueVOList = retrieveAppStartValuesResponseVO.domainValueVOList;
 	isAppReadOnly = retrieveAppStartValuesResponseVO.appReadOnly;
 	if (isAppReadOnly) {

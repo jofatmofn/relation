@@ -40,7 +40,6 @@ import org.sakuram.relation.valueobject.RetrieveAppStartValuesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsBetweenRequestVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,9 +58,6 @@ public class PersonRelationService {
 	
 	@Autowired
 	ServiceParts serviceParts;
-	
-	@Value("${relation.application.readonly}")
-	boolean isAppReadOnly;
 	
 	public GraphVO retrieveRelations(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	Person startPerson;
@@ -343,7 +339,6 @@ public class PersonRelationService {
 		RetrieveAppStartValuesResponseVO retrieveAppStartValuesResponseVO;
 		retrieveAppStartValuesResponseVO = new RetrieveAppStartValuesResponseVO();
 		retrieveAppStartValuesResponseVO.setDomainValueVOList(retrieveDomainValues());
-		retrieveAppStartValuesResponseVO.setAppReadOnly(isAppReadOnly);
 		return retrieveAppStartValuesResponseVO;
 	}
 	

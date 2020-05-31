@@ -26,7 +26,14 @@
 	</head>
 	<body onload="drawGraph()">
 		<div id="container">
-			<div id="topbar"></div>
+			<div id="topbar">
+				<div class="unauthenticated" style="display: block">
+					<a href="oauth2/authorization/google">Login with Google</a>
+				</div>
+				<div class="authenticated" style="display: none">
+					Logged in as: <span id="user"></span>
+				</div>
+			</div>
 			<div id="leftbar">
 				<div id="leftbartitle">Functions</div>
 				<div id="leftbarbuttons">
