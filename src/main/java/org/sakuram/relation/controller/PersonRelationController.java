@@ -34,22 +34,22 @@ public class PersonRelationController {
     PersonRelationService personRelationService;
     
     @RequestMapping(value = "/retrieveRelations", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public GraphVO retrieveRelations(@RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+    public GraphVO retrieveRelations(HttpSession httpSession, @RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	return personRelationService.retrieveRelations(retrieveRelationsRequestVO);
     }
     
     @RequestMapping(value = "/retrieveRelationsBetween", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<RelationVO> retrieveRelationsBetween(@RequestBody RetrieveRelationsBetweenRequestVO retrieveRelationsBetweenRequestVO) {
+    public List<RelationVO> retrieveRelationsBetween(HttpSession httpSession, @RequestBody RetrieveRelationsBetweenRequestVO retrieveRelationsBetweenRequestVO) {
     	return personRelationService.retrieveRelationsBetween(retrieveRelationsBetweenRequestVO);
     }
     
     @RequestMapping(value = "/retrieveTree", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public GraphVO retrieveTree(@RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+    public GraphVO retrieveTree(HttpSession httpSession, @RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	return personRelationService.retrieveTree(retrieveRelationsRequestVO);
     }
     
     @RequestMapping(value = "/retrieveParceners", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public GraphVO retrieveParceners(@RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+    public GraphVO retrieveParceners(HttpSession httpSession, @RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	return personRelationService.retrieveParceners(retrieveRelationsRequestVO);
     }
     
@@ -67,12 +67,12 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/retrievePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<AttributeValueVO> retrievePersonAttributes(@RequestBody long entityId) {
+    public List<AttributeValueVO> retrievePersonAttributes(HttpSession httpSession, @RequestBody long entityId) {
     	return personRelationService.retrievePersonAttributes(entityId);
     }
     
     @RequestMapping(value = "/retrieveRelationAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public RetrieveRelationAttributesResponseVO retrieveRelationAttributes(@RequestBody long entityId) {
+    public RetrieveRelationAttributesResponseVO retrieveRelationAttributes(HttpSession httpSession, @RequestBody long entityId) {
     	return personRelationService.retrieveRelationAttributes(entityId);
     }
     
@@ -95,8 +95,7 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/searchPerson", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public SearchResultsVO searchPerson(@RequestBody List<AttributeValueVO> attributeValueVOList) {
-    	org.sakuram.relation.util.TenantContext.setCurrentTenant(1L); // TODO: Remove Test Code
+    public SearchResultsVO searchPerson(HttpSession httpSession, @RequestBody List<AttributeValueVO> attributeValueVOList) {
     	return personRelationService.searchPerson(attributeValueVOList);
     }
     

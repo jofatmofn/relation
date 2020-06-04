@@ -27,11 +27,20 @@
 	<body onload="drawGraph()">
 		<div id="container">
 			<div id="topbar">
-				<div class="unauthenticated" style="display: block">
-					<a href="oauth2/authorization/google">Login with Google</a>
+				<div id="projectdetails">
+					<label for="project">Project:&nbsp;</label>
+					<input type="text" id="project"/>
+					<button onclick="switchProject()">Switch Project</button>
 				</div>
-				<div class="authenticated" style="display: none">
-					Logged in as: <span id="user"></span>
+				<div id="userdetails">
+					<label for="user">User:&nbsp;</label>
+					<div class="unauthenticated" style="display: block">
+						<a href="oauth2/authorization/google">Login with Google</a>
+					</div>
+					<div class="authenticated" style="display: none">
+						<input type="text" id="user" disabled/>
+						<button onclick="logout()">Logout</button>
+					</div>
 				</div>
 			</div>
 			<div id="leftbar">
@@ -48,9 +57,9 @@
 				<hr/>
 				<div id="leftbarconfig">
 					<span>On double click of a person, show</span><br/>
-					<input type="radio" id="drel" name="cfgPersonDblClk" value="drel" checked onclick="enDisableDepth(this);">
+					<input type="radio" id="drel" name="cfgPersonDblClk" value="drel" checked onclick="enDisableDepth(this);"/>
 					<label for="drel">Direct Relations</label><br/>
-					<input type="radio" id="ftree" name="cfgPersonDblClk" value="ftree" onclick="enDisableDepth(this);">
+					<input type="radio" id="ftree" name="cfgPersonDblClk" value="ftree" onclick="enDisableDepth(this);"/>
 					<label for="ftree">Full Tree</label>
 					&nbsp;&nbsp;&nbsp;(
 					<label for="depth">Max Depth</label>
@@ -61,7 +70,7 @@
 					</select>
 					)
 					<br/>
-					<input type="radio" id="parceners" name="cfgPersonDblClk" value="parceners" onclick="enDisableDepth(this);">
+					<input type="radio" id="parceners" name="cfgPersonDblClk" value="parceners" onclick="enDisableDepth(this);"/>
 					<label for="parceners">Parceners</label><br/>
 				</div>
 			</div>

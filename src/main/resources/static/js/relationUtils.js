@@ -69,6 +69,9 @@ async function invokeService(serviceUrl, requestVO)
 		else if(requestVO == "") {
 			httpRequest.send("{}");
 		}
+		else if(typeof requestVO == "string") {
+			httpRequest.send(requestVO);
+		}
 		else {
 			httpRequest.send(JSON.stringify(requestVO));
 		}

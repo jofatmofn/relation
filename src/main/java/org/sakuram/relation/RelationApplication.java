@@ -20,9 +20,8 @@ public class RelationApplication extends WebSecurityConfigurerAdapter {
 						.antMatchers("/*", "/**/*").permitAll()
 						.anyRequest().authenticated()
 					    .and()
-					    .csrf().disable();
+					    .csrf().disable();	// TODO: CSRF to be enabled
 				} catch (Exception e1) {
-					// TODO Auto-generated catch block
 					throw new AppException("Exception during authentication",e1);
 				}
 			}
@@ -30,6 +29,9 @@ public class RelationApplication extends WebSecurityConfigurerAdapter {
 			.exceptionHandling(e -> e
 				.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
 			)
+	        .logout(l -> l
+	                .logoutSuccessUrl("/").permitAll()
+	        )
 			.oauth2Login();
 	}
 

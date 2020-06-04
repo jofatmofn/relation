@@ -1,5 +1,7 @@
 package org.sakuram.relation.controller;
 
+import javax.servlet.http.HttpSession;
+
 import org.sakuram.relation.service.AlgoService;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
 import org.sakuram.relation.valueobject.GraphVO;
@@ -19,7 +21,7 @@ public class AlgoController {
     AlgoService algoService;
     
     @RequestMapping(value = "/retrieveRelationPath", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public GraphVO retrieveRelationPath(@RequestBody RelatedPersonsVO relatedPersonsVO) {
+    public GraphVO retrieveRelationPath(HttpSession httpSession, @RequestBody RelatedPersonsVO relatedPersonsVO) {
     	return algoService.retrieveRelationPath(relatedPersonsVO);
     }
     

@@ -18,8 +18,11 @@ public class Tenant {
 	@Column(name="id", nullable=false)
 	private long id;
 	
-	@Column(name="project_id", nullable=false)
+	@Column(name="project_id", nullable=false, unique=true)
 	private String projectId;
+
+	@Column(name="project_name", nullable=false)
+	private String projectName;
 
 	public long getId() {
 		return id;
@@ -35,6 +38,14 @@ public class Tenant {
 
 	public void setProjectId(String projectId) {
 		this.projectId = projectId;
+	}
+
+	public String getProjectName() {
+		return projectName;
+	}
+
+	public void setProjectName(String projectName) {
+		this.projectName = projectName;
 	}
 	
 }

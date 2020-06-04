@@ -5,7 +5,7 @@ var action, selectElementMap, doubleClick, paSearchXtraOptions;
 async function drawGraph() {
 	
 	var selectElement, retrieveAppStartValuesResponseVO, buttonElement, urlParams, startPersonId;
-	var ind;
+	var ind, startProjectId;
 	
 	window.addEventListener("unhandledrejection", event =>
 	{
@@ -21,7 +21,7 @@ async function drawGraph() {
 	loginUserPersonId = 6;	// TODO: After integration with login, this should be user's person id
 	retrieveAppStartValuesResponseVO = await invokeService("basic/retrieveAppStartValues", "");
 	if (retrieveAppStartValuesResponseVO.loggedInUser != null) {
-		document.getElementById("user").textContent = retrieveAppStartValuesResponseVO.loggedInUser;
+		document.getElementById("user").value = retrieveAppStartValuesResponseVO.loggedInUser;
 		document.getElementsByClassName("unauthenticated")[0].style.display = "none";
 		document.getElementsByClassName("authenticated")[0].style.display = "block";
 	}
@@ -85,8 +85,8 @@ async function drawGraph() {
 	// Instantiate sigma
 	urlParams = new URLSearchParams(window.location.search);
 	startPersonId = urlParams.get('startPersonId');
+	startProjectId = urlParams.get('startProjectId');
 	s = new sigma({
-		graph: await invokeService("basic/retrieveRelations", {startPersonId : (startPersonId == null ? loginUserPersonId : startPersonId)}),
 		renderer: {
 			container: "graph-container",
 			type: "canvas"
@@ -177,6 +177,14 @@ async function drawGraph() {
 	dragListener.bind('dragend', function(event) {
 	  console.log(event);
 	});
+
+	if (startProjectId != null) {
+		await invokeService("projectuser/switchProject", startProjectId);
+		document.getElementById("project").value = startProjectId;
+		if (startPersonId != null) {
+			s.graph.read(await invokeService("basic/retrieveRelations", {startPersonId : startPersonId}));
+		}
+	}
 
 }
 
@@ -921,4 +929,15 @@ function enDisableDepth(clickedRadioElement) {
 	else {
 		document.getElementById("depth").setAttribute("disabled","");
 	}
+}
+
+async function switchProject() {
+	await invokeService("projectuser/switchProject", document.getElementById("project").value);
+	alert("Project switched successfully");
+}
+
+async function logout() {
+	await invokeService("logout", "");
+	document.getElementsByClassName("unauthenticated")[0].style.display = "block";
+	document.getElementsByClassName("authenticated")[0].style.display = "none";
 }
