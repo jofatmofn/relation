@@ -96,6 +96,7 @@ public class PersonRelationController {
     
     @RequestMapping(value = "/searchPerson", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public SearchResultsVO searchPerson(@RequestBody List<AttributeValueVO> attributeValueVOList) {
+    	org.sakuram.relation.util.TenantContext.setCurrentTenant(1L); // TODO: Remove Test Code
     	return personRelationService.searchPerson(attributeValueVOList);
     }
     

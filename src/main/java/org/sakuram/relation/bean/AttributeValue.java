@@ -15,6 +15,9 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
 import org.hibernate.annotations.Where;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
@@ -23,6 +26,8 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan
 @Entity
 @Where(clause="overwritten_by_fk is null and deleter_fk is null")
+@FilterDef(name = "tenantFilter", parameters = {@ParamDef(name = "tenantId", type = "long")})
+@Filter(name = "tenantFilter", condition = "tenant_fk = :tenantId")
 @Table(name="attribute_value")
 public class AttributeValue {
 
@@ -55,6 +60,10 @@ public class AttributeValue {
 	
 	@Column(name="end_date", nullable=true)
 	private Date endDate;
+	
+	@ManyToOne
+	@JoinColumn(name="tenant_fk", nullable=false)
+	private Tenant tenant;
 	
 	@ManyToOne
 	@JoinColumn(name="creator_fk", nullable=false)
@@ -137,6 +146,14 @@ public class AttributeValue {
 
 	public void setEndDate(Date endDate) {
 		this.endDate = endDate;
+	}
+
+	public Tenant getTenant() {
+		return tenant;
+	}
+
+	public void setTenant(Tenant tenant) {
+		this.tenant = tenant;
 	}
 
 	public Person getCreator() {

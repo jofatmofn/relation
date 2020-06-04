@@ -25,6 +25,7 @@ import org.sakuram.relation.service.ServiceParts.RelatedPerson1VO;
 import org.sakuram.relation.util.AppException;
 import org.sakuram.relation.util.Constants;
 import org.sakuram.relation.util.DomainValueFlags;
+import org.sakuram.relation.util.TenantContext;
 import org.sakuram.relation.util.UtilFuncs;
 import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.DomainValueVO;
@@ -555,11 +556,17 @@ public class PersonRelationService {
     	DomainValueFlags domainValueFlags;
     	String attrVal, parentNamesSsv, spouseNamesSsv, parentsCriteria, spousesCriteria;
     	DomainValue attributeDv;
+    	Long tenantId;
     	
     	parentsCriteria = null;
     	spousesCriteria = null;
     	querySB = new StringBuilder();
-    	querySB.append("SELECT * FROM person p WHERE p.overwritten_by_fk IS NULL AND p.deleter_fk IS NULL");
+    	querySB.append("SELECT * FROM person p LEFT OUTER JOIN tenant t ON p.tenant_fk = t.id WHERE p.overwritten_by_fk IS NULL AND p.deleter_fk IS NULL");
+    	tenantId = TenantContext.getCurrentTenant();
+    	if (tenantId != null) {
+    		querySB.append(" AND p.tenant_fk = ");
+    		querySB.append(tenantId);
+    	}
     	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
     		if (attributeValueVO.getAttributeDvId() > 0) {
 	    		querySB.append(" AND ");
