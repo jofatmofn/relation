@@ -31,6 +31,7 @@ public class RelationApplication extends WebSecurityConfigurerAdapter {
 			)
 	        .logout(l -> l
 	                .logoutSuccessUrl("/").permitAll()
+	                .invalidateHttpSession(false)
 	        )
 			.oauth2Login();
 	}

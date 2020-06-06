@@ -4,6 +4,7 @@ import java.util.List;
 import javax.servlet.http.HttpSession;
 
 import org.sakuram.relation.service.PersonRelationService;
+import org.sakuram.relation.util.Constants;
 import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
@@ -52,14 +53,11 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/retrieveAppStartValues", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public RetrieveAppStartValuesResponseVO retrieveAppStartValues(@AuthenticationPrincipal OAuth2User principal, HttpSession httpSession) {
+    public RetrieveAppStartValuesResponseVO retrieveAppStartValues(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal) {
     	RetrieveAppStartValuesResponseVO retrieveAppStartValuesResponseVO;
     	
-    	retrieveAppStartValuesResponseVO = personRelationService.retrieveAppStartValues();
-    	if (principal == null) {
-    		retrieveAppStartValuesResponseVO.setAppReadOnly(true);
-    	}
-    	else {
+    	retrieveAppStartValuesResponseVO = personRelationService.retrieveAppStartValues((Long) httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID));
+    	if (principal != null) {
     		retrieveAppStartValuesResponseVO.setLoggedInUser(principal.getAttribute("name") + " (" + principal.getAttribute("email") + ")");
     	}
     	return retrieveAppStartValuesResponseVO;

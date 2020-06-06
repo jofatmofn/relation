@@ -6,5 +6,5 @@ import org.sakuram.relation.bean.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PrivilegeRepository extends JpaRepository<Privilege, Long> {
-	Privilege findByTenantAndUser(Tenant tenant, AppUser user);
+	Privilege findByTenantAndAppUser(Tenant tenant, AppUser appUser);
 }

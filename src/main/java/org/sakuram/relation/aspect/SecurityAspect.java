@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class SecurityAspect {
 	
-	@Around("(execution(* org.sakuram.relation.controller.PersonRelationController.*(..)) || execution(* org.sakuram.relation.controller.AlgoController.*(..))) && args(httpSession,..)")
+	@Around("(((execution(* org.sakuram.relation.controller.PersonRelationController.*(..))) && (!execution(* org.sakuram.relation.controller.PersonRelationController.retrieveAppStartValues(..)))) || execution(* org.sakuram.relation.controller.AlgoController.*(..))) && args(httpSession,..)")
 	public Object identifyTenant(ProceedingJoinPoint proceedingJoinPoint, HttpSession httpSession) throws Throwable {
 		Object returnValueObject;
 		if (httpSession == null || httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID) == null) {

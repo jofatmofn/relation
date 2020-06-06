@@ -18,11 +18,13 @@ import org.sakuram.relation.bean.AttributeValue;
 import org.sakuram.relation.bean.DomainValue;
 import org.sakuram.relation.bean.Person;
 import org.sakuram.relation.bean.Relation;
+import org.sakuram.relation.bean.Tenant;
 import org.sakuram.relation.repository.AppUserRepository;
 import org.sakuram.relation.repository.AttributeValueRepository;
 import org.sakuram.relation.repository.DomainValueRepository;
 import org.sakuram.relation.repository.PersonRepository;
 import org.sakuram.relation.repository.RelationRepository;
+import org.sakuram.relation.repository.TenantRepository;
 import org.sakuram.relation.service.ServiceParts.RelatedPerson1VO;
 import org.sakuram.relation.util.AppException;
 import org.sakuram.relation.util.Constants;
@@ -60,6 +62,8 @@ public class PersonRelationService {
 	AttributeValueRepository attributeValueRepository;
 	@Autowired
 	AppUserRepository appUserRepository;
+	@Autowired
+	TenantRepository tenantRepository;
 	
 	@Autowired
 	ServiceParts serviceParts;
@@ -340,10 +344,18 @@ public class PersonRelationService {
 		return retrieveTree(retrieveRelationsRequestVO2);
 	}
 	
-	public RetrieveAppStartValuesResponseVO retrieveAppStartValues() {
+	public RetrieveAppStartValuesResponseVO retrieveAppStartValues(Long tenantId) {
 		RetrieveAppStartValuesResponseVO retrieveAppStartValuesResponseVO;
+		Tenant tenant;
+		
 		retrieveAppStartValuesResponseVO = new RetrieveAppStartValuesResponseVO();
 		retrieveAppStartValuesResponseVO.setDomainValueVOList(retrieveDomainValues());
+		if (tenantId != null) {
+    		tenant = tenantRepository.findById(tenantId)
+    				.orElseThrow(() -> new AppException("Invalid Tenant Id " + tenantId, null));
+    		retrieveAppStartValuesResponseVO.setInUseProject(tenant.getProjectId());
+		}
+
 		return retrieveAppStartValuesResponseVO;
 	}
 	

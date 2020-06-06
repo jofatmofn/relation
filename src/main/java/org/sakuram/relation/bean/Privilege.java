@@ -22,7 +22,7 @@ public class Privilege {
 	
 	@ManyToOne
 	@JoinColumn(name="user_fk", nullable=true)
-	private AppUser user;
+	private AppUser appUser;
 	
 	@ManyToOne
 	@JoinColumn(name="tenant_fk", nullable=true)
@@ -40,12 +40,12 @@ public class Privilege {
 		this.id = id;
 	}
 
-	public AppUser getUser() {
-		return user;
+	public AppUser getAppUser() {
+		return appUser;
 	}
 
-	public void setUser(AppUser user) {
-		this.user = user;
+	public void setAppUser(AppUser appUser) {
+		this.appUser = appUser;
 	}
 
 	public Tenant getTenant() {

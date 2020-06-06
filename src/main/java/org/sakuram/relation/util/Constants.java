@@ -88,4 +88,7 @@ public class Constants {
 	
 	public static final String SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID = "projectId";
 	public static final String SESSION_ATTRIBUTE_USER_SURROGATE_ID = "userId";
+	
+	public static final long ROLE_DV_ID_CREATOR = 332;
+	public static final long ROLE_DV_ID_COLLABORATOR = 333;
 }

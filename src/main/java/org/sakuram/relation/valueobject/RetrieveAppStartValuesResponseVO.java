@@ -4,8 +4,8 @@ import java.util.List;
 
 public class RetrieveAppStartValuesResponseVO {
 	List<DomainValueVO> domainValueVOList;
-	boolean isAppReadOnly;
 	String loggedInUser;
+	String inUseProject;
 	
 	public List<DomainValueVO> getDomainValueVOList() {
 		return domainValueVOList;
@@ -15,20 +15,20 @@ public class RetrieveAppStartValuesResponseVO {
 		this.domainValueVOList = domainValueVOList;
 	}
 	
-	public boolean isAppReadOnly() {
-		return isAppReadOnly;
-	}
-	
-	public void setAppReadOnly(boolean isAppReadOnly) {
-		this.isAppReadOnly = isAppReadOnly;
-	}
-
 	public String getLoggedInUser() {
 		return loggedInUser;
 	}
 
 	public void setLoggedInUser(String loggedInUser) {
 		this.loggedInUser = loggedInUser;
+	}
+
+	public String getInUseProject() {
+		return inUseProject;
+	}
+
+	public void setInUseProject(String inUseProject) {
+		this.inUseProject = inUseProject;
 	}
 	
 }

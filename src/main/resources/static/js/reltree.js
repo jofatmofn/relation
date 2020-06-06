@@ -1,4 +1,4 @@
-var domainValueVOList, isAppReadOnly, highlightedEntity, loginUserPersonId, domainValueVOMap;
+var domainValueVOList, isAppReadOnly, highlightedEntity, domainValueVOMap;
 var paSelectElement, raSelectElement, paDomainValueVOList, raDomainValueVOList, isPersonNode;
 var action, selectElementMap, doubleClick, paSearchXtraOptions;
 
@@ -18,8 +18,7 @@ async function drawGraph() {
 		}
 	});
 	
-	loginUserPersonId = 6;	// TODO: After integration with login, this should be user's person id
-	await invokeService("projectuser/postLogin", "");
+	isAppReadOnly = await invokeService("projectuser/postLogin", "");
 	retrieveAppStartValuesResponseVO = await invokeService("basic/retrieveAppStartValues", "");
 	if (retrieveAppStartValuesResponseVO.loggedInUser != null) {
 		document.getElementById("user").value = retrieveAppStartValuesResponseVO.loggedInUser;
@@ -27,12 +26,7 @@ async function drawGraph() {
 		document.getElementsByClassName("authenticated")[0].style.display = "block";
 	}
 	domainValueVOList = retrieveAppStartValuesResponseVO.domainValueVOList;
-	isAppReadOnly = retrieveAppStartValuesResponseVO.appReadOnly;
-	if (isAppReadOnly) {
-		for (let buttonElement of document.querySelectorAll("div#leftbarbuttons > button[rel-modify-data]")) {
-			buttonElement.disabled = true;
-		}
-	}
+	document.getElementById("project").value = retrieveAppStartValuesResponseVO.inUseProject;
 	domainValueVOMap = new Map();
 	paSelectElement = document.createElement("select");
 	paSelectElement.setAttribute("name","attributenames");
@@ -180,12 +174,13 @@ async function drawGraph() {
 	});
 
 	if (startProjectId != null) {
-		await invokeService("projectuser/switchProject", startProjectId);
+		isAppReadOnly = await invokeService("projectuser/switchProject", startProjectId);
 		document.getElementById("project").value = startProjectId;
 		if (startPersonId != null) {
 			s.graph.read(await invokeService("basic/retrieveRelations", {startPersonId : startPersonId}));
 		}
 	}
+	enableDisableRWFunctions();
 
 }
 
@@ -933,11 +928,24 @@ function enDisableDepth(clickedRadioElement) {
 }
 
 async function switchProject() {
-	await invokeService("projectuser/switchProject", document.getElementById("project").value);
+	isAppReadOnly = await invokeService("projectuser/switchProject", document.getElementById("project").value);
+	enableDisableRWFunctions();
 	alert("Project switched successfully");
 }
 
 async function logout() {
 	await invokeService("projectuser/preLogout", "");
 	window.location.href = "./logout";
+	/* postLogin will now be called which in-turn will take care of enableDisableRWFunctions */
+}
+
+function enableDisableRWFunctions() {
+	for (let buttonElement of document.querySelectorAll("div#leftbarbuttons > button[rel-modify-data]")) {
+		if (isAppReadOnly) {
+			buttonElement.setAttribute("disabled","");
+		}
+		else {
+			buttonElement.removeAttribute("disabled");
+		}
+	}
 }

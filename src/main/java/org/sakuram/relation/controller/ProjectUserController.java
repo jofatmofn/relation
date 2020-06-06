@@ -22,10 +22,12 @@ public class ProjectUserController {
     ProjectUserService projectUserService;
     
     @RequestMapping(value = "/switchProject", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public void switchProject(HttpSession httpSession, @RequestBody String projectId) {
+    public boolean switchProject(HttpSession httpSession, @RequestBody String projectId) {
     	httpSession.removeAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID);
     	httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID, projectUserService.switchProject(projectId));
-    	return;
+    	return projectUserService.isAppReadOnly(
+    			(Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID),
+    			(Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID));
     }
     
     @RequestMapping(value = "/preLogout", method = RequestMethod.POST)
@@ -36,14 +38,16 @@ public class ProjectUserController {
     }
     
     @RequestMapping(value = "/postLogin", method = RequestMethod.POST)
-    public void postLogin(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal) {
+    public boolean postLogin(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal) {
     	long userId;
 		if (principal != null && httpSession != null && httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID) == null) {
 			userId = projectUserService.findOrSaveUser(principal.getAttribute("sub"), principal.getAttribute("iss").toString());
 			httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID, userId);
 			LogManager.getLogger().info("Login: " + principal.getAttribute("name") + " / " + userId);
 		}
-    	return;
+    	return projectUserService.isAppReadOnly(
+    			(Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID),
+    			(Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID));
     }
     
 }
