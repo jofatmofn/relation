@@ -53,7 +53,12 @@ async function invokeService(serviceUrl, requestVO)
 					return;
 				case 4:
 					responseParseOut = JSON.parse(httpRequest.responseText);
-					reject("Error: " + responseParseOut.error + ". Message: " + responseParseOut.message);
+					if (responseParseOut.message == "No message available") {
+						reject("Error: " + responseParseOut.error + ". Message: " + responseParseOut.message);
+					}
+					else {
+						reject(responseParseOut.message);
+					}
 					return;
 				case 5:
 					reject("Taking long duration. Try giving lesser workload.");

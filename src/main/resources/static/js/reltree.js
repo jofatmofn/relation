@@ -19,6 +19,7 @@ async function drawGraph() {
 	});
 	
 	loginUserPersonId = 6;	// TODO: After integration with login, this should be user's person id
+	await invokeService("projectuser/postLogin", "");
 	retrieveAppStartValuesResponseVO = await invokeService("basic/retrieveAppStartValues", "");
 	if (retrieveAppStartValuesResponseVO.loggedInUser != null) {
 		document.getElementById("user").value = retrieveAppStartValuesResponseVO.loggedInUser;
@@ -937,7 +938,6 @@ async function switchProject() {
 }
 
 async function logout() {
-	await invokeService("logout", "");
-	document.getElementsByClassName("unauthenticated")[0].style.display = "block";
-	document.getElementsByClassName("authenticated")[0].style.display = "none";
+	await invokeService("projectuser/preLogout", "");
+	window.location.href = "./logout";
 }

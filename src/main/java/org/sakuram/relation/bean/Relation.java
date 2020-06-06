@@ -55,7 +55,7 @@ public class Relation {
 	
 	@ManyToOne
 	@JoinColumn(name="creator_fk", nullable=false)
-	private Person creator;
+	private AppUser creator;
 	
 	@Column(name="created_at", nullable=false, updatable=false)
 	@CreationTimestamp
@@ -67,7 +67,7 @@ public class Relation {
 	
 	@ManyToOne
 	@JoinColumn(name="deleter_fk", nullable=true)
-	private Person deleter;
+	private AppUser deleter;
 	
 	@Column(name="deleted_at", nullable=true)
 	private Timestamp deletedAt;
@@ -109,11 +109,11 @@ public class Relation {
 		this.tenant = tenant;
 	}
 
-	public Person getCreator() {
+	public AppUser getCreator() {
 		return creator;
 	}
 
-	public void setCreator(Person creator) {
+	public void setCreator(AppUser creator) {
 		this.creator = creator;
 	}
 
@@ -133,11 +133,11 @@ public class Relation {
 		this.overwrittenBy = overwrittenBy;
 	}
 
-	public Person getDeleter() {
+	public AppUser getDeleter() {
 		return deleter;
 	}
 
-	public void setDeleter(Person deleter) {
+	public void setDeleter(AppUser deleter) {
 		this.deleter = deleter;
 	}
 

@@ -1,11 +1,9 @@
 package org.sakuram.relation.controller;
 
 import java.util.List;
-
 import javax.servlet.http.HttpSession;
 
 import org.sakuram.relation.service.PersonRelationService;
-import org.sakuram.relation.util.AppException;
 import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
@@ -54,14 +52,15 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/retrieveAppStartValues", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public RetrieveAppStartValuesResponseVO retrieveAppStartValues(@AuthenticationPrincipal OAuth2User principal) {
+    public RetrieveAppStartValuesResponseVO retrieveAppStartValues(@AuthenticationPrincipal OAuth2User principal, HttpSession httpSession) {
     	RetrieveAppStartValuesResponseVO retrieveAppStartValuesResponseVO;
+    	
     	retrieveAppStartValuesResponseVO = personRelationService.retrieveAppStartValues();
     	if (principal == null) {
     		retrieveAppStartValuesResponseVO.setAppReadOnly(true);
     	}
     	else {
-    		retrieveAppStartValuesResponseVO.setLoggedInUser(principal.getAttribute("name"));
+    		retrieveAppStartValuesResponseVO.setLoggedInUser(principal.getAttribute("name") + " (" + principal.getAttribute("email") + ")");
     	}
     	return retrieveAppStartValuesResponseVO;
     }
@@ -77,20 +76,12 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/savePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public SaveAttributesResponseVO savePersonAttributes(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
-    	if (principal == null) {
-    		throw new AppException("Application is running in READ ONLY mode", null);
-    	}
-    	saveAttributesRequestVO.setCreatorId(getCreatorId(httpSession));
+    public SaveAttributesResponseVO savePersonAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
     	return personRelationService.savePersonAttributes(saveAttributesRequestVO);
     }
     
     @RequestMapping(value = "/saveRelationAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public SaveAttributesResponseVO saveRelationAttributes(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
-    	if (principal == null) {
-    		throw new AppException("Application is running in READ ONLY mode", null);
-    	}
-    	saveAttributesRequestVO.setCreatorId(getCreatorId(httpSession));
+    public SaveAttributesResponseVO saveRelationAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
     	return personRelationService.saveRelationAttributes(saveAttributesRequestVO);
     }
     
@@ -100,37 +91,18 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/saveRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public long saveRelation(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal, @RequestBody RelatedPersonsVO saveRelationRequestVO) {
-    	if (principal == null) {
-    		throw new AppException("Application is running in READ ONLY mode", null);
-    	}
-    	saveRelationRequestVO.setCreatorId(getCreatorId(httpSession));
+    public long saveRelation(HttpSession httpSession, @RequestBody RelatedPersonsVO saveRelationRequestVO) {
     	return personRelationService.saveRelation(saveRelationRequestVO);
     }
     
     @RequestMapping(value = "/deleteRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public void deleteRelation(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal, @RequestBody Long relationId) {
-    	if (principal == null) {
-    		throw new AppException("Application is running in READ ONLY mode", null);
-    	}
-    	personRelationService.deleteRelation(relationId, getCreatorId(httpSession));
+    public void deleteRelation(HttpSession httpSession, @RequestBody Long relationId) {
+    	personRelationService.deleteRelation(relationId);
     }
     
     @RequestMapping(value = "/deletePerson", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public void deletePerson(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal, @RequestBody Long personId) {
-    	if (principal == null) {
-    		throw new AppException("Application is running in READ ONLY mode", null);
-    	}
-    	personRelationService.deletePerson(personId, getCreatorId(httpSession));
+    public void deletePerson(HttpSession httpSession, @RequestBody Long personId) {
+    	personRelationService.deletePerson(personId);
     }
     
-    private long getCreatorId(HttpSession httpSession) {
-    	return 6L;	// TODO: After login feature, the following code is to be used
-    	/* Object loggedInUserObject;
-    	loggedInUserObject = httpSession.getAttribute(SESSION_ATTRIBUTE_LOGGED_IN_USER);
-    	if (loggedInUserObject == null) {
-    		new AppException("Log in to access this functionality", null);
-    	}
-    	return (long)loggedInUserObject; */
-    }
 }

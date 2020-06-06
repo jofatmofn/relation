@@ -41,16 +41,13 @@ public class Person {
 	@Column(name="id", nullable = false)
 	private long id;
 	
-	@Column(name="login_id", nullable=true, unique=true)
-	private String loginId;
-	
 	@ManyToOne
 	@JoinColumn(name="tenant_fk", nullable=false)
 	private Tenant tenant;
 	
 	@ManyToOne
 	@JoinColumn(name="creator_fk", nullable=false)
-	private Person creator;
+	private AppUser creator;
 	
 	@Column(name="created_at", nullable=false, updatable=false)
 	@CreationTimestamp
@@ -62,7 +59,7 @@ public class Person {
 	
 	@ManyToOne
 	@JoinColumn(name="deleter_fk", nullable=true)
-	private Person deleter;
+	private AppUser deleter;
 	
 	@Column(name="deleted_at", nullable=true)
 	private Timestamp deletedAt;
@@ -80,14 +77,6 @@ public class Person {
 		this.id = id;
 	}
 
-	public String getLoginId() {
-		return loginId;
-	}
-
-	public void setLoginId(String loginId) {
-		this.loginId = loginId;
-	}
-
 	public Tenant getTenant() {
 		return tenant;
 	}
@@ -96,11 +85,11 @@ public class Person {
 		this.tenant = tenant;
 	}
 
-	public Person getCreator() {
+	public AppUser getCreator() {
 		return creator;
 	}
 
-	public void setCreator(Person creator) {
+	public void setCreator(AppUser creator) {
 		this.creator= creator;
 	}
 
@@ -120,11 +109,11 @@ public class Person {
 		this.overwrittenBy = overwrittenBy;
 	}
 
-	public Person getDeleter() {
+	public AppUser getDeleter() {
 		return deleter;
 	}
 
-	public void setDeleter(Person deleter) {
+	public void setDeleter(AppUser deleter) {
 		this.deleter = deleter;
 	}
 

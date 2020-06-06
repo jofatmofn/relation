@@ -68,11 +68,11 @@ fieldset {
 #projectdetails {
 	position: fixed;
 	top: 0;
-	left: 75%;
-	width: 12.5%;
+	left: 60%;
+	width: 20%;
 }#userdetails {
 	position: fixed;
 	top: 0;
-	right: 0;
-	width: 12.5%;
+	left: 80%;
+	width: 20%;
 }
