@@ -22,8 +22,12 @@ async function drawGraph() {
 	retrieveAppStartValuesResponseVO = await invokeService("basic/retrieveAppStartValues", "");
 	if (retrieveAppStartValuesResponseVO.loggedInUser != null) {
 		document.getElementById("user").value = retrieveAppStartValuesResponseVO.loggedInUser;
-		document.getElementsByClassName("unauthenticated")[0].style.display = "none";
-		document.getElementsByClassName("authenticated")[0].style.display = "block";
+		for (var element of document.getElementsByClassName("unauthenticated")) {
+			element.style.display = "none";
+		}
+		for (var element of document.getElementsByClassName("authenticated")) {
+			element.style.display = "inline-block";
+		}
 	}
 	domainValueVOList = retrieveAppStartValuesResponseVO.domainValueVOList;
 	document.getElementById("project").value = retrieveAppStartValuesResponseVO.inUseProject;
@@ -948,4 +952,20 @@ function enableDisableRWFunctions() {
 			buttonElement.removeAttribute("disabled");
 		}
 	}
+}
+
+async function createProject() {
+	var projectName;
+	
+	projectName = "";
+	while (projectName == "") {
+		projectName = prompt("Please enter a name for the project", "My Clan");
+		if (projectName == null) {	/* Cancel Clicked */
+			return;
+		}
+	}
+	document.getElementById("project").value = 	await invokeService("projectuser/createProject", projectName);
+	isAppReadOnly = false;
+	enableDisableRWFunctions();
+	alert("Project created successfully");
 }

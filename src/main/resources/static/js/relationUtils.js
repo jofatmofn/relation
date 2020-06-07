@@ -20,12 +20,17 @@ async function invokeService(serviceUrl, requestVO)
 						netAction = 2;
 					}
 					else {
-						netAction = 3;
+						if (httpRequest.getResponseHeader("content-type") == "application/json") {
+							netAction = 3;
+						}
+						else {
+							netAction = 4;
+						}
 					}
 				}
 				else if(this.status == 500)
 				{
-					netAction = 4;
+					netAction = 5;
 				}
 				else
 				{
@@ -37,7 +42,7 @@ async function invokeService(serviceUrl, requestVO)
 		httpRequest.open('POST', serviceUrl);
 		httpRequest.setRequestHeader('Content-Type', 'application/json');
 		httpRequest.ontimeout = function () {
-			netAction = 5;
+			netAction = 7;
 	    };
 		httpRequest.onloadend = function () {
 			console.log("netAction: " + netAction);
@@ -52,6 +57,9 @@ async function invokeService(serviceUrl, requestVO)
 					resolve(JSON.parse(httpRequest.responseText));
 					return;
 				case 4:
+					resolve(httpRequest.responseText);
+					return;
+				case 5:
 					responseParseOut = JSON.parse(httpRequest.responseText);
 					if (responseParseOut.message == "No message available") {
 						reject("Error: " + responseParseOut.error + ". Message: " + responseParseOut.message);
@@ -60,7 +68,7 @@ async function invokeService(serviceUrl, requestVO)
 						reject(responseParseOut.message);
 					}
 					return;
-				case 5:
+				case 7:
 					reject("Taking long duration. Try giving lesser workload.");
 					return;
 				case 6:

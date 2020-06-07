@@ -3,6 +3,7 @@ package org.sakuram.relation.controller;
 import javax.servlet.http.HttpSession;
 
 import org.apache.logging.log4j.LogManager;
+import org.sakuram.relation.bean.Tenant;
 import org.sakuram.relation.service.ProjectUserService;
 import org.sakuram.relation.util.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,15 +40,26 @@ public class ProjectUserController {
     
     @RequestMapping(value = "/postLogin", method = RequestMethod.POST)
     public boolean postLogin(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal) {
-    	long userId;
+    	long appUserId;
 		if (principal != null && httpSession != null && httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID) == null) {
-			userId = projectUserService.findOrSaveUser(principal.getAttribute("sub"), principal.getAttribute("iss").toString());
-			httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID, userId);
-			LogManager.getLogger().info("Login: " + principal.getAttribute("name") + " / " + userId);
+			appUserId = projectUserService.findOrSaveUser(principal.getAttribute("sub"), principal.getAttribute("iss").toString());
+			httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID, appUserId);
+			LogManager.getLogger().info("Login: " + principal.getAttribute("name") + " / " + appUserId);
 		}
     	return projectUserService.isAppReadOnly(
     			(Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID),
     			(Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID));
+    }
+    
+    @RequestMapping(value = "/createProject", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public String createProject(HttpSession httpSession, @RequestBody String projectName) {
+    	Tenant tenant;
+    	Long appUserId;
+    	
+    	appUserId = (Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID);
+    	tenant = projectUserService.createProject(projectName, appUserId);
+    	httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID, tenant.getId());
+    	return tenant.getProjectId();
     }
     
 }

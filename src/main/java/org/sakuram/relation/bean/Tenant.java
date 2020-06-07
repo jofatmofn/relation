@@ -18,10 +18,10 @@ public class Tenant {
 	@Column(name="id", nullable=false)
 	private long id;
 	
-	@Column(name="project_id", nullable=false, unique=true)
+	@Column(name="project_id", nullable=false, unique=true, length=16)
 	private String projectId;
 
-	@Column(name="project_name", nullable=false)
+	@Column(name="project_name", nullable=false, unique=true)
 	private String projectName;
 
 	public long getId() {

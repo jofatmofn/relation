@@ -5,6 +5,7 @@
 	width: 100%;
 	position: absolute;
 	background-color: Blue;
+	color: White;
 }
 #leftbar {
 	top: 15%;
@@ -70,7 +71,8 @@ fieldset {
 	top: 0;
 	left: 60%;
 	width: 20%;
-}#userdetails {
+}
+#userdetails {
 	position: fixed;
 	top: 0;
 	left: 80%;
