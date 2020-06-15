@@ -7,20 +7,16 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.apache.logging.log4j.LogManager;
-import org.hibernate.Session;
 import org.sakuram.relation.bean.Person;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class CustomRepositoryImpl implements CustomRepository {
+public class PersonRepositoryImpl implements PersonRepositoryCustom {
+
     @PersistenceContext
     public EntityManager entityManager;
 
-    public Session getSession() {
-    	return entityManager.unwrap(Session.class);
-    }
-    
-    @SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<Person> executeDynamicQuery(String queryString) {
     	LogManager.getLogger().debug(queryString);

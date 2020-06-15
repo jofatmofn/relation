@@ -302,6 +302,7 @@ async function editEntityAttributes(e) {
 				s.graph.dropNode(highlightedEntity.id);	// The node and each edge that is bound to it
 				s.refresh();
 				clearSidebar();
+				alert("Person DELETED successfully");
 			};
 		}
 		else {
@@ -311,6 +312,7 @@ async function editEntityAttributes(e) {
 				s.graph.dropEdge(highlightedEntity.id); // The edge
 				s.refresh();
 				clearSidebar();
+				alert("Relation DELETED successfully");
 			};
 		}
 	}

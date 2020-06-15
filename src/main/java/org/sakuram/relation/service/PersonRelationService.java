@@ -13,13 +13,11 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
-import org.sakuram.relation.bean.AppUser;
 import org.sakuram.relation.bean.AttributeValue;
 import org.sakuram.relation.bean.DomainValue;
 import org.sakuram.relation.bean.Person;
 import org.sakuram.relation.bean.Relation;
 import org.sakuram.relation.bean.Tenant;
-import org.sakuram.relation.repository.AppUserRepository;
 import org.sakuram.relation.repository.AttributeValueRepository;
 import org.sakuram.relation.repository.DomainValueRepository;
 import org.sakuram.relation.repository.PersonRepository;
@@ -61,8 +59,6 @@ public class PersonRelationService {
 	@Autowired
 	AttributeValueRepository attributeValueRepository;
 	@Autowired
-	AppUserRepository appUserRepository;
-	@Autowired
 	TenantRepository tenantRepository;
 	
 	@Autowired
@@ -83,7 +79,7 @@ public class PersonRelationService {
     	PersonVO personVO;
     	    	
     	relatedPersonSet = new HashSet<Person>();
-    	startPerson = personRepository.findById(retrieveRelationsRequestVO.getStartPersonId())
+    	startPerson = personRepository.findByIdAndTenant(retrieveRelationsRequestVO.getStartPersonId(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + retrieveRelationsRequestVO.getStartPersonId(), null));
 		relatedPersonSet.add(startPerson);
     	participatingRelationList = relationRepository.findByPerson1(startPerson);
@@ -182,7 +178,7 @@ public class PersonRelationService {
     	List<Relation> relationList;
     	List<RelationVO> relationVOList;
     	
-    	end1Person = personRepository.findById(retrieveRelationsBetweenRequestVO.getEnd1PersonId())
+    	end1Person = personRepository.findByIdAndTenant(retrieveRelationsBetweenRequestVO.getEnd1PersonId(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + retrieveRelationsBetweenRequestVO.getEnd1PersonId(), null));
     	relationList = relationRepository.findByPerson1(end1Person);
     	relationList.addAll(relationRepository.findByPerson2(end1Person));
@@ -222,7 +218,7 @@ public class PersonRelationService {
     	relatedRelationIdSet = new HashSet<Long>();
     	excludeSpouseList = new ArrayList<Person>();
 		relatedPerson2VOList = new ArrayList<RelatedPerson2VO>();
-    	startPerson = personRepository.findById(retrieveRelationsRequestVO.getStartPersonId())
+    	startPerson = personRepository.findByIdAndTenant(retrieveRelationsRequestVO.getStartPersonId(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + retrieveRelationsRequestVO.getStartPersonId(), null));
 		relatedPersonIdSet.add(startPerson.getId());
 		currentPersonVO = serviceParts.addToPersonVOMap(personVOMap, startPerson);
@@ -330,7 +326,7 @@ public class PersonRelationService {
 		RetrieveRelationsRequestVO retrieveRelationsRequestVO2;
 		short depth;
 		
-    	startPerson = personRepository.findById(retrieveRelationsRequestVO.getStartPersonId())
+    	startPerson = personRepository.findByIdAndTenant(retrieveRelationsRequestVO.getStartPersonId(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + retrieveRelationsRequestVO.getStartPersonId(), null));
     	depth = 1;
     	while((relatedPerson1VOList = retrieveRelatives(startPerson, Arrays.asList(Constants.RELATION_NAME_FATHER))).size() == 1) {
@@ -393,7 +389,7 @@ public class PersonRelationService {
     	Person person;
     	List<AttributeValue> attributeValueList;
     	
-		person = personRepository.findById(entityId)
+		person = personRepository.findByIdAndTenant(entityId, SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + entityId, null));
 		attributeValueList = person.getAttributeValueList();
 		
@@ -405,7 +401,7 @@ public class PersonRelationService {
     	List<AttributeValue> attributeValueList;
     	RetrieveRelationAttributesResponseVO retrieveRelationAttributesResponseVO;
     	
-		relation = relationRepository.findById(entityId)
+		relation = relationRepository.findByIdAndTenant(entityId, SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Relation Id " + entityId, null));
 		attributeValueList = relation.getAttributeValueList();
 		
@@ -454,46 +450,38 @@ public class PersonRelationService {
     
     public SaveAttributesResponseVO savePersonAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
     	Person person;
-    	AppUser appUser;
     	SaveAttributesResponseVO saveAttributesResponseVO;
-    	
-    	appUser = appUserRepository.findById(SecurityContext.getCurrentUser())
-    			.orElseThrow(() -> new AppException("Invalid User Id " + SecurityContext.getCurrentUser(), null));
     	
     	if (saveAttributesRequestVO.getEntityId() == Constants.NEW_ENTITY_ID) {
     		person = new Person();
-    		person.setCreator(appUser);
+    		person.setCreator(SecurityContext.getCurrentUser());
     		person = personRepository.save(person);
     	}
     	else {
-    		person = personRepository.findById(saveAttributesRequestVO.getEntityId())
+    		person = personRepository.findByIdAndTenant(saveAttributesRequestVO.getEntityId(), SecurityContext.getCurrentTenant())
     				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getEntityId(), null));
     	}
     	
 		saveAttributesResponseVO = new SaveAttributesResponseVO();
 		saveAttributesResponseVO.setEntityId(person.getId());
-		saveAttributesResponseVO.setInsertedAttributeValueIdList(saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), person, null, appUser));
+		saveAttributesResponseVO.setInsertedAttributeValueIdList(saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), person, null));
     	return saveAttributesResponseVO;
     }
     
     public SaveAttributesResponseVO saveRelationAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
     	Relation relation = null;
-    	AppUser appUser;
     	SaveAttributesResponseVO saveAttributesResponseVO;
     	
-    	appUser = appUserRepository.findById(SecurityContext.getCurrentUser())
-    			.orElseThrow(() -> new AppException("Invalid User Id " + SecurityContext.getCurrentUser(), null));
-    	
-		relation = relationRepository.findById(saveAttributesRequestVO.getEntityId())
+		relation = relationRepository.findByIdAndTenant(saveAttributesRequestVO.getEntityId(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Relation Id " + saveAttributesRequestVO.getEntityId(), null));
     	
 		saveAttributesResponseVO = new SaveAttributesResponseVO();
 		saveAttributesResponseVO.setEntityId(saveAttributesRequestVO.getEntityId());
-		saveAttributesResponseVO.setInsertedAttributeValueIdList(saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), null, relation, appUser));
+		saveAttributesResponseVO.setInsertedAttributeValueIdList(saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), null, relation));
     	return saveAttributesResponseVO;
     }
 
-    private List<Long> saveAttributeValue(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation, AppUser appUser) {
+    private List<Long> saveAttributeValue(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation) {
     	AttributeValue attributeValue, insertedAttributeValue;
     	List<Long> incomingAttributeValueWithIdList, insertedAttributeValueIdList;
     	List<AttributeValue> toDeleteAttributeValueList;
@@ -506,12 +494,12 @@ public class PersonRelationService {
     			throw new AppException("System error: Attribute with null id", null);
     		}
     		else if (attributeValueVO.getId() < 1) {
-    			insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, appUser);
+    			insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation);
     			insertedAttributeValueIdList.add(insertedAttributeValue.getId());
     		}
     		else {
     			incomingAttributeValueWithIdList.add(attributeValueVO.getId());
-    			attributeValue = attributeValueRepository.findById(attributeValueVO.getId())
+    			attributeValue = attributeValueRepository.findByIdAndTenant(attributeValueVO.getId(), SecurityContext.getCurrentTenant())
     					.orElseThrow(() -> new AppException("Invalid Attribute Value Id " + attributeValueVO.getId(), null));
     			if (attributeValueVO.getAttributeDvId() != attributeValue.getAttribute().getId()) {
     				throw new AppException("Invalid input from client.", null);
@@ -520,7 +508,7 @@ public class PersonRelationService {
     					!Objects.equals(attributeValueVO.isValueAccurate(), attributeValue.isValueAccurate()) ||
     					!UtilFuncs.dateEquals(attributeValueVO.getStartDate(), attributeValue.getStartDate()) ||
     					!UtilFuncs.dateEquals(attributeValueVO.getEndDate(), attributeValue.getEndDate())) {
-    				insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, appUser);
+    				insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation);
     				attributeValue.setOverwrittenBy(insertedAttributeValue);
     				attributeValueRepository.save(attributeValue);
     			}
@@ -533,7 +521,7 @@ public class PersonRelationService {
 	    	for(AttributeValue toDeleteAttributeValue : toDeleteAttributeValueList) {
 	    		domainValueFlags.setDomainValue(toDeleteAttributeValue.getAttribute());
 	    		if (domainValueFlags.isInputAsAttribute() && !incomingAttributeValueWithIdList.contains(toDeleteAttributeValue.getId())) {
-	    			toDeleteAttributeValue.setDeleter(appUser);
+	    			toDeleteAttributeValue.setDeleter(SecurityContext.getCurrentUser());
 	    			toDeleteAttributeValue.setDeletedAt(new Timestamp(System.currentTimeMillis()));
 					attributeValueRepository.save(toDeleteAttributeValue);
 	    		}
@@ -543,7 +531,7 @@ public class PersonRelationService {
 		return insertedAttributeValueIdList;
     }
 
-    private AttributeValue insertAttributeValue(AttributeValueVO attributeValueVO, Person person, Relation relation, AppUser creator) {
+    private AttributeValue insertAttributeValue(AttributeValueVO attributeValueVO, Person person, Relation relation) {
     	AttributeValue attributeValue;
     	DomainValue attributeDv;
     	
@@ -557,7 +545,7 @@ public class PersonRelationService {
 		attributeValue.setValueAccurate(attributeValueVO.isValueAccurate());
 		attributeValue.setStartDate(attributeValueVO.getStartDate());
 		attributeValue.setEndDate(attributeValueVO.getEndDate());
-		attributeValue.setCreator(creator);
+		attributeValue.setCreator(SecurityContext.getCurrentUser());
 		return attributeValueRepository.save(attributeValue);
     }
     
@@ -573,16 +561,15 @@ public class PersonRelationService {
     	DomainValueFlags domainValueFlags;
     	String attrVal, parentNamesSsv, spouseNamesSsv, parentsCriteria, spousesCriteria;
     	DomainValue attributeDv;
-    	Long tenantId;
     	
     	parentsCriteria = null;
     	spousesCriteria = null;
     	querySB = new StringBuilder();
     	querySB.append("SELECT * FROM person p LEFT OUTER JOIN tenant t ON p.tenant_fk = t.id WHERE p.overwritten_by_fk IS NULL AND p.deleter_fk IS NULL");
-    	tenantId = SecurityContext.getCurrentTenant();
-    	if (tenantId != null) {
+    	// TODO: AOP to take of the following if block
+    	if (SecurityContext.getCurrentTenantId() != null) {
     		querySB.append(" AND p.tenant_fk = ");
-    		querySB.append(tenantId);
+    		querySB.append(SecurityContext.getCurrentTenantId());
     	}
     	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
     		if (attributeValueVO.getAttributeDvId() > 0) {
@@ -746,16 +733,13 @@ public class PersonRelationService {
     
     public long saveRelation(RelatedPersonsVO saveRelationRequestVO) {
     	Person person1, person2;
-    	AppUser creator;
     	Relation relation;
     	HashSet<Person> personSet;
     	
-    	person1 = personRepository.findById(saveRelationRequestVO.getPerson1Id())
+    	person1 = personRepository.findByIdAndTenant(saveRelationRequestVO.getPerson1Id(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveRelationRequestVO.getPerson1Id(), null));
-    	person2 = personRepository.findById(saveRelationRequestVO.getPerson2Id())
+    	person2 = personRepository.findByIdAndTenant(saveRelationRequestVO.getPerson2Id(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveRelationRequestVO.getPerson2Id(), null));
-    	creator = appUserRepository.findById(SecurityContext.getCurrentUser())
-    			.orElseThrow(() -> new AppException("Invalid User Id " + SecurityContext.getCurrentUser(), null));
     	// TODO: To check reverse also; Create a new repository method
     	personSet = new HashSet<Person>(Arrays.asList(new Person[]{person1, person2}));
     	if (relationRepository.findByPerson1InAndPerson2In(personSet, personSet).size() > 0) {
@@ -764,64 +748,57 @@ public class PersonRelationService {
     	relation = new Relation();
     	relation.setPerson1(person1);
     	relation.setPerson2(person2);
-    	relation.setCreator(creator);
+    	relation.setCreator(SecurityContext.getCurrentUser());
     	relation = relationRepository.save(relation);
     	return relation.getId();
     }
     
     public void deleteRelation(long relationId) {
     	Relation relation;
-    	AppUser deleter;
     	Timestamp deletedAt;
     	
-		relation = relationRepository.findById(relationId)
+		relation = relationRepository.findByIdAndTenant(relationId, SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Relation Id " + relationId, null));
-    	
-    	deleter = appUserRepository.findById(SecurityContext.getCurrentUser())
-				.orElseThrow(() -> new AppException("Invalid User Id " + SecurityContext.getCurrentUser(), null));
     	
     	deletedAt = new Timestamp(System.currentTimeMillis());
 		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
-			attributeValue.setDeleter(deleter);
+			attributeValue.setDeleter(SecurityContext.getCurrentUser());
 			attributeValue.setDeletedAt(deletedAt);
 		}
-    	relation.setDeleter(deleter);
+    	relation.setDeleter(SecurityContext.getCurrentUser());
     	relation.setDeletedAt(deletedAt);
     	relationRepository.save(relation);
     }
         
     public void deletePerson(long personId) {
     	Person person;
-    	AppUser deleter;
     	List<Relation> relationList;
     	Timestamp deletedAt;
     	
-		person = personRepository.findById(personId)
+		person = personRepository.findByIdAndTenant(personId, SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + personId, null));
     	
-    	deleter = appUserRepository.findById(SecurityContext.getCurrentUser())
-    			.orElseThrow(() -> new AppException("Invalid User Id " + SecurityContext.getCurrentUser(), null));
     	deletedAt = new Timestamp(System.currentTimeMillis());
     	
     	relationList = relationRepository.findByPerson1(person);
     	relationList.addAll(relationRepository.findByPerson2(person));
     	for (Relation relation : relationList) {
     		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
-    			attributeValue.setDeleter(deleter);
+    			attributeValue.setDeleter(SecurityContext.getCurrentUser());
     			attributeValue.setDeletedAt(deletedAt);
     			attributeValueRepository.save(attributeValue);
     		}
-    		relation.setDeleter(deleter);
+    		relation.setDeleter(SecurityContext.getCurrentUser());
     		relation.setDeletedAt(deletedAt);
         	relationRepository.save(relation);
 		}
     	
 		for (AttributeValue attributeValue : person.getAttributeValueList()) {
-			attributeValue.setDeleter(deleter);
+			attributeValue.setDeleter(SecurityContext.getCurrentUser());
 			attributeValue.setDeletedAt(deletedAt);
 			attributeValueRepository.save(attributeValue);
 		}
-    	person.setDeleter(deleter);
+    	person.setDeleter(SecurityContext.getCurrentUser());
     	person.setDeletedAt(deletedAt);
     	personRepository.save(person);
     }

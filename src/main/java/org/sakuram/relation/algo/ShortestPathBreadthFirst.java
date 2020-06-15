@@ -12,6 +12,7 @@ import java.util.Set;
 import org.sakuram.relation.bean.Person;
 import org.sakuram.relation.bean.Relation;
 import org.sakuram.relation.repository.RelationRepository;
+import org.sakuram.relation.util.AppException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,9 @@ public class ShortestPathBreadthFirst {
 	RelationRepository relationRepository;
 	
 	public LinkedList<Person> findPathBiBFS(Map<Long, Person> people, long source, long destination, List<String> excludeRelationIdList) {
+		if (people.get(source) == null || people.get(destination) == null) {
+			throw new AppException("Person 1 and/or Person 2 do not belong to the project", null);
+		}
 		BFSData sourceData = new BFSData(people.get(source));
 		BFSData destData = new BFSData(people.get(destination));
 		

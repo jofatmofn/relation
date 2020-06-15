@@ -57,9 +57,7 @@ public class ProjectUserService {
     public boolean isAppReadOnly(Long tenantId, Long appUserId) {
     	AppUser appUser;
     	Tenant tenant;
-    	Privilege privilege;
     	boolean isReadOnly;
-    	long roleDvId;
     	
     	isReadOnly = true;
     	if (tenantId != null && appUserId != null) {
@@ -67,16 +65,24 @@ public class ProjectUserService {
     				.orElseThrow(() -> new AppException("Invalid Tenant Id " + tenantId, null));
     		appUser = appUserRepository.findById(appUserId)
     				.orElseThrow(() -> new AppException("Invalid User Id " + appUserId, null));
-    		privilege = privilegeRepository.findByTenantAndAppUser(tenant, appUser);
-    		if (privilege != null) {
-    			roleDvId = privilege.getRole().getId();
-    			if (roleDvId == Constants.ROLE_DV_ID_COLLABORATOR || roleDvId == Constants.ROLE_DV_ID_CREATOR) {
-    				isReadOnly = false;
-    			}
-    		}
+    		isReadOnly = isAppReadOnly(tenant, appUser);
     	}
 		LogManager.getLogger().info("Tenant: " + tenantId + ". AppUser: " + appUserId + ". Privilege: " + isReadOnly);
     	return isReadOnly;
+    }
+    
+    public boolean isAppReadOnly(Tenant tenant, AppUser appUser) {
+    	Privilege privilege;
+    	long roleDvId;
+    	
+		privilege = privilegeRepository.findByTenantAndAppUser(tenant, appUser);
+		if (privilege != null) {
+			roleDvId = privilege.getRole().getId();
+			if (roleDvId == Constants.ROLE_DV_ID_COLLABORATOR || roleDvId == Constants.ROLE_DV_ID_CREATOR) {
+				return false;
+			}
+		}
+    	return true;
     }
     
     public Tenant createProject(String projectName, Long appUserId) {

@@ -44,7 +44,13 @@ public class ProjectUserController {
 		if (principal != null && httpSession != null && httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID) == null) {
 			appUserId = projectUserService.findOrSaveUser(principal.getAttribute("sub"), principal.getAttribute("iss").toString());
 			httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID, appUserId);
-			LogManager.getLogger().info("Login: " + principal.getAttribute("name") + " / " + appUserId);
+			LogManager.getLogger().info("Fresh Login: " + principal.getAttribute("name") + " / " + appUserId);
+		}
+		else if (principal != null) {
+			LogManager.getLogger().info("Earlier Login: " + principal.getAttribute("name"));
+		}
+		else {
+			LogManager.getLogger().info("Without Login");
 		}
     	return projectUserService.isAppReadOnly(
     			(Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID),

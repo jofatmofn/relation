@@ -45,7 +45,7 @@ async function invokeService(serviceUrl, requestVO)
 			netAction = 7;
 	    };
 		httpRequest.onloadend = function () {
-			console.log("netAction: " + netAction);
+			console.log("Service " + serviceUrl + ". netAction: " + netAction);
 			switch(netAction) {
 				case 1:
 					resolve(null);

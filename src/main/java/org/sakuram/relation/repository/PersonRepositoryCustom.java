@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.sakuram.relation.bean.Person;
 
-public interface CustomRepository {
+public interface PersonRepositoryCustom {
 	public List<Person> executeDynamicQuery(String query);
-
 }
