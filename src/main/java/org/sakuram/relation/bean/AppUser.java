@@ -25,6 +25,9 @@ public class AppUser {
 	@Column(name="identity_provider", nullable=false)
 	private String identityProvider;
 
+	@Column(name="email_id", nullable=true)
+	private String emailId;
+
 	public long getId() {
 		return id;
 	}
@@ -47,6 +50,14 @@ public class AppUser {
 
 	public void setIdentityProvider(String identityProvider) {
 		this.identityProvider = identityProvider;
+	}
+
+	public String getEmailId() {
+		return emailId;
+	}
+
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
 	}
 
 }

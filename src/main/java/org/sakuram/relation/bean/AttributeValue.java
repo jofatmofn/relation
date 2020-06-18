@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -64,11 +65,11 @@ public class AttributeValue {
 	@Column(name="end_date", nullable=true)
 	private Date endDate;
 	
-	@ManyToOne
+	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="tenant_fk", nullable=false)
 	private Tenant tenant;
 	
-	@ManyToOne
+	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="creator_fk", nullable=false)
 	private AppUser creator;
 	
@@ -76,11 +77,11 @@ public class AttributeValue {
 	@CreationTimestamp
 	private Timestamp createdAt;
 
-	@OneToOne
+	@OneToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="overwritten_by_fk", nullable=true)
 	private AttributeValue overwrittenBy;
 	
-	@ManyToOne
+	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="deleter_fk", nullable=true)
 	private AppUser deleter;
 	

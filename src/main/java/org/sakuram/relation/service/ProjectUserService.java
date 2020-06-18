@@ -41,7 +41,7 @@ public class ProjectUserService {
     	return tenant.getId();
     }
 
-    public Long findOrSaveUser(String identityProvider, String identityProviderUserId) {
+    public Long findOrSaveUser(String identityProvider, String identityProviderUserId, String emailId) {
     	AppUser appUser;
     	
     	appUser = appUserRepository.findByIdentityProviderAndIdentityProviderUserId(identityProvider, identityProviderUserId);
@@ -49,6 +49,7 @@ public class ProjectUserService {
     		appUser = new AppUser();
     		appUser.setIdentityProvider(identityProvider);
     		appUser.setIdentityProviderUserId(identityProviderUserId);
+    		appUser.setEmailId(emailId);
     		appUser = appUserRepository.save(appUser);
     	}
     	return appUser.getId();

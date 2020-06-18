@@ -42,7 +42,7 @@ public class ProjectUserController {
     public boolean postLogin(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal) {
     	long appUserId;
 		if (principal != null && httpSession != null && httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID) == null) {
-			appUserId = projectUserService.findOrSaveUser(principal.getAttribute("sub"), principal.getAttribute("iss").toString());
+			appUserId = projectUserService.findOrSaveUser(principal.getAttribute("iss").toString(), principal.getAttribute("sub"), principal.getAttribute("email"));
 			httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID, appUserId);
 			LogManager.getLogger().info("Fresh Login: " + principal.getAttribute("name") + " / " + appUserId);
 		}
