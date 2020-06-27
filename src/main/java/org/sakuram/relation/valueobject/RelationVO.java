@@ -53,9 +53,11 @@ public class RelationVO {
 		if (getLabel() != null) {
 			return label;
 		}
-		label = Constants.RELATION_LABEL_TEMPLATE
-				.replaceAll("@@" + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 + "@@", (toSwap ? attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) : attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)))
+		label = Constants.RELATION_LABEL_TEMPLATE;
+		if (attributeMap.containsKey(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) && attributeMap.containsKey(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)) {
+			label = label.replaceAll("@@" + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 + "@@", (toSwap ? attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) : attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)))
 				.replaceAll("@@" + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 + "@@", (toSwap ? attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) : attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)));
+		}
 		for (Map.Entry<Long, String> attributeEntry : attributeMap.entrySet()) {
 			label = label.replaceAll("@@" + attributeEntry.getKey() + "@@", attributeEntry.getValue());
 		}

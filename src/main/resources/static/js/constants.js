@@ -27,7 +27,7 @@ const ACTION_RELATE = "Relate";
 
 const VALID_RELATIONS_JSON = JSON.stringify([["1", "5"],["5", "1"],["1", "6"],["6", "1"],["2", "5"],["5", "2"],["2", "6"],["6", "2"],["3", "4"],["4", "3"]]);
 const VALID_RELSUBTYPES_SPOUSE = ["7", "8", "9", "10", "11", "12"]
-const VALID_RELSUBTYPES_PARENT_CHILD = ["13", "14", "15", "312", "313"]
+const VALID_RELSUBTYPES_PARENT_CHILD = ["13", "14", "15", "312", "313", "334", "335"]
 
 const GENDER_MALE_DV_ID = 59;
 const GENDER_FEMALE_DV_ID = 60;

@@ -15,19 +15,23 @@ async function drawGraph() {
 		}
 		else {
 			alert(event.reason);
+			switch (event.reason) {
+				case "Establish Project before using the system":
+					document.getElementById("project").value = 	"";
+					break;
+				case "Establish yourself by logging-in to the system":
+					loginLogout("");
+					isAppReadOnly=true;
+					enableDisableRWFunctions();
+					break;
+			}
 		}
 	});
 	
 	isAppReadOnly = await invokeService("projectuser/postLogin", "");
 	retrieveAppStartValuesResponseVO = await invokeService("basic/retrieveAppStartValues", "");
 	if (retrieveAppStartValuesResponseVO.loggedInUser != null) {
-		document.getElementById("user").value = retrieveAppStartValuesResponseVO.loggedInUser;
-		for (var element of document.getElementsByClassName("unauthenticated")) {
-			element.style.display = "none";
-		}
-		for (var element of document.getElementsByClassName("authenticated")) {
-			element.style.display = "inline-block";
-		}
+		loginLogout(retrieveAppStartValuesResponseVO.loggedInUser);
 	}
 	domainValueVOList = retrieveAppStartValuesResponseVO.domainValueVOList;
 	document.getElementById("project").value = retrieveAppStartValuesResponseVO.inUseProject;
@@ -198,6 +202,7 @@ async function editEntityAttributes(e) {
 	
 	attributeValueVOList = [];
 	action = ACTION_SAVE;
+	clearSidebar();
 	if (e.type == "clickNode") {
 		isPersonNode = true;
 		highlightedEntity = e.data.node;
@@ -230,7 +235,6 @@ async function editEntityAttributes(e) {
 	highlightedEntity.color = HIGHLIGHT_COLOR;
 	
 	rightBarElement = document.getElementById("sidebarbody");
-	rightBarElement.innerHTML = "";
 	/* Current attribute values from back-end */
 	for (let attributeValueVO of attributeValueVOList) {
 		if (attributeValueVO.attributeDvId == PERSON_ATTRIBUTE_DV_ID_LABEL) {
@@ -296,7 +300,7 @@ async function editEntityAttributes(e) {
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">+</button><button id='actionbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">" + action + "</button>";
 	if (action == ACTION_SAVE) {
 		if (isPersonNode) {
-			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly ? " disabled" : "") + ">Delete Person</button>";
+			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly || highlightedEntity.id == NEW_ENTITY_ID ? " disabled" : "") + ">Delete Person</button>";
 			document.getElementById("deletebutton").onclick = async function() {
 				await invokeService("basic/deletePerson", highlightedEntity.id);
 				s.graph.dropNode(highlightedEntity.id);	// The node and each edge that is bound to it
@@ -498,6 +502,7 @@ async function editEntityAttributes(e) {
 					attributeValueBlkElement.setAttribute("attributevalueid", insertedAttributeValueId);
 				}
 				alert("Saved");
+				document.getElementById("deletebutton").removeAttribute("disabled");
 				if (isPersonNode && highlightedEntity.id == NEW_ENTITY_ID) {
 					s.graph.dropNode(NEW_ENTITY_ID);
 					s.graph.addNode({
@@ -701,6 +706,8 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 		if (attributeValueVO.attributeValue != undefined) {
 			valueElement.setAttribute("value", attributeValueVO.attributeValue);
 		}
+		valueElement.setAttribute("onkeypress","return blockSpecialCharOnKeyPress(event)");
+		valueElement.setAttribute("onpaste","return blockSpecialCharOnPaste(event)");
 	}
 	else {
 		valueElement = selectElementMap.get(attributeDomainValueVO.attributeDomain).cloneNode(true);
@@ -751,11 +758,11 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	}
 	
 	if (attributeDomainValueVO.inputAsAttribute) {
-		valueElement.removeAttribute("disabled","");
-		isAccurateElement.removeAttribute("disabled","");
+		valueElement.removeAttribute("disabled");
+		isAccurateElement.removeAttribute("disabled");
 		if (attributeDomainValueVO.repetitionType != FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED) {
-			startDateElement.removeAttribute("disabled","");
-			endDateElement.removeAttribute("disabled","");
+			startDateElement.removeAttribute("disabled");
+			endDateElement.removeAttribute("disabled");
 		}
 	}
 	else {
@@ -970,4 +977,52 @@ async function createProject() {
 	isAppReadOnly = false;
 	enableDisableRWFunctions();
 	alert("Project created successfully");
+}
+
+function loginLogout(loggedInUser) {
+	document.getElementById("user").value = loggedInUser;
+	if (loggedInUser != null && loggedInUser != "") {
+		for (var element of document.getElementsByClassName("unauthenticated")) {
+			element.style.display = "none";
+		}
+		for (var element of document.getElementsByClassName("authenticated")) {
+			element.style.display = "inline-block";
+		}
+	}
+	else {
+		for (var element of document.getElementsByClassName("unauthenticated")) {
+			element.style.display = "inline-block";
+		}
+		for (var element of document.getElementsByClassName("authenticated")) {
+			element.style.display = "none";
+		}
+	}
+}
+
+function blockSpecialCharOnKeyPress(e) {
+	if (! /\p{L}|[ ]/u.test(e.key)) {	/* document.all ? e.keyCode : e.which); */
+		if (e.preventDefault) {
+			e.preventDefault();
+		}
+		else {
+			e.returnValue = false;
+		}
+	}
+}
+
+function blockSpecialCharOnPaste(e) {
+	if (e.clipboardData) {
+		content = e.clipboardData.getData('text/plain');
+	}
+	else if (window.clipboardData) {
+		content = window.clipboardData.getData('Text');
+	}
+	if (! /^(\p{L}|[ ])*$/u.test(content)) {
+		if (e.preventDefault) {
+			e.preventDefault();
+		}
+		else {
+			e.returnValue = false;
+		}
+	}
 }
