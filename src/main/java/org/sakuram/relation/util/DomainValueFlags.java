@@ -3,7 +3,7 @@ package org.sakuram.relation.util;
 import org.sakuram.relation.bean.DomainValue;
 
 public class DomainValueFlags {
-	private String attributeDomain, repetitionType;
+	private String attributeDomain, repetitionType, validationJsRegEx;
 	private boolean isRelationParentChild, isRelationSpouse, isInputAsAttribute, isInputMandatory;
 	
 	public void setDomainValue(DomainValue domainValue) {
@@ -43,6 +43,9 @@ public class DomainValueFlags {
 			if (flagsArr.length > Constants.FLAG_POSITION_INPUT_MANDATORY) {
 				isInputMandatory = new Boolean(flagsArr[Constants.FLAG_POSITION_INPUT_MANDATORY]);
 			}
+			if (flagsArr.length > Constants.FLAG_POSITION_VALIDATION_JS_REG_EX) {
+				validationJsRegEx = flagsArr[Constants.FLAG_POSITION_VALIDATION_JS_REG_EX];
+			}
 		}
 		
 	}
@@ -69,6 +72,10 @@ public class DomainValueFlags {
 	
 	public boolean isInputMandatory() {
 		return isInputMandatory;
+	}
+	
+	public String getValidationJsRegEx() {
+		return validationJsRegEx;
 	}
 	
 }

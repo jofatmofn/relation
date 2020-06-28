@@ -380,6 +380,7 @@ public class PersonRelationService {
     		domainValueVO.setRepetitionType(domainValueFlags.getRepetitionType());
     		domainValueVO.setAttributeDomain(domainValueFlags.getAttributeDomain());
     		domainValueVO.setInputMandatory(domainValueFlags.isInputMandatory());
+    		domainValueVO.setValidationJsRegEx(domainValueFlags.getValidationJsRegEx());
     	}
     	
     	return domainValueVOList;

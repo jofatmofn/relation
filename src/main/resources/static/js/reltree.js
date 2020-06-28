@@ -668,7 +668,7 @@ function areOverlappingDates(startDate1Str, endDate1Str, startDate2Str, endDate2
 function createAttributeBlock(attributeValueBlockElement, attributeValueVO, action) {
 	var valueElement, isAccurateElement, startDateElement, endDateElement;
 	var startDatePicker, endDatePicker, attributeDomainValueVO;
-	var deleteBlockImageElement;
+	var deleteBlockImageElement, regEx;
 	
 	if (attributeValueVO.attributeDvId > 0) {
 		attributeDomainValueVO = domainValueVOMap.get(attributeValueVO.attributeDvId);
@@ -706,8 +706,12 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 		if (attributeValueVO.attributeValue != undefined) {
 			valueElement.setAttribute("value", attributeValueVO.attributeValue);
 		}
-		valueElement.setAttribute("onkeypress","return blockSpecialCharOnKeyPress(event)");
-		valueElement.setAttribute("onpaste","return blockSpecialCharOnPaste(event)");
+		if (attributeDomainValueVO.validationJsRegEx != null && attributeDomainValueVO.validationJsRegEx != "") {
+			regEx = new RegExp(attributeDomainValueVO.validationJsRegEx, 'u');
+			valueElement.setAttribute("onkeypress","return blockSpecialCharOnKeyPress(event, " + regEx + ")");
+			regEx = new RegExp('^(' + attributeDomainValueVO.validationJsRegEx + ')*$', 'u');
+			valueElement.setAttribute("onpaste","return blockSpecialCharOnPaste(event, " + regEx + ")");
+		}
 	}
 	else {
 		valueElement = selectElementMap.get(attributeDomainValueVO.attributeDomain).cloneNode(true);
@@ -999,8 +1003,8 @@ function loginLogout(loggedInUser) {
 	}
 }
 
-function blockSpecialCharOnKeyPress(e) {
-	if (! /\p{L}|[ ]/u.test(e.key)) {	/* document.all ? e.keyCode : e.which); */
+function blockSpecialCharOnKeyPress(e, regEx) {
+	if (! regEx.test(e.key)) {	/* document.all ? e.keyCode : e.which); */
 		if (e.preventDefault) {
 			e.preventDefault();
 		}
@@ -1010,14 +1014,14 @@ function blockSpecialCharOnKeyPress(e) {
 	}
 }
 
-function blockSpecialCharOnPaste(e) {
+function blockSpecialCharOnPaste(e, regEx) {
 	if (e.clipboardData) {
 		content = e.clipboardData.getData('text/plain');
 	}
 	else if (window.clipboardData) {
 		content = window.clipboardData.getData('Text');
 	}
-	if (! /^(\p{L}|[ ])*$/u.test(content)) {
+	if (! regEx.test(content)) {
 		if (e.preventDefault) {
 			e.preventDefault();
 		}

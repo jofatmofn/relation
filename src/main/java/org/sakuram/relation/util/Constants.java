@@ -75,6 +75,7 @@ public class Constants {
 	public static final int FLAG_POSITION_REPETITION = 1;
 	public static final int FLAG_POSITION_DOMAIN = 2;
 	public static final int FLAG_POSITION_INPUT_MANDATORY = 3;
+	public static final int FLAG_POSITION_VALIDATION_JS_REG_EX = 4;
 
 	public static final String EDGE_TYPE_DIRECT_RELATION = "line";
 	public static final String EDGE_TYPE_SIMPLIFIED_RELATION = "dotCurve";

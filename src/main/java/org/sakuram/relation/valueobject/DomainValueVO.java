@@ -10,6 +10,7 @@ public class DomainValueVO {
 	private String repetitionType;
 	private String attributeDomain;
 	private boolean isInputMandatory;
+	private String validationJsRegEx;
 
 	public long getId() {
 		return id;
@@ -81,6 +82,14 @@ public class DomainValueVO {
 
 	public void setInputMandatory(boolean isInputMandatory) {
 		this.isInputMandatory = isInputMandatory;
+	}
+
+	public String getValidationJsRegEx() {
+		return validationJsRegEx;
+	}
+
+	public void setValidationJsRegEx(String validationJsRegEx) {
+		this.validationJsRegEx = validationJsRegEx;
 	}
 	
 }
