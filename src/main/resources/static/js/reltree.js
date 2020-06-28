@@ -302,21 +302,25 @@ async function editEntityAttributes(e) {
 		if (isPersonNode) {
 			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly || highlightedEntity.id == NEW_ENTITY_ID ? " disabled" : "") + ">Delete Person</button>";
 			document.getElementById("deletebutton").onclick = async function() {
-				await invokeService("basic/deletePerson", highlightedEntity.id);
-				s.graph.dropNode(highlightedEntity.id);	// The node and each edge that is bound to it
-				s.refresh();
-				clearSidebar();
-				alert("Person DELETED successfully");
+				if (confirm("Going to delete the Person.")) {
+					await invokeService("basic/deletePerson", highlightedEntity.id);
+					s.graph.dropNode(highlightedEntity.id);	// The node and each edge that is bound to it
+					s.refresh();
+					clearSidebar();
+					alert("Person DELETED successfully");
+				}
 			};
 		}
 		else {
 			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly ? " disabled" : "") + ">Delete Relation</button>";
 			document.getElementById("deletebutton").onclick = async function() {
-				await invokeService("basic/deleteRelation", highlightedEntity.id);
-				s.graph.dropEdge(highlightedEntity.id); // The edge
-				s.refresh();
-				clearSidebar();
-				alert("Relation DELETED successfully");
+				if (confirm("Going to delete the Relation.")) {
+					await invokeService("basic/deleteRelation", highlightedEntity.id);
+					s.graph.dropEdge(highlightedEntity.id); // The edge
+					s.refresh();
+					clearSidebar();
+					alert("Relation DELETED successfully");
+				}
 			};
 		}
 	}
@@ -692,7 +696,9 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 		deleteBlockImageElement.setAttribute("width","5%");
 		deleteBlockImageElement.setAttribute("height","3%");
 		deleteBlockImageElement.onclick = async function() {
-			attributeValueBlockElement.remove();
+			if (confirm("Going to delete the Property.")) {
+				attributeValueBlockElement.remove();
+			}
 		};
 	}
 	
