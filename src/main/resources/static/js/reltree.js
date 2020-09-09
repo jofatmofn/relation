@@ -195,6 +195,7 @@ async function drawGraph() {
 async function editEntityAttributes(e) {
 	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, actionButtonElement, addButtonElement;
 	var person1Node, person2Node, retrieveRelationAttributesResponseVO,  person1GenderDVId, person2GenderDVId, person1ForPerson2SelectElement,  person2ForPerson2SelectElement;
+	var retrievePersonAttributesResponseVO, photoImageElement;
 	
 	if (highlightedEntity != undefined) {
 		highlightedEntity.color = DEFAULT_COLOR;
@@ -211,7 +212,17 @@ async function editEntityAttributes(e) {
 			action = ACTION_SEARCH;
 		}
 		if (e.data.node.id > 0) {
-			attributeValueVOList = await invokeService("basic/retrievePersonAttributes", e.data.node.id);
+			retrievePersonAttributesResponseVO = await invokeService("basic/retrievePersonAttributes", e.data.node.id);
+			photoImageElement = document.getElementById("sidebarphotoImg");
+			document.getElementById("sidebarphotoInput").value = '';
+			photoImageElement.parentElement.setAttribute("style", "display: block");
+			if (retrievePersonAttributesResponseVO.photo == null) {
+				photoImageElement.removeAttribute("src");
+			}
+			else {
+				photoImageElement.setAttribute("src", "data:image/jpg;base64," + retrievePersonAttributesResponseVO.photo);
+			}
+			attributeValueVOList = retrievePersonAttributesResponseVO.attributeValueVOList;
 		}
 	}
 	else {
@@ -386,7 +397,7 @@ async function editEntityAttributes(e) {
 		var ind1, ind2, attributeValueNBlkList, searchedPersonId, saveAttributesResponseVO;
 		var toInsertAttributeValueDummyId, relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
 		var searchResultsWindowElement, searchResultsTableElement, searchCloseButtonElement, searchReturnButtonElement, searchResultsVO, searchResultsList, srInputElement, srRowNo, searchMessageElement;
-		var relationVO, personIdsList;
+		var relationVO, personIdsList, photoInputElement, file;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
@@ -494,6 +505,30 @@ async function editEntityAttributes(e) {
 		}
 		switch(action) {
 			case ACTION_SAVE:
+				if (isPersonNode) {
+					photoInputElement = document.getElementById("sidebarphotoInput");
+					if ('files' in photoInputElement) {
+						switch(photoInputElement.files.length) {
+							case 0:
+								break;
+							case 1:
+								file = photoInputElement.files[0];
+								if (!file.name.toLowerCase().endsWith(".jpg") && !file.name.toLowerCase().endsWith(".png")) {
+									alert("Only JPG and PNG files are allowed");
+									return;
+								}
+								if (file.size > 1048576) { // 1 MB
+									alert("Only file of maximum size 1 MB allowed");
+									return;
+								}
+								saveAttributesRequestVO.photo = await fileToByteArray(file);
+								break;
+							default:
+								alert("Only one photo is permitted");
+								return;
+						}
+					}
+				}
 				saveAttributesResponseVO = await invokeService((isPersonNode ? "basic/savePersonAttributes" : "basic/saveRelationAttributes"), saveAttributesRequestVO);
 				toInsertAttributeValueDummyId = 1;
 				for (let insertedAttributeValueId of saveAttributesResponseVO.insertedAttributeValueIdList) {
@@ -825,11 +860,13 @@ function clearSidebar() {
 	document.getElementById("sidebartitle").innerHTML = "";
 	document.getElementById("sidebarbuttons").innerHTML = "";
 	document.getElementById("sidebarbody").innerHTML = "";
+	document.getElementById("sidebarphoto").setAttribute("style", "display: none");
 }
 
 function relatePersons() {
 	var actionButtonElement;
 	
+	clearSidebar();
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Relate</button>";
 	document.getElementById("sidebartitle").textContent = "Related Persons";
 
@@ -862,6 +899,7 @@ function relatePersons() {
 function ascertainRelation() {
 	var actionButtonElement;
 	
+	clearSidebar();
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Ascertain</button>";
 	document.getElementById("sidebartitle").textContent = "Ascertain Relation";
 

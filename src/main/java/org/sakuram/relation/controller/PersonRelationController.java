@@ -14,6 +14,7 @@ import org.sakuram.relation.valueobject.SearchResultsVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
 import org.sakuram.relation.valueobject.RelationVO;
 import org.sakuram.relation.valueobject.RetrieveAppStartValuesResponseVO;
+import org.sakuram.relation.valueobject.RetrievePersonAttributesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsBetweenRequestVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +65,7 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/retrievePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<AttributeValueVO> retrievePersonAttributes(HttpSession httpSession, @RequestBody long entityId) {
+    public RetrievePersonAttributesResponseVO retrievePersonAttributes(HttpSession httpSession, @RequestBody long entityId) {
     	return personRelationService.retrievePersonAttributes(entityId);
     }
     

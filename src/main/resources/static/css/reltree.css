@@ -78,3 +78,11 @@ fieldset {
 	left: 80%;
 	width: 20%;
 }
+.column {
+	width: 50%;
+}
+#sidebarphotoImg {
+	width: 107px;
+	height: 140px;
+	margin: 5px;
+}

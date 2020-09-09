@@ -30,6 +30,10 @@ import org.springframework.context.annotation.ComponentScan;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter @Setter
 @EnableAutoConfiguration
 @ComponentScan
 @Entity
@@ -48,7 +52,10 @@ public class Person {
 	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="tenant_fk", nullable=false)
 	private Tenant tenant;
-	
+
+	@Column(name="photo", nullable=true)
+	private byte[] photo;
+
 	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="creator_fk", nullable=false)
 	private AppUser creator;
@@ -72,70 +79,6 @@ public class Person {
 	@OneToMany(mappedBy="person", cascade=CascadeType.ALL)
 	@Where(clause="overwritten_by_fk is null and deleter_fk is null")
 	private List<AttributeValue> attributeValueList;
-
-	public long getId() {
-		return id;
-	}
-
-	public void setId(long id) {
-		this.id = id;
-	}
-
-	public Tenant getTenant() {
-		return tenant;
-	}
-
-	public void setTenant(Tenant tenant) {
-		this.tenant = tenant;
-	}
-
-	public AppUser getCreator() {
-		return creator;
-	}
-
-	public void setCreator(AppUser creator) {
-		this.creator= creator;
-	}
-
-	public Timestamp getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(Timestamp createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public Person getOverwrittenBy() {
-		return overwrittenBy;
-	}
-
-	public void setOverwrittenBy(Person overwrittenBy) {
-		this.overwrittenBy = overwrittenBy;
-	}
-
-	public AppUser getDeleter() {
-		return deleter;
-	}
-
-	public void setDeleter(AppUser deleter) {
-		this.deleter = deleter;
-	}
-
-	public Timestamp getDeletedAt() {
-		return deletedAt;
-	}
-
-	public void setDeletedAt(Timestamp deletedAt) {
-		this.deletedAt = deletedAt;
-	}
-
-	public List<AttributeValue> getAttributeValueList() {
-		return attributeValueList;
-	}
-
-	public void setAttributeValueList(List<AttributeValue> attributeValueList) {
-		this.attributeValueList = attributeValueList;
-	}
 
 	@PrePersist
 	@PreUpdate

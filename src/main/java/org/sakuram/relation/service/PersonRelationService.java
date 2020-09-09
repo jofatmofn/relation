@@ -40,6 +40,7 @@ import org.sakuram.relation.valueobject.SearchResultsVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
 import org.sakuram.relation.valueobject.RelationVO;
 import org.sakuram.relation.valueobject.RetrieveAppStartValuesResponseVO;
+import org.sakuram.relation.valueobject.RetrievePersonAttributesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsBetweenRequestVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -386,15 +387,18 @@ public class PersonRelationService {
     	return domainValueVOList;
     }
     
-    public List<AttributeValueVO> retrievePersonAttributes(long entityId) {
+    public RetrievePersonAttributesResponseVO retrievePersonAttributes(long entityId) {
     	Person person;
     	List<AttributeValue> attributeValueList;
+    	RetrievePersonAttributesResponseVO retrievePersonAttributesResponseVO;
     	
+    	retrievePersonAttributesResponseVO = new RetrievePersonAttributesResponseVO();
 		person = personRepository.findByIdAndTenant(entityId, SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + entityId, null));
+		retrievePersonAttributesResponseVO.setPhoto(person.getPhoto());
 		attributeValueList = person.getAttributeValueList();
-		
-		return attributeValuesEntityToVo(attributeValueList);
+		retrievePersonAttributesResponseVO.setAttributeValueVOList(attributeValuesEntityToVo(attributeValueList));
+		return retrievePersonAttributesResponseVO;
     }
     
     public RetrieveRelationAttributesResponseVO retrieveRelationAttributes(long entityId) {
@@ -462,6 +466,7 @@ public class PersonRelationService {
     		person = personRepository.findByIdAndTenant(saveAttributesRequestVO.getEntityId(), SecurityContext.getCurrentTenant())
     				.orElseThrow(() -> new AppException("Invalid Person Id " + saveAttributesRequestVO.getEntityId(), null));
     	}
+    	person.setPhoto(saveAttributesRequestVO.getPhoto());
     	
 		saveAttributesResponseVO = new SaveAttributesResponseVO();
 		saveAttributesResponseVO.setEntityId(person.getId());
