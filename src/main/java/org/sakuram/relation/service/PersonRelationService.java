@@ -493,6 +493,7 @@ public class PersonRelationService {
     	List<AttributeValue> toDeleteAttributeValueList;
     	DomainValueFlags domainValueFlags;
     	
+		toDeleteAttributeValueList = (person != null ? person.getAttributeValueList() : relation.getAttributeValueList());
     	incomingAttributeValueWithIdList = new ArrayList<Long>();
     	insertedAttributeValueIdList = new ArrayList<Long>();
     	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
@@ -522,7 +523,6 @@ public class PersonRelationService {
     	}
     	
     	domainValueFlags = new DomainValueFlags();
-		toDeleteAttributeValueList = (person != null ? person.getAttributeValueList() : relation.getAttributeValueList());
 		if (toDeleteAttributeValueList != null) {
 	    	for(AttributeValue toDeleteAttributeValue : toDeleteAttributeValueList) {
 	    		domainValueFlags.setDomainValue(toDeleteAttributeValue.getAttribute());
