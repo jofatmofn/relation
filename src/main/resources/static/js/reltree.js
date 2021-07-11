@@ -1074,3 +1074,7 @@ function blockSpecialCharOnPaste(e, regEx) {
 		}
 	}
 }
+
+function nodeToFocus() {
+	s.camera.goTo({x:0, y:0, ratio:1});
+}
