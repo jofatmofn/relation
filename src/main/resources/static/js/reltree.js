@@ -143,8 +143,31 @@ async function drawGraph() {
 				s.graph.read(await invokeService("basic/retrieveParceners", {startPersonId : e.data.node.id}));
 			}
 			else {
-				s.graph.read(await invokeService("basic/retrieveTree", {startPersonId : e.data.node.id, 
-					maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
+				if (document.querySelector('input[type="radio"][name="viewOrExportTree"]:checked').value == "view") {
+					s.graph.read(await invokeService("basic/retrieveTree", {startPersonId : e.data.node.id, 
+						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
+				} else {
+					data = await invokeService("basic/exportTree", {startPersonId : e.data.node.id, 
+						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)})
+					// https://stackoverflow.com/questions/46638343/download-csv-file-as-response-on-ajax-request
+					const downloadData = (function() {
+					    const a = document.createElement("a");
+					    document.body.appendChild(a);
+					    a.style = "display: none";
+					    return function (data, fileName) {
+					        const blob = new Blob([data], {type: "octet/stream"}),
+					            url = window.URL.createObjectURL(blob);
+					        a.href = url;
+					        a.download = fileName;
+					        a.click();
+					            setTimeout(function() {
+					                window.URL.revokeObjectURL(url);
+					            }, 100);
+					    };
+					}());
+
+					downloadData(data, "tree.csv");
+				}
 			}
 			s.refresh();
 		}
@@ -982,9 +1005,13 @@ function printGraph() {
 function enDisableDepth(clickedRadioElement) {
 	if (clickedRadioElement.value == "ftree") {
 		document.getElementById("depth").removeAttribute("disabled");
+		document.getElementById("viewTree").removeAttribute("disabled");
+		document.getElementById("exportTree").removeAttribute("disabled");
 	}
 	else {
 		document.getElementById("depth").setAttribute("disabled","");
+		document.getElementById("viewTree").setAttribute("disabled","");
+		document.getElementById("exportTree").setAttribute("disabled","");
 	}
 }
 

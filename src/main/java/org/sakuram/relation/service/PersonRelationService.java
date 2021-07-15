@@ -321,6 +321,15 @@ public class PersonRelationService {
     	return retrieveRelationsResponseVO;
     }
 	
+	public List<List<Object>> exportTree(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+		List<List<Object>> treeCsvContents;
+		// List<Object> treeCsvRow;
+		
+		treeCsvContents = new ArrayList<List<Object>>();
+		treeCsvContents.add(new ArrayList<Object>(Arrays.asList("Level 1", "L1 Spouse")));
+		return treeCsvContents;
+	}
+	
 	public GraphVO retrieveParceners(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
 		Person startPerson;
 		List<RelatedPerson1VO> relatedPerson1VOList;
@@ -494,6 +503,7 @@ public class PersonRelationService {
     	DomainValueFlags domainValueFlags;
     	
 		toDeleteAttributeValueList = (person != null ? person.getAttributeValueList() : relation.getAttributeValueList());
+		System.out.println("1. Before update, no. of attributes in DB: " + (toDeleteAttributeValueList == null ? 0 : toDeleteAttributeValueList.size()));
     	incomingAttributeValueWithIdList = new ArrayList<Long>();
     	insertedAttributeValueIdList = new ArrayList<Long>();
     	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
@@ -522,6 +532,7 @@ public class PersonRelationService {
     		}
     	}
     	
+		System.out.println("2. Before update, no. of attributes in DB: " + (toDeleteAttributeValueList == null ? 0 : toDeleteAttributeValueList.size()));
     	domainValueFlags = new DomainValueFlags();
 		if (toDeleteAttributeValueList != null) {
 	    	for(AttributeValue toDeleteAttributeValue : toDeleteAttributeValueList) {
