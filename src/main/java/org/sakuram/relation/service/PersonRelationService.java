@@ -323,10 +323,99 @@ public class PersonRelationService {
 	
 	public List<List<Object>> exportTree(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
 		List<List<Object>> treeCsvContents;
-		// List<Object> treeCsvRow;
+		GraphVO treeGraphVO;
+		Map<String, PersonVO> personsMap;
+		List<TreeIntermediateOut1VO> intOutList;
+		TreeIntermediateOut1VO treeIntermediateOut1VO;
+		TreeIntermediateOut2VO treeIntermediateOut2VO;
+		String person2ForPerson1DvId, person1ForPerson2DvId, kidId;
+		int level, maxLevel, ind1;
+		List<Object> treeCsvRow;
+		TreeIntermediateOut1VO intOutItem;
+		
+		treeGraphVO = retrieveTree(retrieveRelationsRequestVO);
+		
+		personsMap = new HashMap<String, PersonVO>();
+		for(PersonVO node : treeGraphVO.getNodes()) {
+			personsMap.put(node.getId(), node);
+		}
+		
+		intOutList = new ArrayList<TreeIntermediateOut1VO>();
+		
+		treeIntermediateOut1VO = new TreeIntermediateOut1VO();
+		intOutList.add(treeIntermediateOut1VO);
+		treeIntermediateOut1VO.personId = String.valueOf(retrieveRelationsRequestVO.getStartPersonId());
+		treeIntermediateOut1VO.level = 0;
+		treeIntermediateOut1VO.directRelativesList = new ArrayList<TreeIntermediateOut2VO>();
+		maxLevel = 0;
+		// TODO: Multiple spouses case not handled
+		// TODO: This code is okay for small volume, needs rewrite
+		ind1 = 0;
+		while(true) {
+			intOutItem = intOutList.get(ind1);
+			level = intOutItem.level + 1;
+			if (level > maxLevel) {
+				maxLevel = level;
+			}
+			for(RelationVO edge : treeGraphVO.getEdges()) {
+				if(edge.getSource().equals(intOutItem.personId) || edge.getTarget().equals(intOutItem.personId)) {
+					person2ForPerson1DvId = edge.getPerson2ForPerson1DvId();
+					person1ForPerson2DvId = edge.getPerson1ForPerson2DvId();
+					
+					if(person2ForPerson1DvId == Constants.RELATION_NAME_HUSBAND || person2ForPerson1DvId == Constants.RELATION_NAME_WIFE) {
+						// Spouse
+						if (intOutItem.directRelativesList.size() == 0) {
+							treeIntermediateOut2VO = new TreeIntermediateOut2VO();
+							intOutItem.directRelativesList.add(treeIntermediateOut2VO);
+							treeIntermediateOut2VO.kidsList = new ArrayList<String>();
+						} else {
+							treeIntermediateOut2VO = intOutItem.directRelativesList.get(0);							
+						}
+						treeIntermediateOut2VO.spouseId = edge.getSource().equals(intOutItem.personId) ? edge.getTarget() : edge.getSource();
+					} else if(edge.getSource().equals(intOutItem.personId) && (person2ForPerson1DvId == Constants.RELATION_NAME_SON || person2ForPerson1DvId == Constants.RELATION_NAME_DAUGHTER) ||
+							edge.getTarget().equals(intOutItem.personId) && (person1ForPerson2DvId == Constants.RELATION_NAME_SON || person1ForPerson2DvId == Constants.RELATION_NAME_DAUGHTER)) {
+						// Child
+						if (intOutItem.directRelativesList.size() == 0) {
+							treeIntermediateOut2VO = new TreeIntermediateOut2VO();
+							intOutItem.directRelativesList.add(treeIntermediateOut2VO);
+							treeIntermediateOut2VO.kidsList = new ArrayList<String>();
+						} else {
+							treeIntermediateOut2VO = intOutItem.directRelativesList.get(0);							
+						}
+						kidId = edge.getSource().equals(intOutItem.personId) ? edge.getTarget() : edge.getSource();
+						treeIntermediateOut2VO.kidsList.add(kidId);
+						
+						treeIntermediateOut1VO = new TreeIntermediateOut1VO();
+						intOutList.add(treeIntermediateOut1VO);
+						treeIntermediateOut1VO.personId = kidId;
+						treeIntermediateOut1VO.level = level;
+						treeIntermediateOut1VO.directRelativesList = new ArrayList<TreeIntermediateOut2VO>();
+					}
+				}
+			}
+			if(ind1 == intOutList.size() - 1) {
+				break;
+			} else {
+				ind1++;
+			}
+		}
 		
 		treeCsvContents = new ArrayList<List<Object>>();
-		treeCsvContents.add(new ArrayList<Object>(Arrays.asList("Level 1", "L1 Spouse")));
+		treeCsvRow = new ArrayList<Object>(maxLevel * 2);
+		treeCsvContents.add(treeCsvRow);
+		for(int ind2 = 0; ind2 < maxLevel; ind2++) {
+			treeCsvRow.add("Level " + (ind2 + 1));
+			treeCsvRow.add("Level " + (ind2 + 1) + " Spouse");
+		}
+		
+		for(TreeIntermediateOut1VO intOutItem1 : intOutList) {
+			treeCsvRow = new ArrayList<Object>(maxLevel * 2);
+			treeCsvContents.add(treeCsvRow);
+			UtilFuncs.listSet(treeCsvRow, intOutItem1.level * 2, personsMap.get(intOutItem1.personId).getLabel(), null);
+			if(intOutItem1.directRelativesList.size() > 0) {
+				UtilFuncs.listSet(treeCsvRow, intOutItem1.level * 2 + 1, personsMap.get(intOutItem1.directRelativesList.get(0).spouseId).getLabel(), null);
+			}
+		}
 		return treeCsvContents;
 	}
 	
@@ -839,4 +928,14 @@ public class PersonRelationService {
     	}
     }
     
+    protected class TreeIntermediateOut1VO {
+    	String personId;
+    	int level;
+    	List<TreeIntermediateOut2VO> directRelativesList;
+    }
+    
+    protected class TreeIntermediateOut2VO {
+    	String spouseId;
+    	List<String> kidsList;
+    }
 }
