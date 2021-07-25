@@ -60,7 +60,10 @@
 					<label for="drel">Direct Relations</label><br/>
 					<input type="radio" id="ftree" name="cfgPersonDblClk" value="ftree" onclick="enDisableDepth(this);"/>
 					<label for="ftree">Full Tree</label>
-					&nbsp;&nbsp;&nbsp;(
+					<br/>
+					&emsp;<input type="radio" id="viewTree" name="viewOrExportTree" value="view" checked disabled/>
+					<label for="viewTree">View</label>&emsp;
+					(
 					<label for="depth">Max Depth</label>
 					<select id="depth" name="depth" disabled>
 						<option value="2">2</option>
@@ -69,8 +72,6 @@
 					</select>
 					)
 					<br/>
-					&emsp;<input type="radio" id="viewTree" name="viewOrExportTree" value="view" checked disabled/>
-					<label for="viewTree">View</label><br/>
 					&emsp;<input type="radio" id="exportTree" name="viewOrExportTree" value="export" disabled/>
 					<label for="exportTree">Export</label><br/>
 					<input type="radio" id="parceners" name="cfgPersonDblClk" value="parceners" onclick="enDisableDepth(this);"/>

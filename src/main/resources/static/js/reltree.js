@@ -148,7 +148,7 @@ async function drawGraph() {
 						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
 				} else {
 					data = await invokeService("basic/exportTree", {startPersonId : e.data.node.id, 
-						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)})
+						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}, timeout_ms=200000)
 					// https://stackoverflow.com/questions/46638343/download-csv-file-as-response-on-ajax-request
 					const downloadData = (function() {
 					    const a = document.createElement("a");

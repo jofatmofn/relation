@@ -1,11 +1,10 @@
-async function invokeService(serviceUrl, requestVO)
+async function invokeService(serviceUrl, requestVO, timeout_ms=10000)
 {
 	return new Promise(function(resolve, reject) 
 	{
 		var httpRequest, netAction, responseParseOut;
 		blockPage();
 		httpRequest = new XMLHttpRequest();
-		httpRequest.timeout = 10000;
 		httpRequest.onreadystatechange = function()
 		{
 			if(this.readyState == 4)
@@ -40,6 +39,7 @@ async function invokeService(serviceUrl, requestVO)
 			}
 		};
 		httpRequest.open('POST', serviceUrl);
+		httpRequest.timeout = timeout_ms;
 		httpRequest.setRequestHeader('Content-Type', 'application/json');
 		httpRequest.ontimeout = function () {
 			netAction = 7;

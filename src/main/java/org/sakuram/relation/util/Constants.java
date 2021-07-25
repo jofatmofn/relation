@@ -88,6 +88,7 @@ public class Constants {
 	public static final long DELETED_ATTRIBUTE_VALUE_ID = -1L;
 	public static final int SEARCH_RESULTS_MAX_COUNT = 20;
 	public static final String RELATION_LABEL_TEMPLATE = "@@34@@(@@61@@)-@@35@@(@@62@@)(@@36@@)"; // TODO: Replace the hard-coded value with Constant
+	public static final short EXPORT_TREE_MAX_DEPTH = 10;
 	
 	public static final String SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID = "projectId";
 	public static final String SESSION_ATTRIBUTE_USER_SURROGATE_ID = "userId";

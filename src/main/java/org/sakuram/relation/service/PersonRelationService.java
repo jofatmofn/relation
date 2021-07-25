@@ -65,6 +65,8 @@ public class PersonRelationService {
 	@Autowired
 	ServiceParts serviceParts;
 	
+	int maxLevel;
+	
 	public GraphVO retrieveRelations(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	Person startPerson;
     	List<Relation> participatingRelationList;
@@ -326,7 +328,9 @@ public class PersonRelationService {
 		GraphVO treeGraphVO;
 		Map<String, PersonVO> personsMap;
 		List<Object> treeCsvRow;
+		
 		treeCsvContents = new ArrayList<List<Object>>();
+		retrieveRelationsRequestVO.setMaxDepth(Constants.EXPORT_TREE_MAX_DEPTH);
 		treeGraphVO = retrieveTree(retrieveRelationsRequestVO);
 		
 		personsMap = new HashMap<String, PersonVO>();
@@ -337,44 +341,59 @@ public class PersonRelationService {
 		/* for(RelationVO edge : treeGraphVO.getEdges()) {
 			System.out.println(personsMap.get(edge.getSource()).getFirstName() + ":" + personsMap.get(edge.getTarget()).getFirstName() + ":" + edge.getLabel());
 		} */
+	
+		maxLevel = 0;
+		exportWriteTree(String.valueOf(retrieveRelationsRequestVO.getStartPersonId()), 0, personsMap, treeGraphVO.getEdges(), treeCsvContents);
 		
-		treeCsvRow = new ArrayList<Object>(retrieveRelationsRequestVO.getMaxDepth() * 2);
-		treeCsvContents.add(treeCsvRow);
-		for(int ind2 = 0; ind2 < retrieveRelationsRequestVO.getMaxDepth(); ind2++) {
+		treeCsvRow = new ArrayList<Object>((maxLevel + 1) * 2);
+		treeCsvContents.add(0, treeCsvRow);
+		for(int ind2 = 0; ind2 <= maxLevel; ind2++) {
 			treeCsvRow.add("Level " + (ind2 + 1));
 			treeCsvRow.add("Level " + (ind2 + 1) + " Spouse");
 		}
 		
-		exportWriteTree(String.valueOf(retrieveRelationsRequestVO.getStartPersonId()), 0, personsMap, treeGraphVO.getEdges(), treeCsvContents, retrieveRelationsRequestVO.getMaxDepth());
 		return treeCsvContents;
 	}
 	
-	private void exportWriteTree(String personId, int level, Map<String, PersonVO> personsMap, List<RelationVO> relationsList, List<List<Object>> treeCsvContents, int maxLevel) {
+	private void exportWriteTree(String personId, int level, Map<String, PersonVO> personsMap, List<RelationVO> relationsList, List<List<Object>> treeCsvContents) {
+		List<String> spousesList;
 		boolean isFirstSpouse;
 		
+		if (level > maxLevel) {
+			maxLevel = level;
+		}
 		// Person
-		exportWriteRow(personId, level * 2, false, personsMap, treeCsvContents, maxLevel);
+		exportWriteRow(personId, level * 2, false, personsMap, treeCsvContents);
 		
 		// Spouse
+		spousesList = getSpouses(personId, relationsList);
 		isFirstSpouse = true;
-		for(String spouseId : getSpouses(personId, relationsList)) {
-			exportWriteRow(spouseId, level * 2 + 1, isFirstSpouse, personsMap, treeCsvContents, maxLevel);
-			isFirstSpouse = false;
-			
-			// Kids
-			for(String kidId : getKids(personId, spouseId, relationsList)) {
-				exportWriteTree(kidId, level + 1, personsMap, relationsList, treeCsvContents, maxLevel);
+		if (spousesList.size() > 0) {
+			for(String spouseId : spousesList) {
+				exportWriteRow(spouseId, level * 2 + 1, isFirstSpouse, personsMap, treeCsvContents);
+				isFirstSpouse = false;
+				
+				// Kids
+				for(String kidId : getKids(personId, spouseId, relationsList)) {
+					exportWriteTree(kidId, level + 1, personsMap, relationsList, treeCsvContents);
+				}
 			}
+		} else {
+			// Kids
+			for(String kidId : getKids(personId, null, relationsList)) {
+				exportWriteTree(kidId, level + 1, personsMap, relationsList, treeCsvContents);
+			}
+			
 		}
 	}
 	
-	private void exportWriteRow(String personId, int index, boolean toReuseLastRow, Map<String, PersonVO> personsMap, List<List<Object>> treeCsvContents, int maxLevel) {
+	private void exportWriteRow(String personId, int index, boolean toReuseLastRow, Map<String, PersonVO> personsMap, List<List<Object>> treeCsvContents) {
 		List<Object> treeCsvRow;
 		
 		if (toReuseLastRow) {
 			treeCsvRow = treeCsvContents.get(treeCsvContents.size() - 1);
 		} else {
-			treeCsvRow = new ArrayList<Object>(maxLevel * 2);
+			treeCsvRow = new ArrayList<Object>(index + 1);
 			treeCsvContents.add(treeCsvRow);
 		}
 		if(personsMap.containsKey(personId)) {
@@ -421,7 +440,7 @@ public class PersonRelationService {
 			if(relationVO.getSource().equals(parent1Id) && (relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_SON || relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_DAUGHTER) ||
 					relationVO.getTarget().equals(parent1Id) && (relationVO.getPerson1ForPerson2DvId() == Constants.RELATION_NAME_SON || relationVO.getPerson1ForPerson2DvId() == Constants.RELATION_NAME_DAUGHTER)) {
 				kidId = relationVO.getSource().equals(parent1Id) ? relationVO.getTarget() : relationVO.getSource();
-				if (parent2SatisfiedKidsList.contains(kidId)) {
+				if (parent2SatisfiedKidsList.contains(kidId) || parent2Id == null) {
 					if (relationVO.getSource().equals(parent1Id)) {
 						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
 					} else if (relationVO.getTarget().equals(parent1Id)) {
