@@ -325,98 +325,132 @@ public class PersonRelationService {
 		List<List<Object>> treeCsvContents;
 		GraphVO treeGraphVO;
 		Map<String, PersonVO> personsMap;
-		List<TreeIntermediateOut1VO> intOutList;
-		TreeIntermediateOut1VO treeIntermediateOut1VO;
-		TreeIntermediateOut2VO treeIntermediateOut2VO;
-		String person2ForPerson1DvId, person1ForPerson2DvId, kidId;
-		int level, maxLevel, ind1;
 		List<Object> treeCsvRow;
-		TreeIntermediateOut1VO intOutItem;
-		
+		treeCsvContents = new ArrayList<List<Object>>();
 		treeGraphVO = retrieveTree(retrieveRelationsRequestVO);
 		
 		personsMap = new HashMap<String, PersonVO>();
 		for(PersonVO node : treeGraphVO.getNodes()) {
 			personsMap.put(node.getId(), node);
 		}
+
+		/* for(RelationVO edge : treeGraphVO.getEdges()) {
+			System.out.println(personsMap.get(edge.getSource()).getFirstName() + ":" + personsMap.get(edge.getTarget()).getFirstName() + ":" + edge.getLabel());
+		} */
 		
-		intOutList = new ArrayList<TreeIntermediateOut1VO>();
-		
-		treeIntermediateOut1VO = new TreeIntermediateOut1VO();
-		intOutList.add(treeIntermediateOut1VO);
-		treeIntermediateOut1VO.personId = String.valueOf(retrieveRelationsRequestVO.getStartPersonId());
-		treeIntermediateOut1VO.level = 0;
-		treeIntermediateOut1VO.directRelativesList = new ArrayList<TreeIntermediateOut2VO>();
-		maxLevel = 0;
-		// TODO: Multiple spouses case not handled
-		// TODO: This code is okay for small volume, needs rewrite
-		ind1 = 0;
-		while(true) {
-			intOutItem = intOutList.get(ind1);
-			level = intOutItem.level + 1;
-			if (level > maxLevel) {
-				maxLevel = level;
-			}
-			for(RelationVO edge : treeGraphVO.getEdges()) {
-				if(edge.getSource().equals(intOutItem.personId) || edge.getTarget().equals(intOutItem.personId)) {
-					person2ForPerson1DvId = edge.getPerson2ForPerson1DvId();
-					person1ForPerson2DvId = edge.getPerson1ForPerson2DvId();
-					
-					if(person2ForPerson1DvId == Constants.RELATION_NAME_HUSBAND || person2ForPerson1DvId == Constants.RELATION_NAME_WIFE) {
-						// Spouse
-						if (intOutItem.directRelativesList.size() == 0) {
-							treeIntermediateOut2VO = new TreeIntermediateOut2VO();
-							intOutItem.directRelativesList.add(treeIntermediateOut2VO);
-							treeIntermediateOut2VO.kidsList = new ArrayList<String>();
-						} else {
-							treeIntermediateOut2VO = intOutItem.directRelativesList.get(0);							
-						}
-						treeIntermediateOut2VO.spouseId = edge.getSource().equals(intOutItem.personId) ? edge.getTarget() : edge.getSource();
-					} else if(edge.getSource().equals(intOutItem.personId) && (person2ForPerson1DvId == Constants.RELATION_NAME_SON || person2ForPerson1DvId == Constants.RELATION_NAME_DAUGHTER) ||
-							edge.getTarget().equals(intOutItem.personId) && (person1ForPerson2DvId == Constants.RELATION_NAME_SON || person1ForPerson2DvId == Constants.RELATION_NAME_DAUGHTER)) {
-						// Child
-						if (intOutItem.directRelativesList.size() == 0) {
-							treeIntermediateOut2VO = new TreeIntermediateOut2VO();
-							intOutItem.directRelativesList.add(treeIntermediateOut2VO);
-							treeIntermediateOut2VO.kidsList = new ArrayList<String>();
-						} else {
-							treeIntermediateOut2VO = intOutItem.directRelativesList.get(0);							
-						}
-						kidId = edge.getSource().equals(intOutItem.personId) ? edge.getTarget() : edge.getSource();
-						treeIntermediateOut2VO.kidsList.add(kidId);
-						
-						treeIntermediateOut1VO = new TreeIntermediateOut1VO();
-						intOutList.add(treeIntermediateOut1VO);
-						treeIntermediateOut1VO.personId = kidId;
-						treeIntermediateOut1VO.level = level;
-						treeIntermediateOut1VO.directRelativesList = new ArrayList<TreeIntermediateOut2VO>();
-					}
-				}
-			}
-			if(ind1 == intOutList.size() - 1) {
-				break;
-			} else {
-				ind1++;
-			}
-		}
-		
-		treeCsvContents = new ArrayList<List<Object>>();
-		treeCsvRow = new ArrayList<Object>(maxLevel * 2);
+		treeCsvRow = new ArrayList<Object>(retrieveRelationsRequestVO.getMaxDepth() * 2);
 		treeCsvContents.add(treeCsvRow);
-		for(int ind2 = 0; ind2 < maxLevel; ind2++) {
+		for(int ind2 = 0; ind2 < retrieveRelationsRequestVO.getMaxDepth(); ind2++) {
 			treeCsvRow.add("Level " + (ind2 + 1));
 			treeCsvRow.add("Level " + (ind2 + 1) + " Spouse");
 		}
 		
-		for(TreeIntermediateOut1VO intOutItem1 : intOutList) {
-			treeCsvRow = new ArrayList<Object>(maxLevel * 2);
-			treeCsvContents.add(treeCsvRow);
-			UtilFuncs.listSet(treeCsvRow, intOutItem1.level * 2, personsMap.get(intOutItem1.personId).getLabel(), null);
-			if(intOutItem1.directRelativesList.size() > 0) {
-				UtilFuncs.listSet(treeCsvRow, intOutItem1.level * 2 + 1, personsMap.get(intOutItem1.directRelativesList.get(0).spouseId).getLabel(), null);
+		exportWriteTree(String.valueOf(retrieveRelationsRequestVO.getStartPersonId()), 0, personsMap, treeGraphVO.getEdges(), treeCsvContents, retrieveRelationsRequestVO.getMaxDepth());
+		return treeCsvContents;
+	}
+	
+	private void exportWriteTree(String personId, int level, Map<String, PersonVO> personsMap, List<RelationVO> relationsList, List<List<Object>> treeCsvContents, int maxLevel) {
+		boolean isFirstSpouse;
+		
+		// Person
+		exportWriteRow(personId, level * 2, false, personsMap, treeCsvContents, maxLevel);
+		
+		// Spouse
+		isFirstSpouse = true;
+		for(String spouseId : getSpouses(personId, relationsList)) {
+			exportWriteRow(spouseId, level * 2 + 1, isFirstSpouse, personsMap, treeCsvContents, maxLevel);
+			isFirstSpouse = false;
+			
+			// Kids
+			for(String kidId : getKids(personId, spouseId, relationsList)) {
+				exportWriteTree(kidId, level + 1, personsMap, relationsList, treeCsvContents, maxLevel);
 			}
 		}
-		return treeCsvContents;
+	}
+	
+	private void exportWriteRow(String personId, int index, boolean toReuseLastRow, Map<String, PersonVO> personsMap, List<List<Object>> treeCsvContents, int maxLevel) {
+		List<Object> treeCsvRow;
+		
+		if (toReuseLastRow) {
+			treeCsvRow = treeCsvContents.get(treeCsvContents.size() - 1);
+		} else {
+			treeCsvRow = new ArrayList<Object>(maxLevel * 2);
+			treeCsvContents.add(treeCsvRow);
+		}
+		if(personsMap.containsKey(personId)) {
+			UtilFuncs.listSet(treeCsvRow, index, personsMap.get(personId).getFirstName(), null);
+		} else {
+			UtilFuncs.listSet(treeCsvRow, index, personId, null);
+		}
+	}
+	
+	private List<String> getSpouses(String personId, List<RelationVO> relationsList) {
+		List<String> spousesList;
+		String spouseId;
+		int sequenceNo, randSequenceNo;
+		
+		spousesList = new ArrayList<String>();
+		randSequenceNo = 1;
+		for(RelationVO relationVO : relationsList) {
+			if (relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_HUSBAND || relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_WIFE) {
+				if (relationVO.getSource().equals(personId)) {
+					sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
+					spouseId = relationVO.getTarget();
+				} else if (relationVO.getTarget().equals(personId)) {
+					sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
+					spouseId = relationVO.getSource();
+				} else {
+					continue;
+				}
+				UtilFuncs.listSet(spousesList, sequenceNo, spouseId, null);
+			}
+		}
+		return spousesList.size() == 0 ? spousesList : spousesList.subList(1, spousesList.size());
+	}
+	
+	private List<String> getKids(String parent1Id, String parent2Id, List<RelationVO> relationsList) {
+		List<String> parent1SatisfiedKidsList, parent2SatisfiedKidsList, kidsList;
+		String kidId;
+		int sequenceNo, randSequenceNo;
+		
+		parent1SatisfiedKidsList = new ArrayList<String>();
+		parent2SatisfiedKidsList = new ArrayList<String>();
+		kidsList = new ArrayList<String>();
+		randSequenceNo = 1;
+		for(RelationVO relationVO : relationsList) {
+			if(relationVO.getSource().equals(parent1Id) && (relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_SON || relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_DAUGHTER) ||
+					relationVO.getTarget().equals(parent1Id) && (relationVO.getPerson1ForPerson2DvId() == Constants.RELATION_NAME_SON || relationVO.getPerson1ForPerson2DvId() == Constants.RELATION_NAME_DAUGHTER)) {
+				kidId = relationVO.getSource().equals(parent1Id) ? relationVO.getTarget() : relationVO.getSource();
+				if (parent2SatisfiedKidsList.contains(kidId)) {
+					if (relationVO.getSource().equals(parent1Id)) {
+						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
+					} else if (relationVO.getTarget().equals(parent1Id)) {
+						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
+					} else {
+						continue;
+					}
+					UtilFuncs.listSet(kidsList, sequenceNo, kidId, null);
+				} else {
+					parent1SatisfiedKidsList.add(kidId);
+				}
+			} else if(relationVO.getSource().equals(parent2Id) && (relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_SON || relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_DAUGHTER) ||
+					relationVO.getTarget().equals(parent2Id) && (relationVO.getPerson1ForPerson2DvId() == Constants.RELATION_NAME_SON || relationVO.getPerson1ForPerson2DvId() == Constants.RELATION_NAME_DAUGHTER)) {
+				kidId = relationVO.getSource().equals(parent2Id) ? relationVO.getTarget() : relationVO.getSource();
+				if (parent1SatisfiedKidsList.contains(kidId)) {
+					if (relationVO.getSource().equals(parent2Id)) {
+						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
+					} else if (relationVO.getTarget().equals(parent2Id)) {
+						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
+					} else {
+						continue;
+					}
+					UtilFuncs.listSet(kidsList, sequenceNo, kidId, null);
+				} else {
+					parent2SatisfiedKidsList.add(kidId);
+				}
+			}
+		}
+		return kidsList.size() == 0 ? kidsList : kidsList.subList(1, kidsList.size());
 	}
 	
 	public GraphVO retrieveParceners(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {

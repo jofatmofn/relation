@@ -85,6 +85,14 @@ public class RelationVO {
 		this.type = type;
 	}
 
+	public String getAttribute(long attributeDvId) {
+		if(attributeMap.containsKey(attributeDvId)) {
+			return attributeMap.get(attributeDvId);
+		} else {
+			return "";
+		}
+	}
+
 	public void setAttribute(long attributeDvId, String attributeValue) {
 		attributeMap.put(attributeDvId, attributeValue);
 	}

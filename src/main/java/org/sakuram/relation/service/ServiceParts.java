@@ -36,12 +36,14 @@ public class ServiceParts {
 		personVO.setColor(Constants.DEFAULT_COLOR);
 		
 		for (AttributeValue attributeValue : person.getAttributeValueList()) {
-    		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_LABEL &&
-    				(attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
+    		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
     				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now()))) {
-    			personVO.setLabel(attributeValue.getAttributeValue());
-    			// TODO: What if domainValueFlags.getAttributeDomain() not empty
-    			break;
+    			if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_LABEL) {
+		    		personVO.setLabel(attributeValue.getAttributeValue());
+		    		// TODO: What if domainValueFlags.getAttributeDomain() not empty
+    			} else if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME) {
+		    		personVO.setFirstName(attributeValue.getAttributeValue());
+    			}
     		}
 		}
 		

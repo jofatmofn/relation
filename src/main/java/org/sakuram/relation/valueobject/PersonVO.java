@@ -1,9 +1,12 @@
 package org.sakuram.relation.valueobject;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class PersonVO implements Comparable<PersonVO>{
 	
 	private String id;
 	private String label;
+	@JsonIgnore private String firstName;
 	private double size;
 	private String color;
 	private double x;
@@ -23,6 +26,14 @@ public class PersonVO implements Comparable<PersonVO>{
 
 	public void setLabel(String label) {
 		this.label = label;
+	}
+
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
 	}
 
 	public double getSize() {
