@@ -405,13 +405,14 @@ public class PersonRelationService {
 	
 	private List<String> getSpouses(String personId, List<RelationVO> relationsList) {
 		List<String> spousesList;
-		String spouseId;
+		String spouseId, person2ForPerson1RelId;
 		int sequenceNo, randSequenceNo;
 		
 		spousesList = new ArrayList<String>();
 		randSequenceNo = 1;
 		for(RelationVO relationVO : relationsList) {
-			if (relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_HUSBAND || relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_WIFE) {
+			person2ForPerson1RelId = Constants.RELATION_NAME_TO_ID_MAP.get(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1));
+			if (person2ForPerson1RelId == Constants.RELATION_NAME_HUSBAND || person2ForPerson1RelId == Constants.RELATION_NAME_WIFE) {
 				if (relationVO.getSource().equals(personId)) {
 					sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
 					spouseId = relationVO.getTarget();
@@ -429,7 +430,7 @@ public class PersonRelationService {
 	
 	private List<String> getKids(String parent1Id, String parent2Id, List<RelationVO> relationsList) {
 		List<String> parent1SatisfiedKidsList, parent2SatisfiedKidsList, kidsList;
-		String kidId;
+		String kidId, person2ForPerson1RelId, person1ForPerson2RelId;
 		int sequenceNo, randSequenceNo;
 		
 		parent1SatisfiedKidsList = new ArrayList<String>();
@@ -437,8 +438,10 @@ public class PersonRelationService {
 		kidsList = new ArrayList<String>();
 		randSequenceNo = 1;
 		for(RelationVO relationVO : relationsList) {
-			if(relationVO.getSource().equals(parent1Id) && (relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_SON || relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_DAUGHTER) ||
-					relationVO.getTarget().equals(parent1Id) && (relationVO.getPerson1ForPerson2DvId() == Constants.RELATION_NAME_SON || relationVO.getPerson1ForPerson2DvId() == Constants.RELATION_NAME_DAUGHTER)) {
+			person2ForPerson1RelId = Constants.RELATION_NAME_TO_ID_MAP.get(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1));
+			person1ForPerson2RelId = Constants.RELATION_NAME_TO_ID_MAP.get(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2));
+			if(relationVO.getSource().equals(parent1Id) && (person2ForPerson1RelId == Constants.RELATION_NAME_SON || person2ForPerson1RelId == Constants.RELATION_NAME_DAUGHTER) ||
+					relationVO.getTarget().equals(parent1Id) && (person1ForPerson2RelId == Constants.RELATION_NAME_SON || person1ForPerson2RelId == Constants.RELATION_NAME_DAUGHTER)) {
 				kidId = relationVO.getSource().equals(parent1Id) ? relationVO.getTarget() : relationVO.getSource();
 				if (parent2SatisfiedKidsList.contains(kidId) || parent2Id == null) {
 					if (relationVO.getSource().equals(parent1Id)) {
@@ -452,8 +455,8 @@ public class PersonRelationService {
 				} else {
 					parent1SatisfiedKidsList.add(kidId);
 				}
-			} else if(relationVO.getSource().equals(parent2Id) && (relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_SON || relationVO.getPerson2ForPerson1DvId() == Constants.RELATION_NAME_DAUGHTER) ||
-					relationVO.getTarget().equals(parent2Id) && (relationVO.getPerson1ForPerson2DvId() == Constants.RELATION_NAME_SON || relationVO.getPerson1ForPerson2DvId() == Constants.RELATION_NAME_DAUGHTER)) {
+			} else if(relationVO.getSource().equals(parent2Id) && (person2ForPerson1RelId == Constants.RELATION_NAME_SON || person2ForPerson1RelId == Constants.RELATION_NAME_DAUGHTER) ||
+					relationVO.getTarget().equals(parent2Id) && (person1ForPerson2RelId == Constants.RELATION_NAME_SON || person1ForPerson2RelId == Constants.RELATION_NAME_DAUGHTER)) {
 				kidId = relationVO.getSource().equals(parent2Id) ? relationVO.getTarget() : relationVO.getSource();
 				if (parent1SatisfiedKidsList.contains(kidId)) {
 					if (relationVO.getSource().equals(parent2Id)) {

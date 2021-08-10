@@ -2,6 +2,7 @@ package org.sakuram.relation.valueobject;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.sakuram.relation.util.Constants;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -34,7 +35,11 @@ public class RelationVO {
 	}
 
 	public void setSource(String source) {
-		this.source = source;
+		if (toSwap) {
+			this.target = source;
+		} else {
+			this.source = source;
+		}
 	}
 
 	public String getTarget() {
@@ -42,7 +47,11 @@ public class RelationVO {
 	}
 
 	public void setTarget(String target) {
-		this.target = target;
+		if (toSwap) {
+			this.source = target;
+		} else {
+			this.target = target;
+		}
 	}
 
 	public String getLabel() {
@@ -54,10 +63,6 @@ public class RelationVO {
 			return label;
 		}
 		label = Constants.RELATION_LABEL_TEMPLATE;
-		if (attributeMap.containsKey(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) && attributeMap.containsKey(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)) {
-			label = label.replaceAll("@@" + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 + "@@", (toSwap ? attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) : attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)))
-				.replaceAll("@@" + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 + "@@", (toSwap ? attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) : attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)));
-		}
 		for (Map.Entry<Long, String> attributeEntry : attributeMap.entrySet()) {
 			label = label.replaceAll("@@" + attributeEntry.getKey() + "@@", attributeEntry.getValue());
 		}
@@ -94,24 +99,20 @@ public class RelationVO {
 	}
 
 	public void setAttribute(long attributeDvId, String attributeValue) {
-		attributeMap.put(attributeDvId, attributeValue);
-	}
-
-	@JsonIgnore public String getPerson1ForPerson2DvId() {
 		if (toSwap) {
-			return Constants.RELATION_NAME_TO_ID_MAP.get(attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1));
-		}
-		else {
-			return Constants.RELATION_NAME_TO_ID_MAP.get(attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2));
-		}
-	}
-
-	@JsonIgnore public String getPerson2ForPerson1DvId() {
-		if (toSwap) {
-			return Constants.RELATION_NAME_TO_ID_MAP.get(attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2));
-		}
-		else {
-			return Constants.RELATION_NAME_TO_ID_MAP.get(attributeMap.get(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1));
+			if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) {
+				attributeMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1, attributeValue);
+			} else if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) {
+				attributeMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, attributeValue);
+			} else if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2) {
+				attributeMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1, attributeValue);
+			} else if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1) {
+				attributeMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2, attributeValue);
+			} else {
+				attributeMap.put(attributeDvId, attributeValue);
+			}
+		} else {
+			attributeMap.put(attributeDvId, attributeValue);
 		}
 	}
 
@@ -121,5 +122,26 @@ public class RelationVO {
 
 	public void setToSwap(boolean toSwap) {
 		this.toSwap = toSwap;
+	}
+	
+	public String toString() {
+		StringBuffer sb;
+		sb = new StringBuffer(1000);
+		sb.append("Source: ");
+		sb.append(source);
+		sb.append("\n");
+		sb.append("Target: ");
+		sb.append(target);
+		sb.append("\n");
+		sb.append("Label: ");
+		sb.append(label);
+		sb.append("\n");
+		for (Entry<Long, String> attributeEntry : attributeMap.entrySet()) {
+			sb.append(attributeEntry.getKey());
+			sb.append(": ");
+			sb.append(attributeEntry.getValue());
+			sb.append("\n");
+		}
+		return sb.toString();
 	}
 }

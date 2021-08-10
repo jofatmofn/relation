@@ -64,8 +64,6 @@ public class ServiceParts {
     	relatedPerson1VO = new RelatedPerson1VO();
 		
 		relationVO.setId(String.valueOf(relation.getId()));
-		relationVO.setSource(String.valueOf(relation.getPerson1().getId()));
-		relationVO.setTarget(String.valueOf(relation.getPerson2().getId()));
 		relationVO.setSize(0.5);
 		relationVO.setType(Constants.EDGE_TYPE_DIRECT_RELATION);
 		if (relation.getPerson1().equals(startPerson)) {
@@ -79,16 +77,17 @@ public class ServiceParts {
 			relatedPerson1VO.person = relation.getPerson1();
 			otherPersonId = String.valueOf(relation.getPerson1().getId());
 			relationVO.setToSwap(true);
-			relationVO.setSource(String.valueOf(relation.getPerson2().getId()));
-			relationVO.setTarget(String.valueOf(relation.getPerson1().getId()));
 			relationAttributeDVIdOtherForStart = Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2;
 			relationSeqNoAttributeDVIdOtherForStart = Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2;
 		}
 		else {
 			otherPersonId = null;
+			relationVO.setToSwap(false);
 			relationAttributeDVIdOtherForStart = -1;
 			relationSeqNoAttributeDVIdOtherForStart = -1;
 		}
+		relationVO.setSource(String.valueOf(relation.getPerson1().getId()));
+		relationVO.setTarget(String.valueOf(relation.getPerson2().getId()));
 		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
     		if (isCurrentValidAttributeValue(attributeValue)) {
         		domainValueFlags.setDomainValue(attributeValue.getAttribute());

@@ -45,17 +45,17 @@ public class RelationSimplification {
 			noNewSimplification = true;
 			while (ind1 < simplifiedRelationVOList.size()) {
 				LogManager.getLogger().debug("ind1: " + ind1);
-				currRelation1VO = new Relation1VO(simplifiedRelationVOList.get(ind1).getPerson1ForPerson2DvId(), simplifiedRelationVOList.get(ind1).getPerson2ForPerson1DvId());
+				currRelation1VO = new Relation1VO(Constants.RELATION_NAME_TO_ID_MAP.get(simplifiedRelationVOList.get(ind1).getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)), Constants.RELATION_NAME_TO_ID_MAP.get(simplifiedRelationVOList.get(ind1).getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)));
 				for (ind2 = 2; ind2 <= MAX_RELATION_PATH_FOR_SIMPLIFICATION; ind2++) {
 					LogManager.getLogger().debug("ind2: " + ind2);
 					simplifiedRelation = null;
 					if (ind1 + ind2 - 1 < simplifiedRelationVOList.size()) {
-						nextRelation1VO = new Relation1VO(simplifiedRelationVOList.get(ind1+1).getPerson1ForPerson2DvId(), simplifiedRelationVOList.get(ind1+1).getPerson2ForPerson1DvId());
+						nextRelation1VO = new Relation1VO(Constants.RELATION_NAME_TO_ID_MAP.get(simplifiedRelationVOList.get(ind1+1).getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)), Constants.RELATION_NAME_TO_ID_MAP.get(simplifiedRelationVOList.get(ind1+1).getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)));
 						if (ind2 == 2) {
 							simplifiedRelation = getSimplifiedRelation(simplificationRuleVOList, Arrays.asList(currRelation1VO, nextRelation1VO));
 						}
 						else if (ind2 == 3) {
-							nextToNextRelation1VO = new Relation1VO(simplifiedRelationVOList.get(ind1+2).getPerson1ForPerson2DvId(), simplifiedRelationVOList.get(ind1+2).getPerson2ForPerson1DvId());
+							nextToNextRelation1VO = new Relation1VO(Constants.RELATION_NAME_TO_ID_MAP.get(simplifiedRelationVOList.get(ind1+2).getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)), Constants.RELATION_NAME_TO_ID_MAP.get(simplifiedRelationVOList.get(ind1+2).getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)));
 							simplifiedRelation = getSimplifiedRelation(simplificationRuleVOList, Arrays.asList(currRelation1VO, nextRelation1VO, nextToNextRelation1VO));
 						}
 					}
