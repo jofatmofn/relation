@@ -336,6 +336,215 @@ public class RelationSimplification {
 		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_BROTHER, Constants.RELATION_NAME_COUSIN_BROTHER);
 		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_DAUGHTER);
 		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SISTER, Constants.RELATION_NAME_BROTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_SON);
+		
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_SISTER, Constants.RELATION_NAME_COUSIN_BROTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_SON);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SISTER, Constants.RELATION_NAME_BROTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_DAUGHTER);
+		
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_SISTER, Constants.RELATION_NAME_COUSIN_BROTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_DAUGHTER);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SISTER, Constants.RELATION_NAME_BROTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_SON);
+		
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_SISTER, Constants.RELATION_NAME_COUSIN_BROTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_SON);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SISTER, Constants.RELATION_NAME_BROTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_DAUGHTER);
+		
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_SISTER, Constants.RELATION_NAME_COUSIN_BROTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_DAUGHTER);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_BROTHER, Constants.RELATION_NAME_SISTER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_SON);
+		
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_BROTHER, Constants.RELATION_NAME_COUSIN_SISTER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_SON);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_BROTHER, Constants.RELATION_NAME_SISTER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_DAUGHTER);
+		
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_BROTHER, Constants.RELATION_NAME_COUSIN_SISTER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_DAUGHTER);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_BROTHER, Constants.RELATION_NAME_SISTER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_SON);
+		
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_BROTHER, Constants.RELATION_NAME_COUSIN_SISTER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_SON);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_BROTHER, Constants.RELATION_NAME_SISTER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_DAUGHTER);
+		
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_BROTHER, Constants.RELATION_NAME_COUSIN_SISTER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_DAUGHTER);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_SON);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_DAUGHTER);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_SON);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_DAUGHTER);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_SON);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_DAUGHTER);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_SON);
+		
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_DAUGHTER);
+
+		/* */
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_BROTHER, Constants.RELATION_NAME_COUSIN_BROTHER);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_SON);
+
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_BROTHER, Constants.RELATION_NAME_COUSIN_SISTER);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_DAUGHTER);
+
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_SISTER, Constants.RELATION_NAME_COUSIN_BROTHER);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_SON);
+
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_SISTER, Constants.RELATION_NAME_COUSIN_SISTER);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_FATHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_MALE, Constants.RELATION_NAME_COUSIN_FEMALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_MOTHER, Constants.RELATION_NAME_DAUGHTER);
+
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_BROTHER, Constants.RELATION_NAME_COUSIN_BROTHER);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_SON);
+
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_BROTHER, Constants.RELATION_NAME_COUSIN_SISTER);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_DAUGHTER);
+
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_SISTER, Constants.RELATION_NAME_COUSIN_BROTHER);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_SON);
+
+		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_COUSIN_SISTER, Constants.RELATION_NAME_COUSIN_SISTER);
+		simplificationRuleVOList.add(simplificationRuleVO);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_DAUGHTER, Constants.RELATION_NAME_MOTHER);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_COUSIN_FEMALE, Constants.RELATION_NAME_COUSIN_MALE);
+		simplificationRuleVO.addRule(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_DAUGHTER);
+
 		/* 2-to-1 */
 		simplificationRuleVO = new SimplificationRuleVO(Constants.RELATION_NAME_BROTHER, Constants.RELATION_NAME_BROTHER);
 		simplificationRuleVOList.add(simplificationRuleVO);

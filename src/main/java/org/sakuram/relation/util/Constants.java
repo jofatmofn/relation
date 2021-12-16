@@ -42,6 +42,8 @@ public class Constants {
 	public static final String RELATION_NAME_NIECE = "327";
 	public static final String RELATION_NAME_COUSIN_BROTHER = "328";
 	public static final String RELATION_NAME_COUSIN_SISTER = "329";
+	public static final String RELATION_NAME_COUSIN_MALE = "330";
+	public static final String RELATION_NAME_COUSIN_FEMALE = "331";
 	public static Map<String, String> RELATION_NAME_TO_ID_MAP = Stream.of(new String[][] {
 		  { "Father", "1" },
 		  { "Mother", "2" },
@@ -61,6 +63,8 @@ public class Constants {
 		  { "Niece", "327" },
 		  { "Cousin-brother", "328" },
 		  { "Cousin-sister", "329" },
+		  { "Cousin-male", "330" },
+		  { "Cousin-female", "331" },
 		  }).collect(Collectors.toMap(data -> data[0], data -> data[1]));	// TODO: Read it from DB?
 	public static final String FLAG_RELATION_TYPE_PARENT_CHILD = "PC";
 	public static final String FLAG_RELATION_TYPE_SPOUSE = "Sp";
