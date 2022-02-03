@@ -25,7 +25,11 @@ public class PersonVO implements Comparable<PersonVO>{
 	}
 
 	public void setLabel(String label) {
-		this.label = label;
+		if (firstName != null && !firstName.startsWith(label)) {
+			this.label = label + "/" + firstName;
+		} else {
+			this.label = label;
+		}
 	}
 
 	public String getFirstName() {
@@ -34,6 +38,9 @@ public class PersonVO implements Comparable<PersonVO>{
 
 	public void setFirstName(String firstName) {
 		this.firstName = firstName;
+		if (label != null && !firstName.startsWith(label)) {
+			label = label + "/" + firstName;
+		}
 	}
 
 	public double getSize() {

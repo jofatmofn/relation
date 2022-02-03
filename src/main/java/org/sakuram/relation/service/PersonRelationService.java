@@ -397,7 +397,7 @@ public class PersonRelationService {
 			treeCsvContents.add(treeCsvRow);
 		}
 		if(personsMap.containsKey(personId)) {
-			UtilFuncs.listSet(treeCsvRow, index, personsMap.get(personId).getFirstName(), null);
+			UtilFuncs.listSet(treeCsvRow, index, personsMap.get(personId).getLabel(), null);
 		} else {
 			UtilFuncs.listSet(treeCsvRow, index, personId, null);
 		}
