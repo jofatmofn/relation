@@ -44,6 +44,8 @@ public class Constants {
 	public static final String RELATION_NAME_COUSIN_SISTER = "329";
 	public static final String RELATION_NAME_COUSIN_MALE = "330";
 	public static final String RELATION_NAME_COUSIN_FEMALE = "331";
+	public static final String GENDER_NAME_MALE = "59";
+	public static final String GENDER_NAME_FEMALE = "60";
 	public static Map<String, String> RELATION_NAME_TO_ID_MAP = Stream.of(new String[][] {
 		  { "Father", "1" },
 		  { "Mother", "2" },

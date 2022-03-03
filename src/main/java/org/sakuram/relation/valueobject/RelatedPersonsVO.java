@@ -3,6 +3,7 @@ package org.sakuram.relation.valueobject;
 public class RelatedPersonsVO {
 	private long person1Id;
 	private long person2Id;
+	private String person1ForPerson2;
 	private long creatorId;
 	private String excludeRelationIdCsv;
 	
@@ -22,6 +23,14 @@ public class RelatedPersonsVO {
 		this.person2Id = person2Id;
 	}
 	
+	public String getPerson1ForPerson2() {
+		return person1ForPerson2;
+	}
+
+	public void setPerson1ForPerson2(String person1ForPerson2) {
+		this.person1ForPerson2 = person1ForPerson2;
+	}
+
 	public long getCreatorId() {
 		return creatorId;
 	}

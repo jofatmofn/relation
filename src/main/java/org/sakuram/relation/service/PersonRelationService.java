@@ -893,26 +893,81 @@ public class PersonRelationService {
 		return relatedPerson1VO;
     }
     
-    public long saveRelation(RelatedPersonsVO saveRelationRequestVO) {
+    public List<String> retrieveGendersOfPersons(List<Long> personsList) {
+    	List<String> gendersOfPersonsList;
+    	Person person;
+    	AttributeValue genderAv;
+    	DomainValue attributeDv;
+    	
+    	gendersOfPersonsList = new ArrayList<String>(personsList.size());
+    	for (long personId : personsList) {
+        	person = personRepository.findByIdAndTenant(personId, SecurityContext.getCurrentTenant())
+    				.orElseThrow(() -> new AppException("Invalid Person Id " + personId, null));
+			attributeDv = domainValueRepository.findById(Constants.PERSON_ATTRIBUTE_DV_ID_GENDER)
+					.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + Constants.PERSON_ATTRIBUTE_DV_ID_GENDER, null));
+			genderAv = attributeValueRepository.findByPersonAndAttribute(person, attributeDv)
+					.orElseThrow(() -> new AppException("Invalid gender for " + personId, null));
+			gendersOfPersonsList.add(genderAv.getAttributeValue());
+    	}
+    	return gendersOfPersonsList;
+    }
+    
+    public RelationVO saveRelation(RelatedPersonsVO saveRelationRequestVO) {
+    	// Person 1 is expected to be one of Father, Mother, Husband
     	Person person1, person2;
     	Relation relation;
-    	HashSet<Person> personSet;
+    	AttributeValue attributeValue1, attributeValue2, genderAv;
+    	DomainValue attributeDv;
+    	List<RelationVO> relationVOList;
     	
+    	if (relationRepository.findRelationGivenPersons(saveRelationRequestVO.getPerson1Id(), saveRelationRequestVO.getPerson2Id(), SecurityContext.getCurrentTenantId()) != null) {
+    		throw new AppException(saveRelationRequestVO.getPerson1Id() + " and " + saveRelationRequestVO.getPerson2Id() + " are already related.", null);
+    	}
     	person1 = personRepository.findByIdAndTenant(saveRelationRequestVO.getPerson1Id(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveRelationRequestVO.getPerson1Id(), null));
     	person2 = personRepository.findByIdAndTenant(saveRelationRequestVO.getPerson2Id(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveRelationRequestVO.getPerson2Id(), null));
-    	// TODO: To check reverse also; Create a new repository method
-    	personSet = new HashSet<Person>(Arrays.asList(new Person[]{person1, person2}));
-    	if (relationRepository.findByPerson1InAndPerson2In(personSet, personSet).size() > 0) {
-    		throw new AppException(saveRelationRequestVO.getPerson1Id() + " and " + saveRelationRequestVO.getPerson2Id() + " are already related.", null);
-    	}
+
     	relation = new Relation();
     	relation.setPerson1(person1);
     	relation.setPerson2(person2);
     	relation.setCreator(SecurityContext.getCurrentUser());
     	relation = relationRepository.save(relation);
-    	return relation.getId();
+
+    	attributeValue1 = new AttributeValue();
+		attributeDv = domainValueRepository.findById(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)
+				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, null));
+		attributeValue1.setAttribute(attributeDv);
+		attributeValue1.setAttributeValue(saveRelationRequestVO.getPerson1ForPerson2());
+		attributeValue1.setRelation(relation);
+		attributeValue1.setCreator(SecurityContext.getCurrentUser());
+		attributeValueRepository.save(attributeValue1);
+		
+		attributeValue2 = new AttributeValue();
+		attributeDv = domainValueRepository.findById(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)
+				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1, null));
+		attributeValue2.setAttribute(attributeDv);
+		if (saveRelationRequestVO.getPerson1ForPerson2().equals(Constants.RELATION_NAME_MOTHER) || saveRelationRequestVO.getPerson1ForPerson2().equals(Constants.RELATION_NAME_FATHER)) {
+			attributeDv = domainValueRepository.findById(Constants.PERSON_ATTRIBUTE_DV_ID_GENDER)
+					.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + Constants.PERSON_ATTRIBUTE_DV_ID_GENDER, null));
+			genderAv = attributeValueRepository.findByPersonAndAttribute(person2, attributeDv)
+					.orElseThrow(() -> new AppException("Invalid gender for " + saveRelationRequestVO.getPerson2Id(), null));
+			if (genderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
+				attributeValue2.setAttributeValue(Constants.RELATION_NAME_SON);
+			} else if (genderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE)) {
+				attributeValue2.setAttributeValue(Constants.RELATION_NAME_DAUGHTER);
+			}
+		} else if (saveRelationRequestVO.getPerson1ForPerson2().equals(Constants.RELATION_NAME_HUSBAND)) {
+			attributeValue2.setAttributeValue(Constants.RELATION_NAME_WIFE);
+		}
+		attributeValue2.setRelation(relation);
+		attributeValue2.setCreator(SecurityContext.getCurrentUser());
+		attributeValueRepository.save(attributeValue2);
+		
+		relation.setAttributeValueList(new ArrayList<AttributeValue>(Arrays.asList(attributeValue1, attributeValue2)));
+    	relationVOList = new ArrayList<RelationVO>();
+		serviceParts.addToRelationVOList(relationVOList, relation, null, false);
+    	return relationVOList.get(0);
     }
     
     public void deleteRelation(long relationId) {

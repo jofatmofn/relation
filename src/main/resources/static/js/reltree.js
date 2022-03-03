@@ -1,6 +1,7 @@
 var domainValueVOList, isAppReadOnly, highlightedEntity, domainValueVOMap;
 var paSelectElement, raSelectElement, paDomainValueVOList, raDomainValueVOList, isPersonNode;
 var action, selectElementMap, doubleClick, paSearchXtraOptions;
+var allPersonsSelectElement, malePersonsSelectElement, femalePersonsSelectElement;
 
 async function drawGraph() {
 	
@@ -887,46 +888,126 @@ function clearSidebar() {
 }
 
 function relatePersons() {
-	var actionButtonElement;
+	var rightBarElement, fatherPersonElement, motherPersonElement, childPersonElement, husbandPersonElement, wifePersonElement;
+	var actionButtonElement, parentChildRadioElement;
 	
 	clearSidebar();
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Relate</button>";
 	document.getElementById("sidebartitle").textContent = "Related Persons";
 
-	getPersonsPair(false);
+	rightBarElement = document.getElementById("sidebarbody");
+	rightBarElement.innerHTML = `<input type="radio" id="PC" name="relGrp" value="PC" checked onclick="switchRelGrp(this);"/>
+					<label for="PC">Parent-Child</label>
+					<input type="radio" id="Sp" name="relGrp" value="Sp" onclick="switchRelGrp(this);"/>
+					<label for="Sp">Spouse</label>
+					<div id="relatedPersons"></div>`
+	parentChildRadioElement = document.getElementById("PC");
+	switchRelGrp(parentChildRadioElement);
 	
 	actionButtonElement = document.getElementById("actionbutton");
 	actionButtonElement.onclick = async function() {
-		var person1Id, person2Id, relationId, person1Element, person2Element;
-		person1Element = document.getElementById("person1");
-		person2Element = document.getElementById("person2");
-		person1Id = parseInt(person1Element.options[person1Element.selectedIndex].value);
-		person2Id = parseInt(person2Element.options[person2Element.selectedIndex].value);
-		if (person1Id == person2Id) {
-			alert("Same person cannot be part of a relation");
-			return;
+		var person1Id, person2Id, relationId, fatherPersonElement, motherPersonElement, childPersonElement, husbandPersonElement, wifePersonElement;
+		var selectedRelGrp;
+		
+		selectedRelGrp = document.querySelector('input[name="relGrp"]:checked')?.value;
+		
+		if (selectedRelGrp == "PC") {
+			fatherPersonElement = document.getElementById("fatherPerson");
+			motherPersonElement = document.getElementById("motherPerson");
+			childPersonElement = document.getElementById("childPerson");
+			fatherPersonId = parseInt(fatherPersonElement.options[fatherPersonElement.selectedIndex].value);
+			motherPersonId = parseInt(motherPersonElement.options[motherPersonElement.selectedIndex].value);
+			childPersonId = parseInt(childPersonElement.options[childPersonElement.selectedIndex].value);
+			if (fatherPersonId == childPersonId || motherPersonId == childPersonId) {
+				alert("Same person cannot be part of a relation");
+				return;
+			}
+			if (fatherPersonId == -1 && motherPersonId == -1) {
+				alert("One of Father, Mother is required");
+				return;
+			}
+			if (motherPersonId != -1) {
+				relationId = await saveRelation({person1Id: motherPersonId, person2Id: childPersonId, person1ForPerson2: RELATION_NAME_MOTHER_DV_ID});
+			}
+			// Beware: The above and below saveRelation are NOT part of a single TRANSACTION
+			if (fatherPersonId != -1) {
+				relationId = await saveRelation({person1Id: fatherPersonId, person2Id: childPersonId, person1ForPerson2: RELATION_NAME_FATHER_DV_ID});
+			}
+		} else {
+			husbandPersonElement = document.getElementById("husbandPerson");
+			wifePersonElement = document.getElementById("wifePerson");
+			husbandPersonId = parseInt(husbandPersonElement.options[husbandPersonElement.selectedIndex].value);
+			wifePersonId = parseInt(wifePersonElement.options[wifePersonElement.selectedIndex].value);
+			relationId = await saveRelation({person1Id: husbandPersonId, person2Id: wifePersonId, person1ForPerson2: '' + RELATION_NAME_HUSBAND_DV_ID});
 		}
-		relationId = await invokeService("basic/saveRelation", {person1Id: person1Id, person2Id: person2Id});
-		s.graph.addEdge({
-			id: relationId,
-			source: person1Id,
-			target: person2Id,
-			label: '',
-			size: 0.5,
-			type: 'goo'
-		});
-		s.renderers[0].dispatchEvent('clickEdge', {edge: s.graph.edges(relationId)});
 	}
 }
 
-function ascertainRelation() {
+async function saveRelation(relatedPersonsVO) {
+	relationVO = await invokeService("basic/saveRelation", relatedPersonsVO);
+	s.graph.addEdge({
+		id: relationVO.id,
+		source: relationVO.source,
+		target: relationVO.target,
+		label: relationVO.label,
+		size: relationVO.size,
+		type: 'goo'
+	});
+	s.renderers[0].dispatchEvent('clickEdge', {edge: s.graph.edges(relationVO.id)});
+}
+
+async function switchRelGrp(clickedRadioElement) {
+	var relatedPersonsElement;
+	
+	await createPersonDropdown();
+	relatedPersonsElement = document.getElementById("relatedPersons");
+	relatedPersonsElement.innerHTML = "";
+	
+	if (clickedRadioElement.value == "PC") {
+		
+		relatedPersonsElement.appendChild(document.createTextNode("Father: "));
+		fatherPersonElement = malePersonsSelectElement.cloneNode(true);
+		makeDropdownOptional(fatherPersonElement);
+		fatherPersonElement.setAttribute("id", "fatherPerson");
+		relatedPersonsElement.appendChild(fatherPersonElement);
+		relatedPersonsElement.appendChild(document.createElement("br"));
+		
+		relatedPersonsElement.appendChild(document.createTextNode("Mother: "));
+		motherPersonElement = femalePersonsSelectElement.cloneNode(true);
+		makeDropdownOptional(motherPersonElement);
+		motherPersonElement.setAttribute("id", "motherPerson");
+		relatedPersonsElement.appendChild(motherPersonElement);
+		relatedPersonsElement.appendChild(document.createElement("br"));
+		
+		relatedPersonsElement.appendChild(document.createTextNode("Son/Daughter: "));
+		childPersonElement = allPersonsSelectElement.cloneNode(true);
+		childPersonElement.setAttribute("id", "childPerson");
+		relatedPersonsElement.appendChild(childPersonElement);
+		relatedPersonsElement.appendChild(document.createElement("br"));
+	}
+	else {
+		relatedPersonsElement.appendChild(document.createTextNode("Husband: "));
+		husbandPersonElement = malePersonsSelectElement.cloneNode(true);
+		husbandPersonElement.setAttribute("id", "husbandPerson");
+		relatedPersonsElement.appendChild(husbandPersonElement);
+		relatedPersonsElement.appendChild(document.createElement("br"));
+		
+		relatedPersonsElement.appendChild(document.createTextNode("Wife: "));
+		wifePersonElement = femalePersonsSelectElement.cloneNode(true);
+		wifePersonElement.setAttribute("id", "wifePerson");
+		relatedPersonsElement.appendChild(wifePersonElement);
+		relatedPersonsElement.appendChild(document.createElement("br"));
+	}
+}
+
+async function ascertainRelation() {
 	var actionButtonElement;
 	
 	clearSidebar();
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Ascertain</button>";
 	document.getElementById("sidebartitle").textContent = "Ascertain Relation";
 
-	getPersonsPair(true);
+	await getPersonsPair();
 	
 	actionButtonElement = document.getElementById("actionbutton");
 	actionButtonElement.onclick = async function() {
@@ -945,30 +1026,20 @@ function ascertainRelation() {
 		s.graph.clear();
 		s.graph.read(await invokeService("algo/retrieveRelationPath", {person1Id: person1Id, person2Id: person2Id, excludeRelationIdCsv: excludeRelationIdCsv}), timeout_ms=50000);
 		s.refresh();
-		getPersonsPair(true, person1Id, person2Id, excludeRelationIdCsv);
+		await getPersonsPair(person1Id, person2Id, excludeRelationIdCsv);
 	}
 }
 
-function getPersonsPair(toIncludeExclude, person1Id, person2Id, excludeRelationIdCsv) {
-	var selectElement, optionElement, node, rightBarElement, person1Element, person2Element;
+async function getPersonsPair(person1Id, person2Id, excludeRelationIdCsv) {
+	var rightBarElement, person1Element, person2Element;
 	var exclrelElement;
-	
-	selectElement = document.createElement("select");
-	selectElement.setAttribute("name","persons");
-	selectElement.classList.add("propdrop");
-	for (let node of s.graph.nodes()) {
-		if (node.id != NEW_ENTITY_ID && node.id != SEARCH_ENTITY_ID) {
-			optionElement = document.createElement("option");
-			optionElement.setAttribute("value", node.id);
-			optionElement.appendChild(document.createTextNode(node.label + " (" + node.id + ")"));
-			selectElement.appendChild(optionElement);
-		}
-	}
+
+	await createPersonDropdown();
 	rightBarElement = document.getElementById("sidebarbody");
 	
 	rightBarElement.innerHTML = "";
 	rightBarElement.appendChild(document.createTextNode("Person 1: "));
-	person1Element = selectElement.cloneNode(true);
+	person1Element = allPersonsSelectElement.cloneNode(true);
 	person1Element.setAttribute("id", "person1");
 	if (person1Id != null) {
 		person1Element.value = person1Id;
@@ -977,29 +1048,75 @@ function getPersonsPair(toIncludeExclude, person1Id, person2Id, excludeRelationI
 	
 	rightBarElement.appendChild(document.createElement("br"));
 	rightBarElement.appendChild(document.createTextNode("Person 2: "));
-	person2Element = selectElement.cloneNode(true);
+	person2Element = allPersonsSelectElement.cloneNode(true);
 	person2Element.setAttribute("id", "person2");
 	if (person2Id != null) {
 		person2Element.value = person2Id;
 	}
 	rightBarElement.appendChild(person2Element);
 	
-	if (toIncludeExclude) {
-		rightBarElement.appendChild(document.createElement("br"));
-		rightBarElement.appendChild(document.createTextNode("Exclude Relations: "));
-		exclrelElement = document.createElement("input");
-		exclrelElement.setAttribute("type","text");
-		exclrelElement.setAttribute("id", "exclrelids");
-		if (excludeRelationIdCsv != null) {
-			exclrelElement.value = excludeRelationIdCsv;
-		}
-		rightBarElement.appendChild(exclrelElement);
+	rightBarElement.appendChild(document.createElement("br"));
+	rightBarElement.appendChild(document.createTextNode("Exclude Relations: "));
+	exclrelElement = document.createElement("input");
+	exclrelElement.setAttribute("type","text");
+	exclrelElement.setAttribute("id", "exclrelids");
+	if (excludeRelationIdCsv != null) {
+		exclrelElement.value = excludeRelationIdCsv;
 	}
+	rightBarElement.appendChild(exclrelElement);
 	
+}
+
+async function createPersonDropdown()
+{
+	var optionElement, allPersonIds, allGenders, ind;
+	
+	allPersonsSelectElement = document.createElement("select");
+	allPersonsSelectElement.setAttribute("name","persons");
+	allPersonsSelectElement.classList.add("propdrop");
+	malePersonsSelectElement = allPersonsSelectElement.cloneNode(true);
+	femalePersonsSelectElement = allPersonsSelectElement.cloneNode(true);
+	
+	allPersonIds = [];
+	for (let node of s.graph.nodes()) {
+		if (node.id != NEW_ENTITY_ID && node.id != SEARCH_ENTITY_ID) {
+			allPersonIds.push(node.id);
+		}
+	}
+	if (allPersonIds.length == 0) {
+		document.getElementById("actionbutton").disabled = true;
+		return;
+	}
+	allGenders = await invokeService("basic/retrieveGendersOfPersons", allPersonIds);
+	
+	ind = -1;
+	for (let node of s.graph.nodes()) {
+		if (node.id != NEW_ENTITY_ID && node.id != SEARCH_ENTITY_ID) {
+			optionElement = document.createElement("option");
+			optionElement.setAttribute("value", node.id);
+			optionElement.appendChild(document.createTextNode(node.label + " (" + node.id + ")"));
+			allPersonsSelectElement.appendChild(optionElement);
+			ind++;
+			if (allGenders[ind] == GENDER_MALE_DV_ID) {
+				malePersonsSelectElement.appendChild(optionElement.cloneNode(true));
+			} else if (allGenders[ind] == GENDER_FEMALE_DV_ID) {
+				femalePersonsSelectElement.appendChild(optionElement.cloneNode(true));
+			}
+		}
+	}
+}
+
+function makeDropdownOptional(ddElement) {
+	var optionElement;
+	optionElement = document.createElement("option");
+	optionElement.setAttribute("value", -1);
+	optionElement.appendChild(document.createTextNode("-- Select --"));
+	ddElement.prepend(optionElement);
 }
 
 function printGraph() {
 	s.toSVG({download: true, filename: 'familytree.svg', labels: true, size: 1000});
+	// s.renderers[0].snapshot({download: true});
 }
 
 function enDisableDepth(clickedRadioElement) {

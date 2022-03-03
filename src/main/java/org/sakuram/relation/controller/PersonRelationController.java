@@ -93,6 +93,11 @@ public class PersonRelationController {
     	return personRelationService.retrieveRelationAttributes(entityId);
     }
     
+    @RequestMapping(value = "/retrieveGendersOfPersons", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<String> retrieveGendersOfPersons(HttpSession httpSession, @RequestBody List<Long> personsList) {
+    	return personRelationService.retrieveGendersOfPersons(personsList);
+    }
+    
     @RequestMapping(value = "/savePersonAttributes", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public SaveAttributesResponseVO savePersonAttributes(HttpSession httpSession, @RequestBody SaveAttributesRequestVO saveAttributesRequestVO) {
     	return personRelationService.savePersonAttributes(saveAttributesRequestVO);
@@ -109,7 +114,7 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/saveRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public long saveRelation(HttpSession httpSession, @RequestBody RelatedPersonsVO saveRelationRequestVO) {
+    public RelationVO saveRelation(HttpSession httpSession, @RequestBody RelatedPersonsVO saveRelationRequestVO) {
     	return personRelationService.saveRelation(saveRelationRequestVO);
     }
     
