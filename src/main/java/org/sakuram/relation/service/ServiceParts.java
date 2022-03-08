@@ -43,10 +43,13 @@ public class ServiceParts {
 		    		// TODO: What if domainValueFlags.getAttributeDomain() not empty
     			} else if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME) {
 		    		personVO.setFirstName(attributeValue.getAttributeValue());
+    			} else if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER) {
+		    		personVO.setGender(attributeValue.getAttributeValue());
     			}
     		}
 		}
 		
+		personVO.setLabel(personVO.getNormalisedLabel());
 		return personVO;
 	}
 	

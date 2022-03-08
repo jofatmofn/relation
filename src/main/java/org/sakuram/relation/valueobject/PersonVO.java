@@ -1,5 +1,7 @@
 package org.sakuram.relation.valueobject;
 
+import org.sakuram.relation.util.Constants;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class PersonVO implements Comparable<PersonVO>{
@@ -7,11 +9,12 @@ public class PersonVO implements Comparable<PersonVO>{
 	private String id;
 	private String label;
 	@JsonIgnore private String firstName;
+	@JsonIgnore private String gender;
 	private double size;
 	private String color;
 	private double x;
 	private double y;
-
+	
 	public String getId() {
 		return id;
 	}
@@ -25,11 +28,12 @@ public class PersonVO implements Comparable<PersonVO>{
 	}
 
 	public void setLabel(String label) {
-		if (firstName != null && !firstName.startsWith(label)) {
-			this.label = label + "/" + firstName;
-		} else {
-			this.label = label;
-		}
+		this.label = label;
+	}
+
+	public String getNormalisedLabel() {
+		return "(" + (id == null ? "" : id) + "/" + (gender == null ? "" : gender) + ")" + (firstName == null ? "" : firstName) +
+				(label != null && (firstName == null || !firstName.startsWith(label) && !firstName.endsWith(label)) ? (firstName == null ? "" : "/") + label : "");
 	}
 
 	public String getFirstName() {
@@ -38,9 +42,21 @@ public class PersonVO implements Comparable<PersonVO>{
 
 	public void setFirstName(String firstName) {
 		this.firstName = firstName;
-		if (label != null && !firstName.startsWith(label)) {
-			label = label + "/" + firstName;
+	}
+
+	public String getGender() {
+		return gender;
+	}
+
+	public void setGender(String genderId) {
+		if (genderId.equals(Constants.GENDER_NAME_MALE)) {
+			this.gender = "M";
+		} else if (genderId.equals(Constants.GENDER_NAME_FEMALE)) {
+			this.gender = "F";
+		} else {
+			this.gender = "-";			
 		}
+
 	}
 
 	public double getSize() {

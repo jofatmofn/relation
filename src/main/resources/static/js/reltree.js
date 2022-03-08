@@ -407,7 +407,7 @@ async function editEntityAttributes(e) {
 			else {
 				person1Node = s.graph.nodes(highlightedEntity.source);
 				person2Node = s.graph.nodes(highlightedEntity.target);
-				document.getElementById("sidebartitle").textContent = "Details of relation between " + person1Node.label + "(" + person1Node.id + ") and " + person2Node.label + "(" + person2Node.id + ")";
+				document.getElementById("sidebartitle").textContent = "Details of relation between " + person1Node.label + " and " + person2Node.label;
 			}
 			break;
 		case ACTION_SEARCH:
