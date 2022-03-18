@@ -106,7 +106,7 @@ public class ServiceParts {
     				relatedPerson1VO.relationDvId = attributeValue.getAttributeValue();
     			}
     			else if (otherPersonId != null && attributeValue.getAttribute().getId() == relationSeqNoAttributeDVIdOtherForStart) {
-    				relatedPerson1VO.seqNo = Integer.parseInt(attributeValue.getAttributeValue());
+    				relatedPerson1VO.seqNo = Float.parseFloat(attributeValue.getAttributeValue());
     			}
     		}
 		}
@@ -128,7 +128,7 @@ public class ServiceParts {
     	Person person;
     	Relation relation;
     	String relationDvId;
-    	int seqNo;
+    	float seqNo;
     }
 
 }

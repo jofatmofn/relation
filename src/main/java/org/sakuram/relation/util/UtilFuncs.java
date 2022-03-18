@@ -6,9 +6,17 @@ import java.util.List;
 
 public class UtilFuncs {
 	private static final List<String> SINGLE_ATTRIBUTE_CLASS_NAME_LIST = Arrays.asList(new String[] {"java.lang.Boolean", "java.lang.Byte", "java.lang.Character", "java.lang.Float", "java.lang.Integer", "java.lang.Long", "java.lang.Short", "java.lang.String", "java.lang.Double"});
-
+	private static final float EPSILON = 0.00000096F;
+	
     @SuppressWarnings("unchecked")
-	public static <T> void listSet(List<T> list, int position, T valueToBeAdded, T fillValue) {
+	public static <T> void listSet(List<T> list, float sequenceNo, T valueToBeAdded, T fillValue) {
+    	int position;
+    	if (sequenceNo == (int)sequenceNo) {
+    		position = (int)sequenceNo;
+    	} else {
+    		position = (int)sequenceNo + (int)((sequenceNo - (float)(int)sequenceNo) * 10 + EPSILON) - 1;
+    		// It is assumed here that the decimal part is just a single digit
+    	}
     	for (int i = list.size(); i <= position; i++) {
     		try {
     			if (fillValue == null) {

@@ -406,7 +406,7 @@ public class PersonRelationService {
 	private List<String> getSpouses(String personId, List<RelationVO> relationsList) {
 		List<String> spousesList;
 		String spouseId, person2ForPerson1RelId;
-		int sequenceNo, randSequenceNo;
+		float sequenceNo, randSequenceNo;
 		
 		spousesList = new ArrayList<String>();
 		randSequenceNo = 1;
@@ -414,10 +414,10 @@ public class PersonRelationService {
 			person2ForPerson1RelId = Constants.RELATION_NAME_TO_ID_MAP.get(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1));
 			if (person2ForPerson1RelId == Constants.RELATION_NAME_HUSBAND || person2ForPerson1RelId == Constants.RELATION_NAME_WIFE) {
 				if (relationVO.getSource().equals(personId)) {
-					sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
+					sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
 					spouseId = relationVO.getTarget();
 				} else if (relationVO.getTarget().equals(personId)) {
-					sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
+					sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
 					spouseId = relationVO.getSource();
 				} else {
 					continue;
@@ -431,7 +431,7 @@ public class PersonRelationService {
 	private List<String> getKids(String parent1Id, String parent2Id, List<RelationVO> relationsList) {
 		List<String> parent1SatisfiedKidsList, parent2SatisfiedKidsList, kidsList;
 		String kidId, person2ForPerson1RelId, person1ForPerson2RelId;
-		int sequenceNo, randSequenceNo;
+		float sequenceNo, randSequenceNo;
 		
 		parent1SatisfiedKidsList = new ArrayList<String>();
 		parent2SatisfiedKidsList = new ArrayList<String>();
@@ -445,9 +445,9 @@ public class PersonRelationService {
 				kidId = relationVO.getSource().equals(parent1Id) ? relationVO.getTarget() : relationVO.getSource();
 				if (parent2SatisfiedKidsList.contains(kidId) || parent2Id == null) {
 					if (relationVO.getSource().equals(parent1Id)) {
-						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
+						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
 					} else if (relationVO.getTarget().equals(parent1Id)) {
-						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
+						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
 					} else {
 						continue;
 					}
@@ -460,9 +460,9 @@ public class PersonRelationService {
 				kidId = relationVO.getSource().equals(parent2Id) ? relationVO.getTarget() : relationVO.getSource();
 				if (parent1SatisfiedKidsList.contains(kidId)) {
 					if (relationVO.getSource().equals(parent2Id)) {
-						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
+						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
 					} else if (relationVO.getTarget().equals(parent2Id)) {
-						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Integer.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
+						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
 					} else {
 						continue;
 					}
@@ -1027,9 +1027,9 @@ public class PersonRelationService {
     
     protected class RelatedPerson3VO  implements Comparable<RelatedPerson3VO> {
     	long personId;
-    	int seqNo;
+    	float seqNo;
 
-    	public RelatedPerson3VO(long personId, int seqNo) {
+    	public RelatedPerson3VO(long personId, float seqNo) {
     		this.personId = personId;
     		this.seqNo = seqNo;
     	}
