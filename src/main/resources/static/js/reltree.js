@@ -1222,3 +1222,52 @@ function blockSpecialCharOnPaste(e, regEx) {
 function nodeToFocus() {
 	s.camera.goTo({x:0, y:0, ratio:1});
 }
+
+async function uploadPrData() {
+	var actionButtonElement, rightBarElement, pRDataCsvInputElement, formData;
+	
+	clearSidebar();
+	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Upload</button>";
+	document.getElementById("sidebartitle").textContent = "Upload Persons & Relations";
+
+	rightBarElement = document.getElementById("sidebarbody");
+	rightBarElement.innerHTML = "<input id='pRDataCsvInput' type='file' accept='.csv' />";
+	
+	actionButtonElement = document.getElementById("actionbutton");
+	actionButtonElement.onclick = async function() {
+		pRDataCsvInputElement = document.getElementById("pRDataCsvInput");
+		if ('files' in pRDataCsvInputElement) {
+			switch(pRDataCsvInputElement.files.length) {
+				case 0:
+					break;
+				case 1:
+					file = pRDataCsvInputElement.files[0];
+					if (!file.name.toLowerCase().endsWith(".csv")) {
+						alert("Only CSV files are allowed");
+						return;
+					}
+					if (file.size > 1048576) { // 1 MB
+						alert("Only file of maximum size 1 MB allowed");
+						return;
+					}
+					let formData = new FormData();
+					formData.append("file", pRDataCsvInput.files[0]);
+					// TODO: Using invokeService instead of fetch?
+					await fetch("basic/importPrData", {
+						method: "POST",
+						body: formData
+					}).then(resp => {
+						if(resp.ok) {
+							alert("The file has been uploaded successfully.");
+							return;
+						}
+						return resp.text().then(text => {throw new Error(text)});
+					});
+					break;
+				default:
+					alert("Only one file is permitted");
+					return;
+			}
+		}
+	}
+}

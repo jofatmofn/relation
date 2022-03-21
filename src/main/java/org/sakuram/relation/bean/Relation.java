@@ -160,6 +160,16 @@ public class Relation {
 	public void setAttributeValueList(List<AttributeValue> attributeValueList) {
 		this.attributeValueList = attributeValueList;
 	}
+
+	public Relation() {
+		
+	}
+	
+	public Relation(Person person1, Person person2) {
+		this.person1 = person1;
+		this.person2 = person2;
+		this.creator = SecurityContext.getCurrentUser();
+	}
 	
 	@PrePersist
 	@PreUpdate

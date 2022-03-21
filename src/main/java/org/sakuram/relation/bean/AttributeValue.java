@@ -200,6 +200,18 @@ public class AttributeValue {
 		this.deletedAt = deletedAt;
 	}
 
+	public AttributeValue() {
+		
+	}
+	
+	public AttributeValue(DomainValue attribute, String attributeValue, Person person, Relation relation) {
+		this.attribute = attribute;
+		this.attributeValue = attributeValue;
+		this.person = person;
+		this.relation = relation;
+		this.creator = SecurityContext.getCurrentUser();
+	}
+	
 	@PrePersist
 	@PreUpdate
 	public void prePersist() {

@@ -52,7 +52,7 @@ public class SecurityAspect {
 		return returnValueObject;
 	}
 
-	@Around("(execution(* org.sakuram.relation.controller.*Controller.save*(..)) || execution(* org.sakuram.relation.controller.*Controller.delete*(..))) && args(httpSession,..)")
+	@Around("(execution(* org.sakuram.relation.controller.*Controller.save*(..)) || execution(* org.sakuram.relation.controller.*Controller.delete*(..)) || execution(* org.sakuram.relation.controller.*Controller.import*(..))) && args(httpSession,..)")
 	public Object identifyUser(ProceedingJoinPoint proceedingJoinPoint, HttpSession httpSession) throws Throwable {
 		Object returnValueObject;
     	Long appUserId;

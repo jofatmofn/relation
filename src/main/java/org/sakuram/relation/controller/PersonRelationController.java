@@ -1,12 +1,15 @@
 package org.sakuram.relation.controller;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.sakuram.relation.service.PersonRelationService;
 import org.sakuram.relation.util.Constants;
@@ -23,13 +26,17 @@ import org.sakuram.relation.valueobject.RetrievePersonAttributesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsBetweenRequestVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/basic")
@@ -127,5 +134,18 @@ public class PersonRelationController {
     public void deletePerson(HttpSession httpSession, @RequestBody Long personId) {
     	personRelationService.deletePerson(personId);
     }
-    
+
+    @RequestMapping(value = "/importPrData", method = RequestMethod.POST)
+    public ResponseEntity<?> importPrData(HttpSession httpSession, @RequestParam("file") MultipartFile file) {
+    	CSVParser csvParser;
+    	try {
+    		csvParser = new CSVParser(new BufferedReader(new InputStreamReader(file.getInputStream(), "UTF-8")), CSVFormat.DEFAULT);
+    		personRelationService.importPrData(csvParser.getRecords());
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+    	}
+    	return ResponseEntity.ok("File uploaded successfully.");
+    }
+
 }

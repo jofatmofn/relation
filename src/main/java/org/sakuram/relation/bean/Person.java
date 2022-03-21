@@ -80,6 +80,10 @@ public class Person {
 	@Where(clause="overwritten_by_fk is null and deleter_fk is null")
 	private List<AttributeValue> attributeValueList;
 
+	public Person() {
+		this.creator = SecurityContext.getCurrentUser();
+	}
+	
 	@PrePersist
 	@PreUpdate
 	public void prePersist() {

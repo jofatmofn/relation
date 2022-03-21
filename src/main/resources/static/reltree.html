@@ -53,6 +53,7 @@
 					<hr/>
 					<button onclick="addPerson()" rel-modify-data>Add Person</button><br/>
 					<button onclick="relatePersons()" rel-modify-data>Relate Persons</button><br/>
+					<button onclick="uploadPrData()" rel-modify-data>Upload Persons & Relations</button><br/>
 				</div>
 				<hr/>
 				<div id="leftbarconfig">
@@ -88,8 +89,8 @@
 				<div style="display: none" id="sidebarphoto">
 					<img class="column" style="float: left" id="sidebarphotoImg"/>
 					<input class="column" id="sidebarphotoInput" type="file" accept=".png,.jpg" onchange="document.getElementById('sidebarphotoImg').src = window.URL.createObjectURL(this.files[0])"/>
+					<hr style="clear: left"/>
 				</div>
-				<hr style="clear: left"/>
 				<div id="sidebarbody" style="overflow-y:scroll; height:85%"></div>
 			</div>
 		</div>
