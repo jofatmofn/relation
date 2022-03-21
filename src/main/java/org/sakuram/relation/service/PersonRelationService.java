@@ -566,6 +566,8 @@ public class PersonRelationService {
 		attributeValueList = relation.getAttributeValueList();
 		
     	retrieveRelationAttributesResponseVO = new RetrieveRelationAttributesResponseVO();
+    	retrieveRelationAttributesResponseVO.setPerson1Id(relation.getPerson1().getId());
+    	// Following two for loops can be replaced with attributeValueRepository.findByPersonAndAttribute(relation.getPersonX(), genderAttributeDv)
     	for(AttributeValue attributeValue : relation.getPerson1().getAttributeValueList()) {
     		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER && serviceParts.isCurrentValidAttributeValue(attributeValue)) {
     	    	retrieveRelationAttributesResponseVO.setPerson1GenderDVId(Long.valueOf(attributeValue.getAttributeValue()));

@@ -220,6 +220,7 @@ async function editEntityAttributes(e) {
 	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, actionButtonElement, addButtonElement;
 	var person1Node, person2Node, retrieveRelationAttributesResponseVO,  person1GenderDVId, person2GenderDVId, person1ForPerson2SelectElement,  person2ForPerson2SelectElement;
 	var retrievePersonAttributesResponseVO, photoImageElement;
+	var person1AsPerRelationId;
 	
 	if (highlightedEntity != undefined) {
 		highlightedEntity.color = DEFAULT_COLOR;
@@ -258,6 +259,7 @@ async function editEntityAttributes(e) {
 			attributeValueVOList = retrieveRelationAttributesResponseVO.attributeValueVOList;
 			person1GenderDVId = retrieveRelationAttributesResponseVO.person1GenderDVId;
 			person2GenderDVId = retrieveRelationAttributesResponseVO.person2GenderDVId;
+			person1AsPerRelationId = retrieveRelationAttributesResponseVO.person1Id;
 		}
 		else {
 			if (!e.data.edge.id.startsWith("S")) {
@@ -407,7 +409,8 @@ async function editEntityAttributes(e) {
 			else {
 				person1Node = s.graph.nodes(highlightedEntity.source);
 				person2Node = s.graph.nodes(highlightedEntity.target);
-				document.getElementById("sidebartitle").textContent = "Details of relation between " + person1Node.label + " and " + person2Node.label;
+				document.getElementById("sidebartitle").textContent = "Details of relation between " +
+						(person1Node.id == person1AsPerRelationId ? person1Node.label + " and " + person2Node.label : person2Node.label + " and " + person1Node.label);
 			}
 			break;
 		case ACTION_SEARCH:

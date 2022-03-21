@@ -6,6 +6,7 @@ public class RetrieveRelationAttributesResponseVO {
 	Long person1GenderDVId;
 	Long person2GenderDVId;
 	List<AttributeValueVO> attributeValueVOList;
+	Long person1Id;
 	
 	public Long getPerson1GenderDVId() {
 		return person1GenderDVId;
@@ -29,5 +30,13 @@ public class RetrieveRelationAttributesResponseVO {
 	
 	public void setAttributeValueVOList(List<AttributeValueVO> attributeValueVOList) {
 		this.attributeValueVOList = attributeValueVOList;
+	}
+
+	public Long getPerson1Id() {
+		return person1Id;
+	}
+
+	public void setPerson1Id(Long person1Id) {
+		this.person1Id = person1Id;
 	}
 }
