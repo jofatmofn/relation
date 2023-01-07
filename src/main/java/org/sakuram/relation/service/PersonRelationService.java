@@ -11,9 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
+import org.javatuples.Pair;
 import org.sakuram.relation.bean.AttributeValue;
 import org.sakuram.relation.bean.DomainValue;
 import org.sakuram.relation.bean.Person;
@@ -430,13 +432,15 @@ public class PersonRelationService {
 	}
 	
 	private List<String> getKids(String parent1Id, String parent2Id, List<RelationVO> relationsList) {
-		List<String> parent1SatisfiedKidsList, parent2SatisfiedKidsList, kidsList;
+		Map<String, Float> parent1SatisfiedKidsMap;
+		List<String> parent2SatisfiedKidsList;
+		List<Pair<String, Float>> kidsList;
 		String kidId, person2ForPerson1RelId, person1ForPerson2RelId;
 		float sequenceNo, randSequenceNo;
 		
-		parent1SatisfiedKidsList = new ArrayList<String>();
+		parent1SatisfiedKidsMap = new HashMap<String, Float>();
 		parent2SatisfiedKidsList = new ArrayList<String>();
-		kidsList = new ArrayList<String>();
+		kidsList = new ArrayList<Pair<String, Float>>();
 		randSequenceNo = 1;
 		for(RelationVO relationVO : relationsList) {
 			person2ForPerson1RelId = Constants.RELATION_NAME_TO_ID_MAP.get(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1));
@@ -444,36 +448,31 @@ public class PersonRelationService {
 			if(relationVO.getSource().equals(parent1Id) && (person2ForPerson1RelId == Constants.RELATION_NAME_SON || person2ForPerson1RelId == Constants.RELATION_NAME_DAUGHTER) ||
 					relationVO.getTarget().equals(parent1Id) && (person1ForPerson2RelId == Constants.RELATION_NAME_SON || person1ForPerson2RelId == Constants.RELATION_NAME_DAUGHTER)) {
 				kidId = relationVO.getSource().equals(parent1Id) ? relationVO.getTarget() : relationVO.getSource();
-				if (parent2SatisfiedKidsList.contains(kidId) || parent2Id == null) {
-					if (relationVO.getSource().equals(parent1Id)) {
-						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
-					} else if (relationVO.getTarget().equals(parent1Id)) {
-						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
-					} else {
-						continue;
-					}
-					UtilFuncs.listSet(kidsList, sequenceNo, kidId, null);
+				if (relationVO.getSource().equals(parent1Id)) {
+					sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
+				} else if (relationVO.getTarget().equals(parent1Id)) {
+					sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
 				} else {
-					parent1SatisfiedKidsList.add(kidId);
+					continue;
+				}
+				if (parent2SatisfiedKidsList.contains(kidId) || parent2Id == null) {
+					kidsList.add(Pair.with(kidId, sequenceNo));
+				} else {
+					parent1SatisfiedKidsMap.put(kidId, sequenceNo);
 				}
 			} else if(relationVO.getSource().equals(parent2Id) && (person2ForPerson1RelId == Constants.RELATION_NAME_SON || person2ForPerson1RelId == Constants.RELATION_NAME_DAUGHTER) ||
 					relationVO.getTarget().equals(parent2Id) && (person1ForPerson2RelId == Constants.RELATION_NAME_SON || person1ForPerson2RelId == Constants.RELATION_NAME_DAUGHTER)) {
 				kidId = relationVO.getSource().equals(parent2Id) ? relationVO.getTarget() : relationVO.getSource();
-				if (parent1SatisfiedKidsList.contains(kidId)) {
-					if (relationVO.getSource().equals(parent2Id)) {
-						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1));
-					} else if (relationVO.getTarget().equals(parent2Id)) {
-						sequenceNo = relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2).equals("") ? randSequenceNo++ : Float.valueOf(relationVO.getAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2));
-					} else {
-						continue;
-					}
-					UtilFuncs.listSet(kidsList, sequenceNo, kidId, null);
+				if (parent1SatisfiedKidsMap.containsKey(kidId)) {
+					sequenceNo = parent1SatisfiedKidsMap.get(kidId);
+					kidsList.add(Pair.with(kidId, sequenceNo));
 				} else {
 					parent2SatisfiedKidsList.add(kidId);
 				}
 			}
 		}
-		return kidsList.size() == 0 ? kidsList : kidsList.subList(1, kidsList.size());
+		Collections.sort(kidsList, (m1, m2) -> m1.getValue1().compareTo(m2.getValue1()));
+		return kidsList.stream().map(Pair<String, Float>::getValue0).collect(Collectors.toCollection(ArrayList::new));
 	}
 	
 	public GraphVO retrieveParceners(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
@@ -1244,6 +1243,7 @@ public class PersonRelationService {
     		
     }
 
+    // Classes that can be avoided with JavaTuples
     protected class RelatedPerson2VO {
     	Person person;
     	int level;
