@@ -1027,7 +1027,7 @@ async function ascertainRelation() {
 			return;
 		}
 		s.graph.clear();
-		s.graph.read(await invokeService("algo/retrieveRelationPath", {person1Id: person1Id, person2Id: person2Id, excludeRelationIdCsv: excludeRelationIdCsv}), timeout_ms=50000);
+		s.graph.read(await invokeService("algo/retrieveRelationPath", {person1Id: person1Id, person2Id: person2Id, excludeRelationIdCsv: excludeRelationIdCsv}, timeout_ms=50000));
 		s.refresh();
 		await getPersonsPair(person1Id, person2Id, excludeRelationIdCsv);
 	}

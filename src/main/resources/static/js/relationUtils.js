@@ -69,7 +69,7 @@ async function invokeService(serviceUrl, requestVO, timeout_ms=10000)
 					}
 					return;
 				case 7:
-					reject("Taking long duration. Try giving lesser workload.");
+					reject("Taking long duration. Try giving lesser workload. Time-out Limit applied: " + timeout_ms + " ms.");
 					return;
 				case 6:
 					reject(serviceUrl + " failed to run and returned with the status " + httpRequest.status);
