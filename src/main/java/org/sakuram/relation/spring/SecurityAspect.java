@@ -7,8 +7,10 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.sakuram.relation.bean.AppUser;
+import org.sakuram.relation.bean.DomainValue;
 import org.sakuram.relation.bean.Tenant;
 import org.sakuram.relation.repository.AppUserRepository;
+import org.sakuram.relation.repository.DomainValueRepository;
 import org.sakuram.relation.repository.TenantRepository;
 import org.sakuram.relation.service.ProjectUserService;
 import org.sakuram.relation.util.AppException;
@@ -27,6 +29,8 @@ public class SecurityAspect {
 	AppUserRepository appUserRepository;
 	@Autowired
 	TenantRepository tenantRepository;
+	@Autowired
+	DomainValueRepository domainValueRepository;
 	
 	@Around("(((execution(* org.sakuram.relation.controller.PersonRelationController.*(..))) && (!execution(* org.sakuram.relation.controller.PersonRelationController.retrieveAppStartValues(..)))) || execution(* org.sakuram.relation.controller.AlgoController.*(..))) && args(httpSession,..)")
 	public Object identifyTenant(ProceedingJoinPoint proceedingJoinPoint, HttpSession httpSession) throws Throwable {
@@ -35,10 +39,10 @@ public class SecurityAspect {
     	Tenant tenant;
 	
 		LogManager.getLogger().debug("identifyTenant");
-		tenantId = (Long)(httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID));
-		if (httpSession == null || tenantId == null) {
+		if (httpSession == null || httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID) == null) {
 	    	 throw new AppException("Establish Project before using the system", null);
 	    }
+		tenantId = (Long)(httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID));
 		SecurityContext.setCurrentTenantId(tenantId);
     	tenant = tenantRepository.findById(tenantId)
     			.orElseThrow(() -> new AppException("Invalid Tenant Id " + tenantId, null));
@@ -58,10 +62,10 @@ public class SecurityAspect {
     	Long appUserId;
     	AppUser appUser;
 		
-		appUserId = (Long)(httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID));
-		if (httpSession == null || appUserId == null) {
+		if (httpSession == null || httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID) == null) {
 			throw new AppException("Establish yourself by logging-in to the system", null);
 		}
+		appUserId = (Long)(httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID));
 		SecurityContext.setCurrentUserId(appUserId);
     	appUser = appUserRepository.findById(appUserId)
     			.orElseThrow(() -> new AppException("Invalid User Id " + appUserId, null));
@@ -78,4 +82,28 @@ public class SecurityAspect {
 		return returnValueObject;
 	}
 
+	@Around("execution(* org.sakuram.relation.controller.PersonRelationController.*(..)) && args(httpSession,..)")
+	public Object identifyLanguage(ProceedingJoinPoint proceedingJoinPoint, HttpSession httpSession) throws Throwable {
+		Object returnValueObject;
+    	Long languageDvId;
+    	DomainValue languageDv;
+		
+		if (httpSession == null || httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_LANGUAGE_DV_ID) == null) {
+			languageDvId = Constants.DEFAULT_LANGUAGE_DV_ID;
+		} else {
+			languageDvId = (Long)(httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_LANGUAGE_DV_ID));
+		}
+		SecurityContext.setCurrentLanguageDvId(languageDvId);
+		languageDv = domainValueRepository.findById(languageDvId)
+    			.orElseThrow(() -> new AppException("Invalid Language Id " + languageDvId, null));
+    	SecurityContext.setCurrentLanguageDv(languageDv);
+		LogManager.getLogger().debug("Established Language: " + languageDvId);
+		
+		returnValueObject = proceedingJoinPoint.proceed();
+		
+		SecurityContext.setCurrentLanguageDvId(null);
+		SecurityContext.setCurrentLanguageDv(null);
+		return returnValueObject;
+	}
+	
 }

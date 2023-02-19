@@ -1,15 +1,33 @@
 package org.sakuram.relation.util;
 
 import org.sakuram.relation.bean.DomainValue;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter @Setter
+@NoArgsConstructor
 public class DomainValueFlags {
-	private String attributeDomain, repetitionType, validationJsRegEx;
-	private boolean isRelationParentChild, isRelationSpouse, isInputAsAttribute, isInputMandatory;
+	private String attributeDomain, repetitionType, validationJsRegEx, languageCode;
+	private Boolean isRelationParentChild, isRelationSpouse, isInputAsAttribute, isInputMandatory, isTranslatable;
+	
+	public DomainValueFlags(DomainValue domainValue) {
+		setDomainValue(domainValue);
+	}
 	
 	public void setDomainValue(DomainValue domainValue) {
     	String flagsArr[];
     	
-		attributeDomain = "";
+		attributeDomain = null;
+		repetitionType = null;
+		validationJsRegEx = null;
+		languageCode = null;
+		isRelationParentChild = null;
+		isRelationSpouse = null;
+		isInputAsAttribute = null;
+		isInputMandatory = null;
+		isTranslatable = null;
+		
 		if (domainValue.getFlagsCsv() != null && !domainValue.getFlagsCsv().equals("")) {
 			flagsArr = domainValue.getFlagsCsv().split(Constants.CSV_SEPARATOR);
 		}
@@ -29,10 +47,10 @@ public class DomainValueFlags {
 			else {
 				isRelationSpouse = false;
 			}
-		}
-		if (domainValue.getCategory().equals(Constants.CATEGORY_PERSON_ATTRIBUTE) || domainValue.getCategory().equals(Constants.CATEGORY_RELATION_ATTRIBUTE)) {
+		} else if (domainValue.getCategory().equals(Constants.CATEGORY_PERSON_ATTRIBUTE) || domainValue.getCategory().equals(Constants.CATEGORY_RELATION_ATTRIBUTE)) {
+			isTranslatable = false;
 			if (flagsArr.length > Constants.FLAG_POSITION_INPUT_AS_ATTRIBUTE) {
-				isInputAsAttribute = new Boolean(flagsArr[Constants.FLAG_POSITION_INPUT_AS_ATTRIBUTE]);    				
+				isInputAsAttribute = Boolean.valueOf(flagsArr[Constants.FLAG_POSITION_INPUT_AS_ATTRIBUTE]);    				
 			}
 			if (flagsArr.length > Constants.FLAG_POSITION_REPETITION) {
 				repetitionType = flagsArr[Constants.FLAG_POSITION_REPETITION];
@@ -41,41 +59,18 @@ public class DomainValueFlags {
 				attributeDomain = flagsArr[Constants.FLAG_POSITION_DOMAIN];
 			}
 			if (flagsArr.length > Constants.FLAG_POSITION_INPUT_MANDATORY) {
-				isInputMandatory = new Boolean(flagsArr[Constants.FLAG_POSITION_INPUT_MANDATORY]);
+				isInputMandatory = Boolean.valueOf(flagsArr[Constants.FLAG_POSITION_INPUT_MANDATORY]);
 			}
 			if (flagsArr.length > Constants.FLAG_POSITION_VALIDATION_JS_REG_EX) {
 				validationJsRegEx = flagsArr[Constants.FLAG_POSITION_VALIDATION_JS_REG_EX];
+				if (validationJsRegEx.equals(Constants.TRANSLATABLE_REGEX)) {
+					isTranslatable = true;
+				}
 			}
+		} else if (domainValue.getCategory().equals(Constants.CATEGORY_LANGUAGE)) {
+			languageCode = flagsArr[Constants.FLAG_POSITION_ISO_LANGUAGE_CODE];
 		}
 		
-	}
-	
-	public boolean isRelationParentChild() {
-		return isRelationParentChild;
-	}
-	
-	public boolean isRelationSpouse() {
-		return isRelationSpouse;
-	}
-
-	public boolean isInputAsAttribute() {
-		return isInputAsAttribute;
-	}
-	
-	public String getRepetitionType() {
-		return repetitionType;
-	}
-	
-	public String getAttributeDomain() {
-		return attributeDomain;
-	}
-	
-	public boolean isInputMandatory() {
-		return isInputMandatory;
-	}
-	
-	public String getValidationJsRegEx() {
-		return validationJsRegEx;
 	}
 	
 }

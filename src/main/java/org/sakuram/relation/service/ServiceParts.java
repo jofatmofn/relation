@@ -39,12 +39,12 @@ public class ServiceParts {
     		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
     				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now()))) {
     			if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_LABEL) {
-		    		personVO.setLabel(attributeValue.getAttributeValue());
+		    		personVO.setLabel(attributeValue.getAvValue());
 		    		// TODO: What if domainValueFlags.getAttributeDomain() not empty
     			} else if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME) {
-		    		personVO.setFirstName(attributeValue.getAttributeValue());
+		    		personVO.setFirstName(attributeValue.getAvValue());
     			} else if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER) {
-		    		personVO.setGender(attributeValue.getAttributeValue());
+		    		personVO.setGender(attributeValue.getAvValue());
     			}
     		}
 		}
@@ -95,12 +95,12 @@ public class ServiceParts {
     		if (isCurrentValidAttributeValue(attributeValue)) {
         		domainValueFlags.setDomainValue(attributeValue.getAttribute());
         		if (domainValueFlags.getAttributeDomain().equals("")) {
-        			relationVO.setAttribute(attributeValue.getAttribute().getId(), attributeValue.getAttributeValue());
+        			relationVO.setAttribute(attributeValue.getAttribute().getId(), attributeValue.getAvValue());
         		}
         		else {
             		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
             				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
-        			relationVO.setAttribute(attributeValue.getAttribute().getId(), attributeDv.getValue());
+        			relationVO.setAttribute(attributeValue.getAttribute().getId(), attributeDv.getDvValue());
         		}
     			if (otherPersonId != null && attributeValue.getAttribute().getId() == relationAttributeDVIdOtherForStart) {
     				relatedPerson1VO.relationDvId = attributeValue.getAttributeValue();

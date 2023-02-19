@@ -5,8 +5,7 @@ var allPersonsSelectElement, malePersonsSelectElement, femalePersonsSelectElemen
 
 async function drawGraph() {
 	
-	var selectElement, retrieveAppStartValuesResponseVO, buttonElement, urlParams, startPersonId;
-	var ind, startProjectId;
+	var urlParams, startPersonId, startProjectId;
 	
 	window.addEventListener("unhandledrejection", event =>
 	{
@@ -30,61 +29,7 @@ async function drawGraph() {
 	});
 	
 	isAppReadOnly = await invokeService("projectuser/postLogin", "");
-	retrieveAppStartValuesResponseVO = await invokeService("basic/retrieveAppStartValues", "");
-	if (retrieveAppStartValuesResponseVO.loggedInUser != null) {
-		loginLogout(retrieveAppStartValuesResponseVO.loggedInUser);
-	}
-	domainValueVOList = retrieveAppStartValuesResponseVO.domainValueVOList;
-	document.getElementById("project").value = retrieveAppStartValuesResponseVO.inUseProject;
-	domainValueVOMap = new Map();
-	paSelectElement = document.createElement("select");
-	paSelectElement.setAttribute("name","attributenames");
-	paSelectElement.classList.add("propdrop");
-	raSelectElement = document.createElement("select");
-	raSelectElement.setAttribute("name","attributenames");
-	raSelectElement.classList.add("propdrop");
-	selectElementMap = new Map();
-	paDomainValueVOList = [];
-	raDomainValueVOList = [];
-	for (let domainValueVO of domainValueVOList) {
-		domainValueVOMap.set(domainValueVO.id, domainValueVO);
-		optionElement = document.createElement("option");
-		optionElement.setAttribute("value", domainValueVO.id);
-		optionElement.appendChild(document.createTextNode(domainValueVO.value));
-		if (domainValueVO.category == CATEGORY_PERSON_ATTRIBUTE) {
-			if (domainValueVO.inputAsAttribute) {
-				paSelectElement.appendChild(optionElement);
-				paDomainValueVOList.push(domainValueVO);
-			}
-		}
-		else if (domainValueVO.category == CATEGORY_RELATION_ATTRIBUTE) {
-			if (domainValueVO.inputAsAttribute) {
-				raSelectElement.appendChild(optionElement);
-				raDomainValueVOList.push(domainValueVO);
-			}
-		}
-		else {
-			if (selectElementMap.has(domainValueVO.category)) {
-				selectElement = selectElementMap.get(domainValueVO.category);
-			}
-			else {
-				selectElement = document.createElement("select");
-				selectElement.setAttribute("name", domainValueVO.category);
-				selectElement.classList.add("propdrop");
-				selectElementMap.set(domainValueVO.category, selectElement);
-			}
-			selectElement.appendChild(optionElement);
-		}
-	}
-
-	paSearchXtraOptions = [];
-	ind = 0;
-	for (label of ["Person Id", "Parents", "Spouses"]) {
-		optionElement = document.createElement("option");
-		optionElement.setAttribute("value", --ind);
-		optionElement.appendChild(document.createTextNode(label));
-		paSearchXtraOptions.push(optionElement);
-	}
+	await retrieveAppStartValues();
 	
 	// Instantiate sigma
 	urlParams = new URLSearchParams(window.location.search);
@@ -216,6 +161,72 @@ async function drawGraph() {
 
 }
 
+async function retrieveAppStartValues() {
+	var retrieveAppStartValuesResponseVO, selectElement, optionElement, languageSelectElement, ind;
+	
+	retrieveAppStartValuesResponseVO = await invokeService("basic/retrieveAppStartValues", "");
+	if (retrieveAppStartValuesResponseVO.loggedInUser != null) {
+		loginLogout(retrieveAppStartValuesResponseVO.loggedInUser);
+	}
+	domainValueVOList = retrieveAppStartValuesResponseVO.domainValueVOList;
+	document.getElementById("project").value = retrieveAppStartValuesResponseVO.inUseProject;
+	domainValueVOMap = new Map();
+	paSelectElement = document.createElement("select");
+	paSelectElement.setAttribute("name","attributenames");
+	paSelectElement.classList.add("propdrop");
+	raSelectElement = document.createElement("select");
+	raSelectElement.setAttribute("name","attributenames");
+	raSelectElement.classList.add("propdrop");
+	selectElementMap = new Map();
+	paDomainValueVOList = [];
+	raDomainValueVOList = [];
+	for (let domainValueVO of domainValueVOList) {
+		domainValueVOMap.set(domainValueVO.id, domainValueVO);
+		optionElement = document.createElement("option");
+		optionElement.setAttribute("value", domainValueVO.id);
+		optionElement.appendChild(document.createTextNode(domainValueVO.value));
+		if (domainValueVO.category == CATEGORY_PERSON_ATTRIBUTE) {
+			if (domainValueVO.isInputAsAttribute) {
+				paSelectElement.appendChild(optionElement);
+				paDomainValueVOList.push(domainValueVO);
+			}
+		}
+		else if (domainValueVO.category == CATEGORY_RELATION_ATTRIBUTE) {
+			if (domainValueVO.isInputAsAttribute) {
+				raSelectElement.appendChild(optionElement);
+				raDomainValueVOList.push(domainValueVO);
+			}
+		}
+		else {
+			if (selectElementMap.has(domainValueVO.category)) {
+				selectElement = selectElementMap.get(domainValueVO.category);
+			}
+			else {
+				selectElement = document.createElement("select");
+				selectElement.setAttribute("name", domainValueVO.category);
+				selectElement.classList.add("propdrop");
+				selectElementMap.set(domainValueVO.category, selectElement);
+			}
+			selectElement.appendChild(optionElement);
+		}
+	}
+
+	paSearchXtraOptions = [];
+	ind = 0;
+	for (label of ["Person Id", "Parents", "Spouses"]) {
+		optionElement = document.createElement("option");
+		optionElement.setAttribute("value", --ind);
+		optionElement.appendChild(document.createTextNode(label));
+		paSearchXtraOptions.push(optionElement);
+	}
+
+	languageSelectElement = selectElementMap.get(CATEGORY_LANGUAGE).cloneNode(true);
+	languageSelectElement.id = "language";
+	document.getElementById("language").replaceWith(languageSelectElement);
+	languageSelectElement.value = retrieveAppStartValuesResponseVO.inUseLanguage;
+	
+}
+
 async function editEntityAttributes(e) {
 	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, actionButtonElement, addButtonElement;
 	var person1Node, person2Node, retrieveRelationAttributesResponseVO,  person1GenderDVId, person2GenderDVId, person1ForPerson2SelectElement,  person2ForPerson2SelectElement;
@@ -285,7 +296,7 @@ async function editEntityAttributes(e) {
 	/* Mandatory attributes for new entity */
 	if (action == ACTION_SAVE && attributeValueVOList.length == 0) {
 		for (let attributeDomainValueVO of (isPersonNode ? paDomainValueVOList : raDomainValueVOList)) {
-			if (attributeDomainValueVO.inputMandatory) {
+			if (attributeDomainValueVO.isInputMandatory) {
 				attributeValueBlockElement = document.createElement("fieldset");
 				rightBarElement.appendChild(attributeValueBlockElement);
 				attributeValueBlockElement.appendChild(document.createTextNode(attributeDomainValueVO.value));
@@ -467,7 +478,7 @@ async function editEntityAttributes(e) {
 		if (action == ACTION_SAVE) {
 			// Validations
 			for (let attributeDomainValueVO of (isPersonNode ? paDomainValueVOList : raDomainValueVOList)) {
-				if (attributeDomainValueVO.inputMandatory && !attributeVsValueListMap.has(attributeDomainValueVO.id)) {
+				if (attributeDomainValueVO.isInputMandatory && !attributeVsValueListMap.has(attributeDomainValueVO.id)) {
 					alert(attributeDomainValueVO.value + " is a mandatory property");
 					return;
 				}
@@ -512,8 +523,8 @@ async function editEntityAttributes(e) {
 				}
 				if (attributeVsValueListMap.has(RELATION_ATTRIBUTE_DV_ID_RELATION_SUB_TYPE)) {
 					relationSubType = attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_RELATION_SUB_TYPE)[0].attributeValueVO.attributeValue;
-					if (attributeDomainValueVO.relationParentChild && !VALID_RELSUBTYPES_PARENT_CHILD.includes(relationSubType) ||
-						attributeDomainValueVO.relationSpouse && !VALID_RELSUBTYPES_SPOUSE.includes(relationSubType)) {
+					if (attributeDomainValueVO.isRelationParentChild && !VALID_RELSUBTYPES_PARENT_CHILD.includes(relationSubType) ||
+						attributeDomainValueVO.isRelationSpouse && !VALID_RELSUBTYPES_SPOUSE.includes(relationSubType)) {
 						alert("Invalid relation sub type");
 						return;
 					}
@@ -829,7 +840,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 		}
 	}
 	
-	if (attributeDomainValueVO.inputAsAttribute) {
+	if (attributeDomainValueVO.isInputAsAttribute) {
 		valueElement.removeAttribute("disabled");
 		isAccurateElement.removeAttribute("disabled");
 		if (attributeDomainValueVO.repetitionType != FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED) {
@@ -1139,6 +1150,13 @@ async function switchProject() {
 	isAppReadOnly = await invokeService("projectuser/switchProject", document.getElementById("project").value);
 	enableDisableRWFunctions();
 	alert("Project switched successfully");
+}
+
+async function switchLanguage() {
+	await invokeService("projectuser/switchLanguage", document.getElementById("language").value);
+	await retrieveAppStartValues();
+	clearGraph();
+	alert("Language switched successfully");
 }
 
 async function logout() {

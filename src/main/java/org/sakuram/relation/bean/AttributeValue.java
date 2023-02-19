@@ -2,7 +2,8 @@ package org.sakuram.relation.bean;
 
 import java.sql.Date;
 import java.sql.Timestamp;
-
+import java.util.List;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -11,11 +12,14 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.PostLoad;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Filter;
@@ -26,8 +30,16 @@ import org.sakuram.relation.util.SecurityContext;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 @EnableAutoConfiguration
 @ComponentScan
+@Getter @Setter
+@NoArgsConstructor
 @Entity
 @Where(clause="overwritten_by_fk is null and deleter_fk is null")
 @FilterDef(name = "tenantFilter", parameters = {@ParamDef(name = "tenantId", type = "long")})
@@ -88,120 +100,15 @@ public class AttributeValue {
 	@Column(name="deleted_at", nullable=true)
 	private Timestamp deletedAt;
 
-	public long getId() {
-		return id;
-	}
+	@JsonIgnore
+	@OneToMany(mappedBy = "attributeValue", cascade = CascadeType.ALL)
+	private List<Translation> translationList;
 
-	public void setId(long id) {
-		this.id = id;
-	}
+	@Transient
+	private String translatedValue;
 
-	public Person getPerson() {
-		return person;
-	}
-
-	public void setPerson(Person person) {
-		this.person = person;
-	}
-
-	public Relation getRelation() {
-		return relation;
-	}
-
-	public void setRelation(Relation relation) {
-		this.relation = relation;
-	}
-
-	public DomainValue getAttribute() {
-		return attribute;
-	}
-
-	public void setAttribute(DomainValue attribute) {
-		this.attribute = attribute;
-	}
-
-	public String getAttributeValue() {
-		return attributeValue;
-	}
-
-	public void setAttributeValue(String attributeValue) {
-		this.attributeValue = attributeValue;
-	}
-
-	public boolean isValueAccurate() {
-		return isValueAccurate;
-	}
-
-	public void setValueAccurate(boolean isValueAccurate) {
-		this.isValueAccurate = isValueAccurate;
-	}
-
-	public Date getStartDate() {
-		return startDate;
-	}
-
-	public void setStartDate(Date startDate) {
-		this.startDate = startDate;
-	}
-
-	public Date getEndDate() {
-		return endDate;
-	}
-
-	public void setEndDate(Date endDate) {
-		this.endDate = endDate;
-	}
-
-	public Tenant getTenant() {
-		return tenant;
-	}
-
-	public void setTenant(Tenant tenant) {
-		this.tenant = tenant;
-	}
-
-	public AppUser getCreator() {
-		return creator;
-	}
-
-	public void setCreator(AppUser creator) {
-		this.creator= creator;
-	}
-
-	public Timestamp getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(Timestamp createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public AttributeValue getOverwrittenBy() {
-		return overwrittenBy;
-	}
-
-	public void setOverwrittenBy(AttributeValue overwrittenBy) {
-		this.overwrittenBy = overwrittenBy;
-	}
-
-	public AppUser getDeleter() {
-		return deleter;
-	}
-
-	public void setDeleter(AppUser deleter) {
-		this.deleter = deleter;
-	}
-
-	public Timestamp getDeletedAt() {
-		return deletedAt;
-	}
-
-	public void setDeletedAt(Timestamp deletedAt) {
-		this.deletedAt = deletedAt;
-	}
-
-	public AttributeValue() {
-		
+	public String getAvValue() {
+		return translatedValue == null ? attributeValue : translatedValue;
 	}
 	
 	public AttributeValue(DomainValue attribute, String attributeValue, Person person, Relation relation) {
@@ -217,5 +124,14 @@ public class AttributeValue {
 	public void prePersist() {
 	    tenant = SecurityContext.getCurrentTenant();
 	}
-	
+
+	@PostLoad
+	protected void translate() {
+		for (Translation translation : translationList) {
+			if (SecurityContext.getCurrentLanguageDvId().equals(translation.getLanguage().getId())) {
+				translatedValue = translation.getValue();
+				break;
+			}
+		}
+	}
 }

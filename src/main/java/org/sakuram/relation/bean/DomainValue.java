@@ -1,16 +1,32 @@
 package org.sakuram.relation.bean;
 
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.util.List;
+
 import javax.persistence.Cacheable;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
+import org.sakuram.relation.util.SecurityContext;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 @EnableAutoConfiguration
 @ComponentScan
+@Getter @Setter
 @Entity
 @Cacheable
 @org.hibernate.annotations.Cache(usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_ONLY)
@@ -30,36 +46,24 @@ public class DomainValue {
 	@Column(name="flags_csv", nullable=true)
 	private String flagsCsv;
 
-	public long getId() {
-		return id;
-	}
+	@JsonIgnore
+	@OneToMany(mappedBy = "domainValue", cascade = CascadeType.ALL)
+	private List<Translation> translationList;
 
-	public void setId(long id) {
-		this.id = id;
-	}
-
-	public String getCategory() {
-		return category;
-	}
-
-	public void setCategory(String category) {
-		this.category = category;
-	}
-
-	public String getValue() {
-		return value;
-	}
-
-	public void setValue(String value) {
-		this.value = value;
-	}
-
-	public String getFlagsCsv() {
-		return flagsCsv;
-	}
-
-	public void setFlagsCsv(String flagsCsv) {
-		this.flagsCsv = flagsCsv;
+	@Transient
+	private String translatedValue;
+	
+	public String getDvValue() {
+		return translatedValue == null ? value : translatedValue;
 	}
 	
+	@PostLoad
+	protected void translate() {
+		for (Translation translation : translationList) {
+			if (SecurityContext.getCurrentLanguageDvId().equals(translation.getLanguage().getId())) {
+				translatedValue = translation.getValue();
+				break;
+			}
+		}
+	}
 }

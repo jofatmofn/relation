@@ -21,6 +21,7 @@ import org.sakuram.relation.bean.DomainValue;
 import org.sakuram.relation.bean.Person;
 import org.sakuram.relation.bean.Relation;
 import org.sakuram.relation.bean.Tenant;
+import org.sakuram.relation.bean.Translation;
 import org.sakuram.relation.repository.AttributeValueRepository;
 import org.sakuram.relation.repository.DomainValueRepository;
 import org.sakuram.relation.repository.PersonRepository;
@@ -526,15 +527,15 @@ public class PersonRelationService {
     		
     		domainValueVO.setId(domainValue.getId());
     		domainValueVO.setCategory(domainValue.getCategory());
-    		domainValueVO.setValue(domainValue.getValue());
+    		domainValueVO.setValue(domainValue.getDvValue());
     		
     		domainValueFlags.setDomainValue(domainValue);
-    		domainValueVO.setRelationParentChild(domainValueFlags.isRelationParentChild());
-    		domainValueVO.setRelationSpouse(domainValueFlags.isRelationSpouse());
-    		domainValueVO.setInputAsAttribute(domainValueFlags.isInputAsAttribute());
+    		domainValueVO.setIsRelationParentChild(domainValueFlags.getIsRelationParentChild());
+    		domainValueVO.setIsRelationSpouse(domainValueFlags.getIsRelationSpouse());
+    		domainValueVO.setIsInputAsAttribute(domainValueFlags.getIsInputAsAttribute());
     		domainValueVO.setRepetitionType(domainValueFlags.getRepetitionType());
     		domainValueVO.setAttributeDomain(domainValueFlags.getAttributeDomain());
-    		domainValueVO.setInputMandatory(domainValueFlags.isInputMandatory());
+    		domainValueVO.setIsInputMandatory(domainValueFlags.getIsInputMandatory());
     		domainValueVO.setValidationJsRegEx(domainValueFlags.getValidationJsRegEx());
     	}
     	
@@ -569,13 +570,13 @@ public class PersonRelationService {
     	// Following two for loops can be replaced with attributeValueRepository.findByPersonAndAttribute(relation.getPersonX(), genderAttributeDv)
     	for(AttributeValue attributeValue : relation.getPerson1().getAttributeValueList()) {
     		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER && serviceParts.isCurrentValidAttributeValue(attributeValue)) {
-    	    	retrieveRelationAttributesResponseVO.setPerson1GenderDVId(Long.valueOf(attributeValue.getAttributeValue()));
+    	    	retrieveRelationAttributesResponseVO.setPerson1GenderDVId(Long.valueOf(attributeValue.getAvValue()));
     	    	break;
     		}
     	}
     	for(AttributeValue attributeValue : relation.getPerson2().getAttributeValueList()) {
     		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER && serviceParts.isCurrentValidAttributeValue(attributeValue)) {
-    	    	retrieveRelationAttributesResponseVO.setPerson2GenderDVId(Long.valueOf(attributeValue.getAttributeValue()));
+    	    	retrieveRelationAttributesResponseVO.setPerson2GenderDVId(Long.valueOf(attributeValue.getAvValue()));
     	    	break;
     		}
     	}
@@ -594,13 +595,13 @@ public class PersonRelationService {
     	for(AttributeValue attributeValue : attributeValueList) {
     		
     		domainValueFlags.setDomainValue(attributeValue.getAttribute());
-    		if (domainValueFlags.isInputAsAttribute()) {
+    		if (domainValueFlags.getIsInputAsAttribute()) {
         		attributeValueVO = new AttributeValueVO();
         		attributeValueVOList.add(attributeValueVO);
         		attributeValueVO.setId(attributeValue.getId());
         		attributeValueVO.setAttributeDvId(attributeValue.getAttribute().getId());
-        		attributeValueVO.setAttributeName(attributeValue.getAttribute().getValue());
-        		attributeValueVO.setAttributeValue(attributeValue.getAttributeValue());
+        		attributeValueVO.setAttributeName(attributeValue.getAttribute().getDvValue());
+        		attributeValueVO.setAttributeValue(attributeValue.getAvValue());
         		attributeValueVO.setValueAccurate(attributeValue.isValueAccurate());
         		attributeValueVO.setStartDate(attributeValue.getStartDate());
         		attributeValueVO.setEndDate(attributeValue.getEndDate());
@@ -667,7 +668,7 @@ public class PersonRelationService {
     			if (attributeValueVO.getAttributeDvId() != attributeValue.getAttribute().getId()) {
     				throw new AppException("Invalid input from client.", null);
     			}
-    			if (!Objects.equals(attributeValueVO.getAttributeValue(), attributeValue.getAttributeValue()) ||
+    			if (!Objects.equals(attributeValueVO.getAttributeValue(), attributeValue.getAvValue()) ||
     					!Objects.equals(attributeValueVO.isValueAccurate(), attributeValue.isValueAccurate()) ||
     					!UtilFuncs.dateEquals(attributeValueVO.getStartDate(), attributeValue.getStartDate()) ||
     					!UtilFuncs.dateEquals(attributeValueVO.getEndDate(), attributeValue.getEndDate())) {
@@ -683,7 +684,7 @@ public class PersonRelationService {
 		if (toDeleteAttributeValueList != null) {
 	    	for(AttributeValue toDeleteAttributeValue : toDeleteAttributeValueList) {
 	    		domainValueFlags.setDomainValue(toDeleteAttributeValue.getAttribute());
-	    		if (domainValueFlags.isInputAsAttribute() && !incomingAttributeValueWithIdList.contains(toDeleteAttributeValue.getId())) {
+	    		if (domainValueFlags.getIsInputAsAttribute() && !incomingAttributeValueWithIdList.contains(toDeleteAttributeValue.getId())) {
 	    			toDeleteAttributeValue.setDeleter(SecurityContext.getCurrentUser());
 	    			toDeleteAttributeValue.setDeletedAt(new Timestamp(System.currentTimeMillis()));
 					attributeValueRepository.save(toDeleteAttributeValue);
@@ -697,12 +698,14 @@ public class PersonRelationService {
     private AttributeValue insertAttributeValue(AttributeValueVO attributeValueVO, Person person, Relation relation) {
     	AttributeValue attributeValue;
     	DomainValue attributeDv;
+    	DomainValueFlags domainValueFlags;
     	
-		attributeValue = new AttributeValue();
+    	attributeValue = new AttributeValue();
 		attributeDv = domainValueRepository.findById(attributeValueVO.getAttributeDvId())
 				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValueVO.getAttributeDvId(), null));
 		attributeValue.setAttribute(attributeDv);
-		attributeValue.setAttributeValue(attributeValueVO.getAttributeValue());
+		domainValueFlags = new DomainValueFlags(attributeDv);
+		setValueInAttributeValue(attributeValue, domainValueFlags.getIsTranslatable(), attributeValueVO.getAttributeValue());
 		attributeValue.setPerson(person);
 		attributeValue.setRelation(relation);
 		attributeValue.setValueAccurate(attributeValueVO.isValueAccurate());
@@ -711,7 +714,7 @@ public class PersonRelationService {
 		attributeValue.setCreator(SecurityContext.getCurrentUser());
 		return attributeValueRepository.save(attributeValue);
     }
-    
+
     public SearchResultsVO searchPerson(List<AttributeValueVO> attributeValueVOList) {
     	StringBuilder querySB;
     	List<Person> personList;
@@ -723,10 +726,11 @@ public class PersonRelationService {
     	List<String> personAttributesList;
     	DomainValueFlags domainValueFlags;
     	String attrVal, parentNamesSsv, spouseNamesSsv, parentsCriteria, spousesCriteria;
-    	DomainValue attributeDv;
+    	DomainValue domainValue;
     	
     	parentsCriteria = null;
     	spousesCriteria = null;
+    	domainValueFlags = new DomainValueFlags();
     	querySB = new StringBuilder();
     	querySB.append("SELECT * FROM person p LEFT OUTER JOIN tenant t ON p.tenant_fk = t.id WHERE p.overwritten_by_fk IS NULL AND p.deleter_fk IS NULL");
     	// TODO: AOP to take of the following if block
@@ -739,9 +743,18 @@ public class PersonRelationService {
 	    		querySB.append(" AND ");
 	    		querySB.append("EXISTS (SELECT 1 FROM attribute_value av WHERE av.overwritten_by_fk IS NULL AND av.deleter_fk IS NULL AND av.person_fk = p.id AND av.attribute_fk = ");
 	    		querySB.append(attributeValueVO.getAttributeDvId());
-	    		querySB.append(" AND LOWER(av.attribute_value) LIKE '%");	// Beware: PostgreSQL specific syntax
+				domainValue = domainValueRepository.findById(Long.valueOf(attributeValueVO.getAttributeDvId()))
+						.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValueVO.getAttributeDvId(), null));
+				domainValueFlags.setDomainValue(domainValue);
+	    		querySB.append(" AND (LOWER(av.attribute_value) LIKE '%");	// Beware: PostgreSQL specific syntax
 	    		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
-	    		querySB.append("%')");
+	    		querySB.append("%'");
+	    		if (domainValueFlags.getIsTranslatable() && !SecurityContext.getCurrentLanguageDvId().equals(Constants.DEFAULT_LANGUAGE_DV_ID)) {
+		    		querySB.append(" OR EXISTS (SELECT 1 FROM translation t WHERE t.attribute_value_fk = av.id AND LOWER(t.value) LIKE '%");	// Beware: PostgreSQL specific syntax
+		    		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
+		    		querySB.append("%')");
+	    		}
+	    		querySB.append("))");
     		}
     		else if (attributeValueVO.getAttributeDvId() == -1) {
 	    		querySB.append(" AND p.id = ");
@@ -763,7 +776,6 @@ public class PersonRelationService {
     		return searchResultsVO;
     	}
     	
-    	domainValueFlags = new DomainValueFlags();
     	searchResultAttributesListSize = 0;
     	attributeVsColumnMap = new HashMap<Long, Integer>();
     	searchResultsList = new ArrayList<List<String>>(personList.size());
@@ -777,20 +789,20 @@ public class PersonRelationService {
     		for (AttributeValue attributeValue : person.getAttributeValueList()) {
     			if(serviceParts.isCurrentValidAttributeValue(attributeValue)) {
     				domainValueFlags.setDomainValue(attributeValue.getAttribute());
-    				if (domainValueFlags.getAttributeDomain().equals("")) {
-    					attrVal = attributeValue.getAttributeValue();
+    				if (domainValueFlags.getAttributeDomain() == null || domainValueFlags.getAttributeDomain().equals("")) {
+    					attrVal = attributeValue.getAvValue();
     				}
     				else {
-    					attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
-    							.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
-    					attrVal = attributeDv.getValue();
+    					domainValue = domainValueRepository.findById(Long.valueOf(attributeValue.getAvValue()))
+    							.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAvValue(), null));
+    					attrVal = domainValue.getDvValue();
     				}
 	    			if (attributeVsColumnMap.containsKey(attributeValue.getAttribute().getId())) {
 	    				UtilFuncs.listSet(personAttributesList, attributeVsColumnMap.get(attributeValue.getAttribute().getId()), attrVal, "");
 	    			}
 	    			else {
 	    				attributeVsColumnMap.put(attributeValue.getAttribute().getId(), attributeVsColumnMap.size() + 1);
-	    				UtilFuncs.listSet(searchResultsList.get(0), attributeVsColumnMap.size(), attributeValue.getAttribute().getValue(), "");
+	    				UtilFuncs.listSet(searchResultsList.get(0), attributeVsColumnMap.size(), attributeValue.getAttribute().getDvValue(), "");
 	    				UtilFuncs.listSet(personAttributesList, attributeVsColumnMap.size(), attrVal, "");
 	    			}
     			}
@@ -806,13 +818,13 @@ public class PersonRelationService {
 			parentNamesSsv = "";
 			spouseNamesSsv = "";
     		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_MOTHER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_LABEL))) {
-    			parentNamesSsv += "/" + relativeAttributeEntry.getValue().getAttributeValue();
+    			parentNamesSsv += "/" + relativeAttributeEntry.getValue().getAvValue();
     		}
     		if (parentsCriteria != null && (parentNamesSsv.equals("") || !parentNamesSsv.toLowerCase().contains(parentsCriteria))) {
     			continue;
     		}
     		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_LABEL))) {
-    			spouseNamesSsv += "/" + relativeAttributeEntry.getValue().getAttributeValue();
+    			spouseNamesSsv += "/" + relativeAttributeEntry.getValue().getAvValue();
     		}
     		if (spousesCriteria != null && (spouseNamesSsv.equals("") || !spouseNamesSsv.toLowerCase().contains(spousesCriteria))) {
     			continue;
@@ -887,7 +899,7 @@ public class PersonRelationService {
 		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
 			if (attributeValue.getAttribute().getId() == reqdAttributeDvId &&
 					serviceParts.isCurrentValidAttributeValue(attributeValue)) {
-				relatedPerson1VO.relationDvId = attributeValue.getAttributeValue();
+				relatedPerson1VO.relationDvId = attributeValue.getAvValue();
 				break;
 			}
 		}
@@ -908,7 +920,7 @@ public class PersonRelationService {
 					.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + Constants.PERSON_ATTRIBUTE_DV_ID_GENDER, null));
 			genderAv = attributeValueRepository.findByPersonAndAttribute(person, attributeDv)
 					.orElseThrow(() -> new AppException("Invalid gender for " + personId, null));
-			gendersOfPersonsList.add(genderAv.getAttributeValue());
+			gendersOfPersonsList.add(genderAv.getAvValue());
     	}
     	return gendersOfPersonsList;
     }
@@ -950,12 +962,12 @@ public class PersonRelationService {
 					.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + Constants.PERSON_ATTRIBUTE_DV_ID_GENDER, null));
 			genderAv = attributeValueRepository.findByPersonAndAttribute(person2, attributeDv)
 					.orElseThrow(() -> new AppException("Invalid gender for " + saveRelationRequestVO.getPerson2Id(), null));
-			if (genderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
+			if (genderAv.getAvValue().equals(Constants.GENDER_NAME_MALE)) {
 				attributeValue2.setAttributeValue(Constants.RELATION_NAME_SON);
-			} else if (genderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE)) {
+			} else if (genderAv.getAvValue().equals(Constants.GENDER_NAME_FEMALE)) {
 				attributeValue2.setAttributeValue(Constants.RELATION_NAME_DAUGHTER);
 			} else {
-				throw new AppException("Incomplete support for Gender " + genderAv.getAttributeValue(), null);
+				throw new AppException("Incomplete support for Gender " + genderAv.getAvValue(), null);
 			}
 		} else if (saveRelationRequestVO.getPerson1ForPerson2().equals(Constants.RELATION_NAME_HUSBAND)) {
 			attributeValue2.setAttributeValue(Constants.RELATION_NAME_WIFE);
@@ -1099,12 +1111,12 @@ public class PersonRelationService {
         	    	if (relationRepository.findRelationGivenPersons(mainPerson.getId(), spousePerson.getId(), SecurityContext.getCurrentTenantId()) != null) {
         	    		// mainPerson and spousePerson are already related
         	    	} else {
-	        			if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
+	        			if (mainPersonGenderAv.getAvValue().equals(Constants.GENDER_NAME_MALE)) {
 	        				relation = new Relation(mainPerson, spousePerson);
-	        			} else if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE)) {
+	        			} else if (mainPersonGenderAv.getAvValue().equals(Constants.GENDER_NAME_FEMALE)) {
 	        				relation = new Relation(spousePerson, mainPerson);
 	        			} else {
-	        				throw new AppException("Incomplete support for Gender " + mainPersonGenderAv.getAttributeValue(), null);
+	        				throw new AppException("Incomplete support for Gender " + mainPersonGenderAv.getAvValue(), null);
 	        			}
 	        	    	relation = relationRepository.save(relation);
 	        	    	
@@ -1122,15 +1134,15 @@ public class PersonRelationService {
     			}
     		}
     		if (mainPerson != null &&
-    				mainPersonGenderAv != null && mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE) ||
+    				mainPersonGenderAv != null && mainPersonGenderAv.getAvValue().equals(Constants.GENDER_NAME_MALE) ||
     				spousePerson != null &&
-    				spousePersonGenderAv != null && spousePersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE)) {
+    				spousePersonGenderAv != null && spousePersonGenderAv.getAvValue().equals(Constants.GENDER_NAME_FEMALE)) {
     			UtilFuncs.listSet(malePersonList, level, mainPerson, null);
     			UtilFuncs.listSet(femalePersonList, level, spousePerson, null);
     		} else if (mainPerson != null &&
-    				mainPersonGenderAv != null && mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE) ||
+    				mainPersonGenderAv != null && mainPersonGenderAv.getAvValue().equals(Constants.GENDER_NAME_FEMALE) ||
     				spousePerson != null &&
-    				spousePersonGenderAv != null && spousePersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
+    				spousePersonGenderAv != null && spousePersonGenderAv.getAvValue().equals(Constants.GENDER_NAME_MALE)) {
     			UtilFuncs.listSet(malePersonList, level, spousePerson, null);
     			UtilFuncs.listSet(femalePersonList, level, mainPerson, null);
 			} else {
@@ -1194,7 +1206,8 @@ public class PersonRelationService {
         		person = new Person();
         		person = personRepository.save(person);
         		
-	    		attributeValue = new AttributeValue(firstNamePersAttributeDv, personAttributeValuesArr[1], person, null);
+	    		attributeValue = new AttributeValue(firstNamePersAttributeDv, null, person, null);
+	    		setValueInAttributeValue(attributeValue, true, personAttributeValuesArr[1]);
 	    		attributeValueRepository.save(attributeValue);
 	    		
 	        	attributeValue = new AttributeValue(genderPersAttributeDv, isMale? Constants.GENDER_NAME_MALE : Constants.GENDER_NAME_FEMALE, person, null);
@@ -1203,7 +1216,8 @@ public class PersonRelationService {
 	    		if (personAttributeValuesArr[3].equals("")) {
 	    			personAttributeValuesArr[3] = personAttributeValuesArr[1];
 	    		}
-	    		attributeValue = new AttributeValue(labelPersAttributeDv, personAttributeValuesArr[3], person, null);
+	    		attributeValue = new AttributeValue(labelPersAttributeDv, null, person, null);
+	    		setValueInAttributeValue(attributeValue, true, personAttributeValuesArr[3]);
 	    		attributeValueRepository.save(attributeValue);
     		}
     	}
@@ -1226,12 +1240,12 @@ public class PersonRelationService {
 			attributeValue = new AttributeValue(person1ForPerson2RelAttributeDv, parentRelationName, null, relation);
     		attributeValueRepository.save(attributeValue);
     		
-			if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
+			if (mainPersonGenderAv.getAvValue().equals(Constants.GENDER_NAME_MALE)) {
 				attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_SON, null, relation);
-			} else if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE)) {
+			} else if (mainPersonGenderAv.getAvValue().equals(Constants.GENDER_NAME_FEMALE)) {
 				attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_DAUGHTER, null, relation);
 			} else {
-				throw new AppException("Incomplete support for Gender " + mainPersonGenderAv.getAttributeValue(), null);
+				throw new AppException("Incomplete support for Gender " + mainPersonGenderAv.getAvValue(), null);
 			}
     		attributeValueRepository.save(attributeValue);
     		
@@ -1243,6 +1257,24 @@ public class PersonRelationService {
     		
     }
 
+    private void setValueInAttributeValue(AttributeValue attributeValue, Boolean isTranslatable, String value) {
+    	DomainValue languageDv;
+    	Translation translation;
+    	List<Translation> translationList;
+    	
+		if (isTranslatable == null || !isTranslatable || SecurityContext.getCurrentLanguageDvId().equals(Constants.DEFAULT_LANGUAGE_DV_ID)) {
+			attributeValue.setAttributeValue(value);
+		} else {
+			translationList = new ArrayList<Translation>();
+			attributeValue.setTranslationList(translationList);
+			translation = new Translation();
+			translationList.add(translation);
+			
+			translation.setLanguage(SecurityContext.getCurrentLanguageDv());
+			translation.setValue(value);
+		}
+    }
+    
     // Classes that can be avoided with JavaTuples
     protected class RelatedPerson2VO {
     	Person person;

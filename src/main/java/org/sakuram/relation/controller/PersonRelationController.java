@@ -13,6 +13,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.sakuram.relation.service.PersonRelationService;
 import org.sakuram.relation.util.Constants;
+import org.sakuram.relation.util.SecurityContext;
 import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
@@ -83,10 +84,12 @@ public class PersonRelationController {
     public RetrieveAppStartValuesResponseVO retrieveAppStartValues(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal) {
     	RetrieveAppStartValuesResponseVO retrieveAppStartValuesResponseVO;
     	
+    	httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_LANGUAGE_DV_ID, SecurityContext.getCurrentLanguageDvId());
     	retrieveAppStartValuesResponseVO = personRelationService.retrieveAppStartValues((Long) httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID));
     	if (principal != null) {
     		retrieveAppStartValuesResponseVO.setLoggedInUser(principal.getAttribute("name") + " (" + principal.getAttribute("email") + ")");
     	}
+		retrieveAppStartValuesResponseVO.setInUseLanguage(SecurityContext.getCurrentLanguageDvId());
     	return retrieveAppStartValuesResponseVO;
     }
     

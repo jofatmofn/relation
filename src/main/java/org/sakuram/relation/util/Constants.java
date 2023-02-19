@@ -13,6 +13,7 @@ public class Constants {
 	public static final String CATEGORY_RELATION_SUB_TYPE = "RelSubType";
 	public static final String CATEGORY_PERSON_ATTRIBUTE = "PersAttribute";
 	public static final String CATEGORY_RELATION_ATTRIBUTE = "RelAttribute";
+	public static final String CATEGORY_LANGUAGE = "Language";
 
 	public static final long PERSON_ATTRIBUTE_DV_ID_LABEL = 16;
 	public static final long PERSON_ATTRIBUTE_DV_ID_GENDER = 19;
@@ -84,6 +85,7 @@ public class Constants {
 	public static final int FLAG_POSITION_DOMAIN = 2;
 	public static final int FLAG_POSITION_INPUT_MANDATORY = 3;
 	public static final int FLAG_POSITION_VALIDATION_JS_REG_EX = 4;
+	public static final int FLAG_POSITION_ISO_LANGUAGE_CODE = 0;
 
 	public static final String EDGE_TYPE_DIRECT_RELATION = "line";
 	public static final String EDGE_TYPE_SIMPLIFIED_RELATION = "dotCurve";
@@ -95,10 +97,14 @@ public class Constants {
 	public static final int SEARCH_RESULTS_MAX_COUNT = 20;
 	public static final String RELATION_LABEL_TEMPLATE = "@@34@@(@@61@@)-@@35@@(@@62@@)(@@36@@)"; // TODO: Replace the hard-coded value with Constant
 	public static final short EXPORT_TREE_MAX_DEPTH = 10;
+	public static final long DEFAULT_LANGUAGE_DV_ID = 336;
+	public static final String TRANSLATABLE_REGEX = "\\p{L}|[ \\u0BBE-\\u0BCD]";
 	
 	public static final String SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID = "projectId";
 	public static final String SESSION_ATTRIBUTE_USER_SURROGATE_ID = "userId";
+	public static final String SESSION_ATTRIBUTE_LANGUAGE_DV_ID = "languageDvId";
 	
 	public static final long ROLE_DV_ID_CREATOR = 332;
 	public static final long ROLE_DV_ID_COLLABORATOR = 333;
+	
 }

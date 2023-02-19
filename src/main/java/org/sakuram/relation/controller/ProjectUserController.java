@@ -68,4 +68,10 @@ public class ProjectUserController {
     	return tenant.getProjectId();
     }
     
+    @RequestMapping(value = "/switchLanguage", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public void switchLanguage(HttpSession httpSession, @RequestBody String languageDvId) {
+    	httpSession.removeAttribute(Constants.SESSION_ATTRIBUTE_LANGUAGE_DV_ID);
+    	httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_LANGUAGE_DV_ID, Long.parseLong(languageDvId));
+    }
+    
 }
