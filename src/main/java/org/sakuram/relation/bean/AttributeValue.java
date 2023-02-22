@@ -105,10 +105,10 @@ public class AttributeValue {
 	private List<Translation> translationList;
 
 	@Transient
-	private String translatedValue;
+	private Translation translation;
 
 	public String getAvValue() {
-		return translatedValue == null ? attributeValue : translatedValue;
+		return translation == null ? attributeValue : translation.getValue();
 	}
 	
 	public AttributeValue(DomainValue attribute, String attributeValue, Person person, Relation relation) {
@@ -117,6 +117,18 @@ public class AttributeValue {
 		this.person = person;
 		this.relation = relation;
 		this.creator = SecurityContext.getCurrentUser();
+	}
+	
+	public AttributeValue(AttributeValue attributeValue) {	// Clone
+		this.attribute = attributeValue.attribute;
+		this.attributeValue = attributeValue.attributeValue;
+		this.creator = SecurityContext.getCurrentUser();
+		this.endDate = attributeValue.endDate;
+		this.isValueAccurate = attributeValue.isValueAccurate;
+		this.person = attributeValue.person;
+		this.relation = attributeValue.relation;
+		this.startDate = attributeValue.startDate;
+		// createdAt, deletedAt, deleter, id, overwrittenBy, tenant, translation, translationList
 	}
 	
 	@PrePersist
@@ -129,7 +141,7 @@ public class AttributeValue {
 	protected void translate() {
 		for (Translation translation : translationList) {
 			if (SecurityContext.getCurrentLanguageDvId().equals(translation.getLanguage().getId())) {
-				translatedValue = translation.getValue();
+				this.translation = translation;
 				break;
 			}
 		}

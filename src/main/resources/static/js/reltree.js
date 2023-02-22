@@ -435,7 +435,7 @@ async function editEntityAttributes(e) {
 		var ind1, ind2, attributeValueNBlkList, searchedPersonId, saveAttributesResponseVO;
 		var toInsertAttributeValueDummyId, relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
 		var searchResultsWindowElement, searchResultsTableElement, searchCloseButtonElement, searchReturnButtonElement, searchResultsVO, searchResultsList, srInputElement, srRowNo, searchMessageElement;
-		var relationVO, personIdsList, photoInputElement, file;
+		var isTranslatable, personIdsList, photoInputElement, file;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
@@ -445,7 +445,16 @@ async function editEntityAttributes(e) {
 		for (let attributeValueBlkElement of rightBarElement.querySelectorAll("fieldset[attributedvid]")) {
 			inputElements = attributeValueBlkElement.querySelectorAll("input,select:not([name=attributenames])");
 			attributeDvId = parseInt(attributeValueBlkElement.getAttribute("attributedvid"));
-			attributeValueVO = {attributeDvId: attributeDvId, id: null, attributeValue: (inputElements[0].tagName == "INPUT" ? inputElements[0].value : inputElements[0].options[inputElements[0].selectedIndex].value), valueAccurate: null, startDate: null, endDate: null};
+			attributeDomainValueVO = domainValueVOMap.get(attributeDvId);
+			if (action == ACTION_SAVE && document.getElementById("language").value != DEFAULT_LANGUAGE_DV_ID &&
+					attributeDomainValueVO.validationJsRegEx != null && attributeDomainValueVO.validationJsRegEx == TRANSLATABLE_REGEX) {
+				isTranslatable = true;
+			} else {
+				isTranslatable = false;
+			}
+			attributeValueVO = {attributeDvId: attributeDvId, id: null,
+				attributeValue: (inputElements[0].tagName == "INPUT" ? inputElements[0].value : inputElements[0].options[inputElements[0].selectedIndex].value),
+				translatedValue: (isTranslatable ? inputElements[1].value : null), valueAccurate: null, startDate: null, endDate: null};
 			if (action == ACTION_SAVE) {
 				if (attributeValueBlkElement.hasAttribute("attributevalueid")) {
 					attributeValueVO.id = parseInt(attributeValueBlkElement.getAttribute("attributevalueid"));
@@ -455,13 +464,13 @@ async function editEntityAttributes(e) {
 					attributeValueVO.id = toInsertAttributeValueDummyId;
 					attributeValueBlkElement.setAttribute("attributevalueid", toInsertAttributeValueDummyId);
 				}
-				attributeValueVO.valueAccurate = inputElements[1].checked;
-				if (inputElements.length > 2) {
-					if (inputElements[2].value != "") {
-						attributeValueVO.startDate = pikadayToIsoFormat(inputElements[2].value);
+				attributeValueVO.valueAccurate = inputElements[(isTranslatable ? 2 : 1)].checked;
+				if (inputElements.length > (isTranslatable ? 3 : 2)) {
+					if (inputElements[(isTranslatable ? 3  : 2)].value != "") {
+						attributeValueVO.startDate = pikadayToIsoFormat(inputElements[(isTranslatable ? 3 : 2)].value);
 					}
-					if (inputElements[3].value != "") {
-						attributeValueVO.endDate = pikadayToIsoFormat(inputElements[3].value);
+					if (inputElements[(isTranslatable ? 4 : 3)].value != "") {
+						attributeValueVO.endDate = pikadayToIsoFormat(inputElements[(isTranslatable ? 4 : 3)].value);
 					}
 				}
 			}
@@ -504,6 +513,13 @@ async function editEntityAttributes(e) {
 					if (value.attributeValueVO.attributeValue == "") {
 						value.attributeValueBlkElement.className = "attrValError";
 						alert("Blank is not a valid value");
+						return;
+					}
+					if (document.getElementById("language").value != DEFAULT_LANGUAGE_DV_ID &&
+							attributeDomainValueVO.validationJsRegEx != null && attributeDomainValueVO.validationJsRegEx == TRANSLATABLE_REGEX &&
+							value.attributeValueVO.translatedValue == "") {
+						value.attributeValueBlkElement.className = "attrValError";
+						alert("Blank is not a valid translation");
 						return;
 					}
 					if (value.attributeValueVO.startDate != null && value.attributeValueVO.endDate != null && new Date(value.attributeValueVO.startDate) > new Date(value.attributeValueVO.endDate)) {
@@ -602,6 +618,15 @@ async function editEntityAttributes(e) {
 				if (attributeValueVOList.length == 0) {
 					alert("Specify search criteria");
 					return;
+				}
+				for (let keyValueArr of attributeVsValueListMap.entries()) {
+					for (let value of keyValueArr[1]) {
+						if (value.attributeValueVO.attributeValue == "") {
+							value.attributeValueBlkElement.className = "attrValError";
+							alert("Blank is not a valid value");
+							return;
+						}
+					}
 				}
 				searchResultsVO = await invokeService("basic/searchPerson", attributeValueVOList);
 				if (searchResultsVO.resultsList == null) {
@@ -780,25 +805,41 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	attributeValueBlockElement.appendChild(document.createTextNode("Value: "));
 	
 	if (attributeDomainValueVO.attributeDomain == "") {
-		valueElement = document.createElement("input");
-		valueElement.setAttribute("type","text");
-		if (attributeValueVO.attributeValue != undefined) {
-			valueElement.setAttribute("value", attributeValueVO.attributeValue);
+		var loopInd, isTranslatable;
+		
+		if (action == ACTION_SAVE && document.getElementById("language").value != DEFAULT_LANGUAGE_DV_ID &&
+				attributeDomainValueVO.validationJsRegEx != null && attributeDomainValueVO.validationJsRegEx == TRANSLATABLE_REGEX) {
+			isTranslatable = true;
+		} else {
+			isTranslatable = false;
 		}
-		if (attributeDomainValueVO.validationJsRegEx != null && attributeDomainValueVO.validationJsRegEx != "") {
-			regEx = new RegExp(attributeDomainValueVO.validationJsRegEx, 'u');
-			valueElement.setAttribute("onkeypress","return blockSpecialCharOnKeyPress(event, " + regEx + ")");
-			regEx = new RegExp('^(' + attributeDomainValueVO.validationJsRegEx + ')*$', 'u');
-			valueElement.setAttribute("onpaste","return blockSpecialCharOnPaste(event, " + regEx + ")");
+		for (loopInd = 1; loopInd <= (isTranslatable ? 2 : 1); loopInd++) {
+			valueElement = document.createElement("input");
+			valueElement.setAttribute("type","text");
+			if (loopInd == 1 && attributeValueVO.attributeValue != undefined) {
+				valueElement.setAttribute("value", attributeValueVO.attributeValue);
+			}
+			if (loopInd == 2 && attributeValueVO.translatedValue != undefined) {
+				valueElement.setAttribute("value", attributeValueVO.translatedValue);
+			}
+			if (attributeDomainValueVO.validationJsRegEx != null && attributeDomainValueVO.validationJsRegEx != "") {
+				regEx = new RegExp(attributeDomainValueVO.validationJsRegEx, 'u');
+				valueElement.setAttribute("onkeypress","return blockSpecialCharOnKeyPress(event, " + regEx + ")");
+				regEx = new RegExp('^(' + attributeDomainValueVO.validationJsRegEx + ')*$', 'u');
+				valueElement.setAttribute("onpaste","return blockSpecialCharOnPaste(event, " + regEx + ")");
+			}
+			if (loopInd == 2) {
+				attributeValueBlockElement.appendChild(document.createElement("br"));
+			}
+			attributeValueBlockElement.appendChild(valueElement);
 		}
-	}
-	else {
+	} else {
 		valueElement = selectElementMap.get(attributeDomainValueVO.attributeDomain).cloneNode(true);
 		if (attributeValueVO.attributeValue != undefined) {
 			valueElement.value = domainValueVOMap.get(parseInt(attributeValueVO.attributeValue)).id;
 		}
+		attributeValueBlockElement.appendChild(valueElement);
 	}
-	attributeValueBlockElement.appendChild(valueElement);
 
 	if (action != ACTION_SAVE) {
 		return;

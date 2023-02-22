@@ -1,70 +1,24 @@
 package org.sakuram.relation.valueobject;
 
 import java.sql.Date;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter @Setter
+@NoArgsConstructor
 public class AttributeValueVO {
 	private Long id;
 	private long attributeDvId;
 	private String attributeName;
 	private String attributeValue;
+	private String translatedValue;
 	private boolean isValueAccurate;
 	private Date startDate;
 	private Date endDate;
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
+	public String getAvValue() {
+		return translatedValue == null ? attributeValue : translatedValue;
 	}
 	
-	public long getAttributeDvId() {
-		return attributeDvId;
-	}
-
-	public void setAttributeDvId(long attributeDvId) {
-		this.attributeDvId = attributeDvId;
-	}
-
-	public String getAttributeName() {
-		return attributeName;
-	}
-
-	public void setAttributeName(String attributeName) {
-		this.attributeName = attributeName;
-	}
-
-	public String getAttributeValue() {
-		return attributeValue;
-	}
-
-	public void setAttributeValue(String attributeValue) {
-		this.attributeValue = attributeValue;
-	}
-
-	public boolean isValueAccurate() {
-		return isValueAccurate;
-	}
-
-	public void setValueAccurate(boolean isValueAccurate) {
-		this.isValueAccurate = isValueAccurate;
-	}
-
-	public Date getStartDate() {
-		return startDate;
-	}
-
-	public void setStartDate(Date startDate) {
-		this.startDate = startDate;
-	}
-
-	public Date getEndDate() {
-		return endDate;
-	}
-
-	public void setEndDate(Date endDate) {
-		this.endDate = endDate;
-	}
-
 }

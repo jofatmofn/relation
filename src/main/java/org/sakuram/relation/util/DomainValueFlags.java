@@ -68,7 +68,9 @@ public class DomainValueFlags {
 				}
 			}
 		} else if (domainValue.getCategory().equals(Constants.CATEGORY_LANGUAGE)) {
-			languageCode = flagsArr[Constants.FLAG_POSITION_ISO_LANGUAGE_CODE];
+			if (flagsArr.length > Constants.FLAG_POSITION_ISO_LANGUAGE_CODE) {
+				languageCode = flagsArr[Constants.FLAG_POSITION_ISO_LANGUAGE_CODE];
+			}
 		}
 		
 	}
