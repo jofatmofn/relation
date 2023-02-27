@@ -855,13 +855,13 @@ public class PersonRelationService {
     	for (int ind = 1; ind < searchResultsList.size(); ind++) {
 			parentNamesSsv = "";
 			spouseNamesSsv = "";
-    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_MOTHER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_LABEL))) {
+    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_MOTHER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME))) {
     			parentNamesSsv += "/" + relativeAttributeEntry.getValue().getAvValue();
     		}
     		if (parentsCriteria != null && (parentNamesSsv.equals("") || !parentNamesSsv.toLowerCase().contains(parentsCriteria))) {
     			continue;
     		}
-    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_LABEL))) {
+    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME))) {
     			spouseNamesSsv += "/" + relativeAttributeEntry.getValue().getAvValue();
     		}
     		if (spousesCriteria != null && (spouseNamesSsv.equals("") || !spouseNamesSsv.toLowerCase().contains(spousesCriteria))) {
@@ -1250,11 +1250,10 @@ public class PersonRelationService {
 	        	attributeValue = new AttributeValue(genderPersAttributeDv, isMale? Constants.GENDER_NAME_MALE : Constants.GENDER_NAME_FEMALE, person, null);
 	    		attributeValueRepository.save(attributeValue);
 	    		
-	    		if (personAttributeValuesArr[3].equals("")) {
-	    			personAttributeValuesArr[3] = personAttributeValuesArr[1];
+	    		if (!personAttributeValuesArr[3].equals("")) {
+		    		attributeValue = new AttributeValue(labelPersAttributeDv, personAttributeValuesArr[3], person, null);
+		    		attributeValueRepository.save(attributeValue);
 	    		}
-	    		attributeValue = new AttributeValue(labelPersAttributeDv, personAttributeValuesArr[3], person, null);
-	    		attributeValueRepository.save(attributeValue);
     		}
     	}
     	

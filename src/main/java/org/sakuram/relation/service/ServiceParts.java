@@ -39,17 +39,17 @@ public class ServiceParts {
     		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&
     				(attributeValue.getEndDate() == null || attributeValue.getEndDate().toLocalDate().isAfter(LocalDate.now()))) {
     			if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_LABEL) {
-		    		personVO.setLabel(attributeValue.getAvValue());
+		    		personVO.setPersonLabel(attributeValue.getAvValue());
 		    		// TODO: What if domainValueFlags.getAttributeDomain() not empty
     			} else if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME) {
 		    		personVO.setFirstName(attributeValue.getAvValue());
     			} else if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER) {
-		    		personVO.setGender(attributeValue.getAvValue());
+		    		personVO.determineGender(attributeValue.getAvValue());
     			}
     		}
 		}
 		
-		personVO.setLabel(personVO.getNormalisedLabel());
+		personVO.determineLabel();
 		return personVO;
 	}
 	
@@ -89,8 +89,8 @@ public class ServiceParts {
 			relationAttributeDVIdOtherForStart = -1;
 			relationSeqNoAttributeDVIdOtherForStart = -1;
 		}
-		relationVO.setSource(String.valueOf(relation.getPerson1().getId()));
-		relationVO.setTarget(String.valueOf(relation.getPerson2().getId()));
+		relationVO.determineSource(String.valueOf(relation.getPerson1().getId()));
+		relationVO.determineTarget(String.valueOf(relation.getPerson2().getId()));
 		for (AttributeValue attributeValue : relation.getAttributeValueList()) {
     		if (isCurrentValidAttributeValue(attributeValue)) {
         		domainValueFlags.setDomainValue(attributeValue.getAttribute());
@@ -110,7 +110,7 @@ public class ServiceParts {
     			}
     		}
 		}
-		relationVO.setLabel(relationVO.getNormalisedLabel(toIncludeRelationId));
+		relationVO.determineLabel(toIncludeRelationId);
 		return relatedPerson1VO;
 	}
 	

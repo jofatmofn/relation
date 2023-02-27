@@ -285,7 +285,7 @@ async function editEntityAttributes(e) {
 	rightBarElement = document.getElementById("sidebarbody");
 	/* Current attribute values from back-end */
 	for (let attributeValueVO of attributeValueVOList) {
-		if (attributeValueVO.attributeDvId == PERSON_ATTRIBUTE_DV_ID_LABEL) {
+		if (attributeValueVO.attributeDvId == PERSON_ATTRIBUTE_DV_ID_FIRST_NAME) {
 			highlightedEntity.label = attributeValueVO.attributeValue;
 		}
 		attributeValueBlockElement = document.createElement("fieldset");
@@ -388,8 +388,8 @@ async function editEntityAttributes(e) {
 		}
 		attributeValueBlockElement.appendChild(selectElement);
 		if (isPersonNode && action == ACTION_SEARCH) {
-			selectElement.value = PERSON_ATTRIBUTE_DV_ID_LABEL;
-			createAttributeBlock(attributeValueBlockElement, {attributeDvId: PERSON_ATTRIBUTE_DV_ID_LABEL}, action);
+			selectElement.value = PERSON_ATTRIBUTE_DV_ID_FIRST_NAME;
+			createAttributeBlock(attributeValueBlockElement, {attributeDvId: PERSON_ATTRIBUTE_DV_ID_FIRST_NAME}, action);
 		}
 		else {
 			createAttributeBlock(attributeValueBlockElement, {attributeDvId: parseInt(selectElement.options[0].value)}, action);
@@ -610,7 +610,7 @@ async function editEntityAttributes(e) {
 					highlightedEntity = s.graph.nodes(saveAttributesResponseVO.entityId);
 					highlightedEntity.color = HIGHLIGHT_COLOR;
 				}
-				highlightedEntity.label = (isPersonNode ? attributeVsValueListMap.get(PERSON_ATTRIBUTE_DV_ID_LABEL)[0].attributeValueVO.attributeValue :
+				highlightedEntity.label = (isPersonNode ? attributeVsValueListMap.get(PERSON_ATTRIBUTE_DV_ID_FIRST_NAME)[0].attributeValueVO.attributeValue :
 					domainValueVOMap.get(parseInt(attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)[0].attributeValueVO.attributeValue)).value + "-" + domainValueVOMap.get(parseInt(attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)[0].attributeValueVO.attributeValue)).value);
 				s.refresh();
 				break;

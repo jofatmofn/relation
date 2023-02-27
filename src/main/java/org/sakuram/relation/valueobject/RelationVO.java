@@ -7,6 +7,10 @@ import java.util.Map.Entry;
 import org.sakuram.relation.util.Constants;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter @Setter
 public class RelationVO {
 
 	private String id;
@@ -15,6 +19,7 @@ public class RelationVO {
 	private String label;
 	private double size;
 	private String type;
+	@JsonIgnore private String relationLabel;
 	@JsonIgnore private Map<Long, String> attributeMap;
 	@JsonIgnore private boolean toSwap;
 
@@ -22,19 +27,7 @@ public class RelationVO {
 		attributeMap = new HashMap<Long, String>();
 	}
 	
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public String getSource() {
-		return source;
-	}
-
-	public void setSource(String source) {
+	public void determineSource(String source) {
 		if (toSwap) {
 			this.target = source;
 		} else {
@@ -42,11 +35,7 @@ public class RelationVO {
 		}
 	}
 
-	public String getTarget() {
-		return target;
-	}
-
-	public void setTarget(String target) {
+	public void determineTarget(String target) {
 		if (toSwap) {
 			this.source = target;
 		} else {
@@ -54,40 +43,16 @@ public class RelationVO {
 		}
 	}
 
-	public String getLabel() {
-		return label;
-	}
-
-	public String getNormalisedLabel(boolean toIncludeRelationId) {
-		if (getLabel() != null) {
-			return label;
+	public void determineLabel(boolean toIncludeRelationId) {
+		if (label != null) {
+			return;
 		}
 		label = Constants.RELATION_LABEL_TEMPLATE;
 		for (Map.Entry<Long, String> attributeEntry : attributeMap.entrySet()) {
 			label = label.replaceAll("@@" + attributeEntry.getKey() + "@@", attributeEntry.getValue());
 		}
 		// Beware: Because of the ids 34, 35, 36, 61, 62, the pattern \d\d is used below
-		return (toIncludeRelationId ? "<" + id + ">" : "") + label.replaceAll("@@\\d\\d@@", "").replaceAll("\\(\\)", "");
-	}
-
-	public void setLabel(String label) {
-		this.label = label;
-	}
-
-	public double getSize() {
-		return size;
-	}
-
-	public void setSize(double size) {
-		this.size = size;
-	}
-	
-	public String getType() {
-		return type;
-	}
-
-	public void setType(String type) {
-		this.type = type;
+		label = (toIncludeRelationId ? "<" + id + ">" : "") + label.replaceAll("@@\\d\\d@@", "").replaceAll("\\(\\)", "");
 	}
 
 	public String getAttribute(long attributeDvId) {
@@ -116,14 +81,6 @@ public class RelationVO {
 		}
 	}
 
-	public boolean isToSwap() {
-		return toSwap;
-	}
-
-	public void setToSwap(boolean toSwap) {
-		this.toSwap = toSwap;
-	}
-	
 	public String toString() {
 		StringBuffer sb;
 		sb = new StringBuffer(1000);

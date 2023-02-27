@@ -71,8 +71,8 @@ public class RelationSimplification {
 						newSimplifiedRelationVOList.add(relationVO);
 						simpleRelationInd++;
 						relationVO.setId("S"+String.valueOf(simpleRelationInd));
-						relationVO.setSource(simplifiedRelationVOList.get(ind1).getSource());
-						relationVO.setTarget(simplifiedRelationVOList.get(ind1 + ind2 - 1).getTarget());
+						relationVO.determineSource(simplifiedRelationVOList.get(ind1).getSource());
+						relationVO.determineTarget(simplifiedRelationVOList.get(ind1 + ind2 - 1).getTarget());
 						relationVO.setSize(0.5);
 						relationVO.setType(Constants.EDGE_TYPE_SIMPLIFIED_RELATION);
 						relName1Dv = domainValueRepository.findById(Long.valueOf(simplifiedRelation.person1ForPerson2DvId))
@@ -81,7 +81,7 @@ public class RelationSimplification {
 								.orElseThrow(() -> new AppException("Invalid Dv Id ", null));
 						relationVO.setAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, relName1Dv.getDvValue());
 						relationVO.setAttribute(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1, relName2Dv.getDvValue());
-						relationVO.setLabel(relationVO.getNormalisedLabel(false));
+						relationVO.determineLabel(false);
 						ind1 = ind1 + ind2 - 1;
 						break; // from for ind2
 					}
