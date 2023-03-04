@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 	<head>
 		<meta charset="utf-8"/>
 		<!-- script src="sigmajs/sigma.min.js"></script -->
@@ -29,49 +29,49 @@
 		<div id="container">
 			<div id="topbar">
 				<div id="languageDetails">
-					<label for="Language">Language:&nbsp;</label>
+					<label for="Language" th:utext="#{label.language}"></label>:&nbsp;
 					<select id="language"></select><br/>
-					<button onclick="switchLanguage()">Switch</button>&nbsp;&nbsp;
+					<button onclick="switchLanguage()" th:utext="#{label.switch}"></button>&nbsp;&nbsp;
 				</div>
 				<div id="projectdetails">
-					<label for="project">Project:&nbsp;</label>
+					<label for="project" th:utext="#{label.project}"></label>:&nbsp;
 					<input type="text" id="project"/><br/>
-					<button onclick="switchProject()">Switch</button>&nbsp;&nbsp;
-					<button onclick="createProject()" class="authenticated" style="display: none">Create New</button>
+					<button onclick="switchProject()" th:utext="#{label.switch}"></button>&nbsp;&nbsp;
+					<button onclick="createProject()" class="authenticated" style="display: none" th:utext="#{label.createNew}"></button>
 				</div>
 				<div id="userdetails">
-					<label for="user">User:&nbsp;</label>
+					<label for="user" th:utext="#{label.user}"></label>:&nbsp;
 					<input type="text" id="user" class="authenticated" style="display: none" disabled/><br/>
-					<input type="button" onclick="location.href='./oauth2/authorization/google';" value="Login with Google" class="unauthenticated" style="display: inline-block"/>
-					<button onclick="logout()" class="authenticated" style="display: none">Logout</button>
+					<input type="button" onclick="location.href='./oauth2/authorization/google';" th:attr="value=#{label.loginWithGoogle}" class="unauthenticated" style="display: inline-block"/>
+					<button onclick="logout()" class="authenticated" style="display: none" th:utext="#{label.logout}"></button>
 				</div>
 			</div>
 			<div id="leftbar">
-				<div id="leftbartitle">Functions</div>
+				<div id="leftbartitle" th:utext="#{label.functions}"></div>
 				<div id="leftbarbuttons">
-					<button onclick="searchPerson()">Search Person</button><br/>
-					<button onclick="ascertainRelation()">Ascertain Relation</button><br/>
+					<button onclick="searchPerson()" th:utext="#{label.searchPerson}"></button><br/>
+					<button onclick="ascertainRelation()" th:utext="#{label.ascertainRelation}"></button><br/>
 					<hr/>
-					<button onclick="clearGraph()">Clear Graph</button><br/>
-					<button onclick="nodeToFocus()">Bring Focus</button><br/>
-					<button onclick="printGraph()">Print Graph</button><br/>
+					<button onclick="clearGraph()" th:utext="#{label.clearGraph}"></button><br/>
+					<button onclick="nodeToFocus()" th:utext="#{label.bringFocus}"></button><br/>
+					<button onclick="printGraph()" th:utext="#{label.printGraph}"></button><br/>
 					<hr/>
-					<button onclick="addPerson()" rel-modify-data>Add Person</button><br/>
-					<button onclick="relatePersons()" rel-modify-data>Relate Persons</button><br/>
-					<button onclick="uploadPrData()" rel-modify-data>Upload Persons & Relations</button><br/>
+					<button onclick="addPerson()" rel-modify-data th:utext="#{label.addPerson}"></button><br/>
+					<button onclick="relatePersons()" rel-modify-data th:utext="#{label.relatePersons}"></button><br/>
+					<button onclick="uploadPrData()" rel-modify-data th:utext="#{label.uploadPersonsNRelations}"></button><br/>
 				</div>
 				<hr/>
 				<div id="leftbarconfig">
-					<span>On double click of a person, show</span><br/>
+					<span th:utext="#{label.doubleClickFunction}"></span><br/>
 					<input type="radio" id="drel" name="cfgPersonDblClk" value="drel" checked onclick="enDisableDepth(this);"/>
-					<label for="drel">Direct Relations</label><br/>
+					<label for="drel" th:utext="#{label.directRelations}"></label><br/>
 					<input type="radio" id="ftree" name="cfgPersonDblClk" value="ftree" onclick="enDisableDepth(this);"/>
-					<label for="ftree">Full Tree</label>
+					<label for="ftree" th:utext="#{label.relationTree}"></label>
 					<br/>
 					&emsp;<input type="radio" id="viewTree" name="viewOrExportTree" value="view" checked disabled/>
-					<label for="viewTree">View</label>&emsp;
+					<label for="viewTree" th:utext="#{label.view}"></label>&emsp;
 					(
-					<label for="depth">Max Depth</label>
+					<label for="depth" th:utext="#{label.maxDepth}"></label>
 					<select id="depth" name="depth" disabled>
 						<option value="2">2</option>
 						<option value="3" selected>3</option>
@@ -80,9 +80,9 @@
 					)
 					<br/>
 					&emsp;<input type="radio" id="exportTree" name="viewOrExportTree" value="export" disabled/>
-					<label for="exportTree">Export</label><br/>
+					<label for="exportTree" th:utext="#{label.export}"></label><br/>
 					<input type="radio" id="parceners" name="cfgPersonDblClk" value="parceners" onclick="enDisableDepth(this);"/>
-					<label for="parceners">Parceners</label><br/>
+					<label for="parceners" th:utext="#{label.parceners}"></label><br/>
 				</div>
 			</div>
 			<div id="graph-container"></div>
@@ -104,7 +104,7 @@
 			<div class="modal-content">
 				<div class="modal-header">
 					<span id="searchCloseButton" class="close">&times;</span>
-					<div class="fontsize15">Search Results</div>
+					<div class="fontsize15" th:utext="#{label.searchResults}"></div>
 					<div class="fontsize13" id="searchMessage"></div>
 				</div>
 				<div class="modal-body" style="overflow-x:scroll">
@@ -112,7 +112,7 @@
 					</table>
 				</div>
 				<div class="modal-footer">
-					<button id="searchReturnButton">Return with Selection</button><br/>
+					<button id="searchReturnButton" th:utext="#{label.returnWithSelection}"></button><br/>
 				</div>
 			</div>
 		</div>

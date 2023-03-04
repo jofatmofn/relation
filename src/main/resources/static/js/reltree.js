@@ -1196,7 +1196,7 @@ async function switchProject() {
 async function switchLanguage() {
 	await invokeService("projectuser/switchLanguage", document.getElementById("language").value);
 	await retrieveAppStartValues();
-	clearGraph();
+	location.reload();
 	alert("Language switched successfully");
 }
 

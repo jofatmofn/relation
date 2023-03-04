@@ -98,6 +98,8 @@ public class Constants {
 	public static final String RELATION_LABEL_TEMPLATE = "@@34@@(@@61@@)-@@35@@(@@62@@)(@@36@@)"; // TODO: Replace the hard-coded value with Constant
 	public static final short EXPORT_TREE_MAX_DEPTH = 10;
 	public static final long DEFAULT_LANGUAGE_DV_ID = 336;
+	public static final long ENGLISH_LANGUAGE_DV_ID = 336;
+	public static final long TAMIL_LANGUAGE_DV_ID = 51;
 	public static final String TRANSLATABLE_REGEX = "\\p{L}|[ \\u0BBE-\\u0BCD]";
 	
 	public static final String SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID = "projectId";
