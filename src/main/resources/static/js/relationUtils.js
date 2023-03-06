@@ -134,3 +134,30 @@ function fileToByteArray(file) {
         } 
     })
 }
+
+/* https://stackoverflow.com/questions/228835/best-practice-javascript-and-multilanguage */
+function Language(lang)
+{
+    var __construct = async function() {
+        if (eval('typeof ' + lang) == 'undefined')
+        {
+            lang = DEFAULT_LANGUAGE_CODE;
+        }
+        return;
+    }()
+
+    this.getStr = function(str, defaultStr) {
+        var retStr = eval('eval(lang).' + str);
+        if (typeof retStr != 'undefined')
+        {
+            return retStr;
+        } else {
+            if (typeof defaultStr != 'undefined')
+            {
+                return defaultStr;
+            } else {
+                return eval(DEFAULT_LANGUAGE_CODE + '.' + str);
+            }
+        }
+    }
+}

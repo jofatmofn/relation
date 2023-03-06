@@ -27,6 +27,7 @@ public class ServiceParts {
 	
 	public PersonVO addToPersonVOMap(Map<Long, PersonVO> personVOMap, Person person) {
     	PersonVO personVO;
+    	DomainValue attributeValueDv;
     	
 		personVO = new PersonVO();
 		personVOMap.put(person.getId(), personVO);
@@ -44,7 +45,9 @@ public class ServiceParts {
     			} else if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME) {
 		    		personVO.setFirstName(attributeValue.getAvValue());
     			} else if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER) {
-		    		personVO.determineGender(attributeValue.getAvValue());
+    				attributeValueDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
+            				.orElseThrow(() -> new AppException("Invalid Attribute Value Dv Id " + attributeValue.getAttributeValue(), null));
+		    		personVO.determineGender(attributeValueDv.getDvValue());
     			}
     		}
 		}
@@ -95,12 +98,12 @@ public class ServiceParts {
     		if (isCurrentValidAttributeValue(attributeValue)) {
         		domainValueFlags.setDomainValue(attributeValue.getAttribute());
         		if (domainValueFlags.getAttributeDomain().equals("")) {
-        			relationVO.setAttribute(attributeValue.getAttribute().getId(), attributeValue.getAvValue());
+        			relationVO.setAttribute(attributeValue.getAttribute().getId(), attributeValue.getAttributeValue(), attributeValue.getAvValue());
         		}
         		else {
             		attributeDv = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
             				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValue.getAttributeValue(), null));
-        			relationVO.setAttribute(attributeValue.getAttribute().getId(), attributeDv.getDvValue());
+        			relationVO.setAttribute(attributeValue.getAttribute().getId(), attributeDv.getValue(), attributeDv.getDvValue());
         		}
     			if (otherPersonId != null && attributeValue.getAttribute().getId() == relationAttributeDVIdOtherForStart) {
     				relatedPerson1VO.relationDvId = attributeValue.getAttributeValue();

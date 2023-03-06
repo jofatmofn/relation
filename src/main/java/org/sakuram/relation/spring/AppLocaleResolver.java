@@ -27,7 +27,7 @@ public class AppLocaleResolver implements LocaleResolver {
 		} else if (currentLanguageDvId.equals(Constants.ENGLISH_LANGUAGE_DV_ID)) {
 			locale = Locale.ENGLISH;
 		} else if (currentLanguageDvId.equals(Constants.TAMIL_LANGUAGE_DV_ID)) {
-			locale = new Locale("ta", "IN");	// TODO: To come from DomainValue table?
+			locale = new Locale("ta");	// TODO: To come from DomainValue table?
 		} else {
 			locale = Locale.ENGLISH;	// TODO: To come from configuration / Constants.
 		}

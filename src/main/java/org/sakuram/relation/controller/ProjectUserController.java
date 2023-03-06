@@ -34,7 +34,7 @@ public class ProjectUserController {
     @RequestMapping(value = "/preLogout", method = RequestMethod.POST)
     public void preLogout(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal) {
     	httpSession.removeAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID);
-		LogManager.getLogger().info("Logout: " + principal.getAttribute("name"));
+		LogManager.getLogger().debug("Logout: " + principal.getAttribute("name"));
     	return;
     }
     
@@ -44,13 +44,13 @@ public class ProjectUserController {
 		if (principal != null && httpSession != null && httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID) == null) {
 			appUserId = projectUserService.findOrSaveUser(principal.getAttribute("iss").toString(), principal.getAttribute("sub"), principal.getAttribute("email"));
 			httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID, appUserId);
-			LogManager.getLogger().info("Fresh Login: " + principal.getAttribute("name") + " / " + appUserId);
+			LogManager.getLogger().debug("Fresh Login: " + principal.getAttribute("name") + " / " + appUserId);
 		}
 		else if (principal != null) {
-			LogManager.getLogger().info("Earlier Login: " + principal.getAttribute("name"));
+			LogManager.getLogger().debug("Earlier Login: " + principal.getAttribute("name"));
 		}
 		else {
-			LogManager.getLogger().info("Without Login");
+			LogManager.getLogger().debug("Without Login");
 		}
     	return projectUserService.isAppReadOnly(
     			(Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID),

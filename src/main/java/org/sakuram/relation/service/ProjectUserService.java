@@ -68,7 +68,7 @@ public class ProjectUserService {
     				.orElseThrow(() -> new AppException("Invalid User Id " + appUserId, null));
     		isReadOnly = isAppReadOnly(tenant, appUser);
     	}
-		LogManager.getLogger().info("Tenant: " + tenantId + ". AppUser: " + appUserId + ". Privilege: " + isReadOnly);
+		LogManager.getLogger().debug("Tenant: " + tenantId + ". AppUser: " + appUserId + ". Privilege: " + isReadOnly);
     	return isReadOnly;
     }
     

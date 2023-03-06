@@ -246,7 +246,7 @@ public class PersonRelationService {
 		while (true) {
 			currentPerson = relatedPerson2VOList.get(readInd).person;
 			currentLevel = relatedPerson2VOList.get(readInd).level;
-			LogManager.getLogger().debug("Current person: " + currentPerson.getId() + " at level " + currentLevel);
+			LogManager.getLogger().info("Current person: " + currentPerson.getId() + " at level " + currentLevel);
 			if (currentLevel == retrieveRelationsRequestVO.getMaxDepth()) {
 				break;
 			}
@@ -284,15 +284,15 @@ public class PersonRelationService {
 						relatedPersonVO.setX(sequence * 20 + 1);
 						relatedPersonVO.setY(level * 10 + 1);
 		    		}
-		    		LogManager.getLogger().debug("Added person: " + relatedPerson2VO.person.getId() + " at level " + relatedPerson2VO.level);
+		    		LogManager.getLogger().info("Added person: " + relatedPerson2VO.person.getId() + " at level " + relatedPerson2VO.level);
 
 				}
-				else LogManager.getLogger().debug("Skipped (due to duplicate) person: " + relatedPerson1VO.person.getId());
+				else LogManager.getLogger().info("Skipped (due to duplicate) person: " + relatedPerson1VO.person.getId());
 				if (relatedRelationIdSet.add(relatedPerson1VO.relation.getId())) {
 					serviceParts.addToRelationVOList(relationVOList, relatedPerson1VO.relation, currentPerson, false);
 				}
 				}
-				else LogManager.getLogger().debug("Skipped (due to higher depth) person: " + relatedPerson1VO.person.getId());
+				else LogManager.getLogger().info("Skipped (due to higher depth) person: " + relatedPerson1VO.person.getId());
 			}
 			}
 	    	readInd++;
@@ -339,6 +339,8 @@ public class PersonRelationService {
 		treeCsvContents = new ArrayList<List<Object>>();
 		retrieveRelationsRequestVO.setMaxDepth(Constants.EXPORT_TREE_MAX_DEPTH);
 		treeGraphVO = retrieveTree(retrieveRelationsRequestVO);
+		LogManager.getLogger().info("treeGraphVO nodes: " + treeGraphVO.getNodes().size());
+		LogManager.getLogger().info("treeGraphVO edges: " + treeGraphVO.getEdges().size());
 		
 		personsMap = new HashMap<String, PersonVO>();
 		for(PersonVO node : treeGraphVO.getNodes()) {
@@ -359,6 +361,7 @@ public class PersonRelationService {
 			treeCsvRow.add("Level " + (ind2 + 1) + " Spouse");
 		}
 		
+		LogManager.getLogger().info("Exported rows: " + treeCsvContents.size());
 		return treeCsvContents;
 	}
 	
@@ -432,6 +435,7 @@ public class PersonRelationService {
 				UtilFuncs.listSet(spousesList, sequenceNo, spouseId, null);
 			}
 		}
+		LogManager.getLogger().info(personId + "'s spouses: " +  spousesList.size());
 		return spousesList.size() == 0 ? spousesList : spousesList.subList(1, spousesList.size());
 	}
 	
@@ -476,6 +480,7 @@ public class PersonRelationService {
 			}
 		}
 		Collections.sort(kidsList, (m1, m2) -> m1.getValue1().compareTo(m2.getValue1()));
+		LogManager.getLogger().info(parent1Id + "-" + parent2Id + "'s kids: " +  kidsList.size());
 		return kidsList.stream().map(Pair<String, Float>::getValue0).collect(Collectors.toCollection(ArrayList::new));
 	}
 	
@@ -540,6 +545,7 @@ public class PersonRelationService {
     		domainValueVO.setAttributeDomain(domainValueFlags.getAttributeDomain());
     		domainValueVO.setIsInputMandatory(domainValueFlags.getIsInputMandatory());
     		domainValueVO.setValidationJsRegEx(domainValueFlags.getValidationJsRegEx());
+    		domainValueVO.setLanguageCode(domainValueFlags.getLanguageCode());
     	}
     	
     	return domainValueVOList;
@@ -549,6 +555,8 @@ public class PersonRelationService {
     	Person person;
     	List<AttributeValue> attributeValueList;
     	RetrievePersonAttributesResponseVO retrievePersonAttributesResponseVO;
+		String gender, firstName, personLabel, label;
+		DomainValue attributeValueDv;
     	
     	retrievePersonAttributesResponseVO = new RetrievePersonAttributesResponseVO();
 		person = personRepository.findByIdAndTenant(entityId, SecurityContext.getCurrentTenant())
@@ -556,6 +564,27 @@ public class PersonRelationService {
 		retrievePersonAttributesResponseVO.setPhoto(person.getPhoto());
 		attributeValueList = person.getAttributeValueList();
 		retrievePersonAttributesResponseVO.setAttributeValueVOList(attributeValuesEntityToVo(attributeValueList));
+		
+		// Determine Label
+		gender = null;
+		firstName = null;
+		personLabel = null;
+		for (AttributeValueVO aVVo : retrievePersonAttributesResponseVO.getAttributeValueVOList()) {
+			if(aVVo.getAttributeDvId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER) {
+				attributeValueDv = domainValueRepository.findById(Long.valueOf(aVVo.getAttributeValue()))
+        				.orElseThrow(() -> new AppException("Invalid Attribute Value Dv Id " + aVVo.getAttributeValue(), null));
+				gender = attributeValueDv.getDvValue().substring(0,1);	// TODO: Incorrect logic (In some languages, duplicates can be there; In some languages, a single character could be made up of multiple unicodes)
+			} else if(aVVo.getAttributeDvId() == Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME) {
+				firstName = aVVo.getAvValue();
+			} else if(aVVo.getAttributeDvId() == Constants.PERSON_ATTRIBUTE_DV_ID_LABEL) {
+				personLabel = aVVo.getAvValue();
+			}
+		}
+		// The following expression is to be maintained in sync with that in PersonVO.determineLabel
+		label =  "(" + entityId + "/" + (gender == null ? "" : gender) + ")" + (firstName == null ? "" : firstName) +
+				(firstName == null || personLabel  == null ? "" : "/") + (personLabel == null ? "" : personLabel);
+		retrievePersonAttributesResponseVO.setLabel(label);
+		
 		return retrievePersonAttributesResponseVO;
     }
     
@@ -659,7 +688,7 @@ public class PersonRelationService {
     	DomainValue attributeDv;
     	
 		toDeleteAttributeValueList = (person != null ? person.getAttributeValueList() : relation.getAttributeValueList());
-		LogManager.getLogger().debug("1. Before update, no. of attributes in DB: " + (toDeleteAttributeValueList == null ? 0 : toDeleteAttributeValueList.size()));
+		LogManager.getLogger().info("1. Before update, no. of attributes in DB: " + (toDeleteAttributeValueList == null ? 0 : toDeleteAttributeValueList.size()));
     	incomingAttributeValueWithIdList = new ArrayList<Long>();
     	insertedAttributeValueIdList = new ArrayList<Long>();
     	domainValueFlags = new DomainValueFlags();
@@ -719,7 +748,7 @@ public class PersonRelationService {
     		}
     	}
     	
-    	LogManager.getLogger().debug("2. Before update, no. of attributes in DB: " + (toDeleteAttributeValueList == null ? 0 : toDeleteAttributeValueList.size()));
+    	LogManager.getLogger().info("2. Before update, no. of attributes in DB: " + (toDeleteAttributeValueList == null ? 0 : toDeleteAttributeValueList.size()));
 		if (toDeleteAttributeValueList != null) {	// Delete AV
 	    	for(AttributeValue toDeleteAttributeValue : toDeleteAttributeValueList) {
 	    		domainValueFlags.setDomainValue(toDeleteAttributeValue.getAttribute());

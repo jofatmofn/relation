@@ -82,7 +82,7 @@ public class SecurityAspect {
 		return returnValueObject;
 	}
 
-	@Around("execution(* org.sakuram.relation.controller.PersonRelationController.*(..)) && args(httpSession,..)")
+	@Around("(execution(* org.sakuram.relation.controller.PersonRelationController.*(..)) || execution(* org.sakuram.relation.controller.AlgoController.retrieveRelationPath(..))) && args(httpSession,..)")
 	public Object identifyLanguage(ProceedingJoinPoint proceedingJoinPoint, HttpSession httpSession) throws Throwable {
 		Object returnValueObject;
     	Long languageDvId;

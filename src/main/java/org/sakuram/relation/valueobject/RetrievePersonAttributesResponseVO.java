@@ -8,6 +8,7 @@ import lombok.Setter;
 @Getter @Setter
 public class RetrievePersonAttributesResponseVO {
 	byte[] photo;
+	String label;
 	List<AttributeValueVO> attributeValueVOList;
 
 }

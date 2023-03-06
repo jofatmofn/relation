@@ -2,6 +2,7 @@ var domainValueVOList, isAppReadOnly, highlightedEntity, domainValueVOMap;
 var paSelectElement, raSelectElement, paDomainValueVOList, raDomainValueVOList, isPersonNode;
 var action, selectElementMap, doubleClick, paSearchXtraOptions;
 var allPersonsSelectElement, malePersonsSelectElement, femalePersonsSelectElement;
+var translator;
 
 async function drawGraph() {
 	
@@ -211,20 +212,21 @@ async function retrieveAppStartValues() {
 		}
 	}
 
-	paSearchXtraOptions = [];
-	ind = 0;
-	for (label of ["Person Id", "Parents", "Spouses"]) {
-		optionElement = document.createElement("option");
-		optionElement.setAttribute("value", --ind);
-		optionElement.appendChild(document.createTextNode(label));
-		paSearchXtraOptions.push(optionElement);
-	}
-
 	languageSelectElement = selectElementMap.get(CATEGORY_LANGUAGE).cloneNode(true);
 	languageSelectElement.id = "language";
 	document.getElementById("language").replaceWith(languageSelectElement);
 	languageSelectElement.value = retrieveAppStartValuesResponseVO.inUseLanguage;
+	translator = new Language(domainValueVOMap.get(retrieveAppStartValuesResponseVO.inUseLanguage).languageCode);
 	
+	paSearchXtraOptions = [];
+	ind = 0;
+	for (label of ["labelPersonId", "labelParents", "labelSpouses"]) {
+		optionElement = document.createElement("option");
+		optionElement.setAttribute("value", --ind);
+		optionElement.appendChild(document.createTextNode(translator.getStr(label)));
+		paSearchXtraOptions.push(optionElement);
+	}
+
 }
 
 async function editEntityAttributes(e) {
@@ -249,8 +251,12 @@ async function editEntityAttributes(e) {
 		}
 		if (e.data.node.id > 0) {
 			retrievePersonAttributesResponseVO = await invokeService("basic/retrievePersonAttributes", e.data.node.id);
+			highlightedEntity.label = retrievePersonAttributesResponseVO.label;
 			photoImageElement = document.getElementById("sidebarphotoImg");
 			document.getElementById("sidebarphotoInput").value = '';
+			if (isAppReadOnly) {
+				document.getElementById("sidebarphotoInput").setAttribute("disabled", "");
+			}
 			photoImageElement.parentElement.setAttribute("style", "display: block");
 			if (retrievePersonAttributesResponseVO.photo == null) {
 				photoImageElement.removeAttribute("src");
@@ -285,9 +291,6 @@ async function editEntityAttributes(e) {
 	rightBarElement = document.getElementById("sidebarbody");
 	/* Current attribute values from back-end */
 	for (let attributeValueVO of attributeValueVOList) {
-		if (attributeValueVO.attributeDvId == PERSON_ATTRIBUTE_DV_ID_FIRST_NAME) {
-			highlightedEntity.label = attributeValueVO.attributeValue;
-		}
 		attributeValueBlockElement = document.createElement("fieldset");
 		rightBarElement.appendChild(attributeValueBlockElement);
 		attributeValueBlockElement.appendChild(document.createTextNode(attributeValueVO.attributeName));
@@ -345,10 +348,10 @@ async function editEntityAttributes(e) {
 		}
 	}
 	
-	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">+</button><button id='actionbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">" + action + "</button>";
+	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">+</button><button id='actionbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">" + translator.getStr("label" + action) + "</button>";
 	if (action == ACTION_SAVE) {
 		if (isPersonNode) {
-			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly || highlightedEntity.id == NEW_ENTITY_ID ? " disabled" : "") + ">Delete Person</button>";
+			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly || highlightedEntity.id == NEW_ENTITY_ID ? " disabled" : "") + ">" + translator.getStr("labelDeletePerson") + "</button>";
 			document.getElementById("deletebutton").onclick = async function() {
 				if (confirm("Going to delete the Person.")) {
 					await invokeService("basic/deletePerson", highlightedEntity.id);
@@ -360,7 +363,7 @@ async function editEntityAttributes(e) {
 			};
 		}
 		else {
-			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly ? " disabled" : "") + ">Delete Relation</button>";
+			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly ? " disabled" : "") + ">" + translator.getStr("labelDeleteRelation") + "</button>";
 			document.getElementById("deletebutton").onclick = async function() {
 				if (confirm("Going to delete the Relation.")) {
 					await invokeService("basic/deleteRelation", highlightedEntity.id);
@@ -415,17 +418,17 @@ async function editEntityAttributes(e) {
 	switch(action) {
 		case ACTION_SAVE:
 			if (isPersonNode) {
-				document.getElementById("sidebartitle").textContent = "Details of " + (highlightedEntity.id == NEW_ENTITY_ID ? "new person" : highlightedEntity.label + "(" + highlightedEntity.id + ")");
+				document.getElementById("sidebartitle").textContent = translator.getStr("labelDetails") + ": " + (highlightedEntity.id == NEW_ENTITY_ID ? translator.getStr("labelNewPerson") : highlightedEntity.label);
 			}
 			else {
 				person1Node = s.graph.nodes(highlightedEntity.source);
 				person2Node = s.graph.nodes(highlightedEntity.target);
-				document.getElementById("sidebartitle").textContent = "Details of relation between " +
-						(person1Node.id == person1AsPerRelationId ? person1Node.label + " and " + person2Node.label : person2Node.label + " and " + person1Node.label);
+				document.getElementById("sidebartitle").textContent = translator.getStr("labelDetailsOfRelation") + ": " +
+						(person1Node.id == person1AsPerRelationId ? (person1Node.label + " " + translator.getStr("labelAnd") + " " + person2Node.label) : (person2Node.label + " " + translator.getStr("labelAnd") + " " + person1Node.label));
 			}
 			break;
 		case ACTION_SEARCH:
-			document.getElementById("sidebartitle").textContent = "Person Search Criteria";
+			document.getElementById("sidebartitle").textContent = translator.getStr("labelPersonSearchCriteria");
 			break;
 	}
 	
@@ -653,10 +656,10 @@ async function editEntityAttributes(e) {
 					} */
 					searchResultsTableElement.innerHTML = "";
 					if (searchResultsVO.morePresentInDb) {
-						searchMessageElement.innerText = "Showing partial result of " + (searchResultsList.length - 1) + " persons. Provide more restricting criteria to limit the results."
+						searchMessageElement.innerText = translator.getStr("messagePartialSearchResults").replace("#resultCount#", searchResultsList.length - 1);
 					}
 					else {
-						searchMessageElement.innerText = "Showing " + (searchResultsList.length - 1) + " persons."
+						searchMessageElement.innerText =  (searchResultsList.length - 1) + " " + translator.getStr("labelPersons");
 					}
 					
 					srRowNo = -1;
@@ -790,7 +793,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 		deleteBlockImageElement = document.createElement("img");
 		attributeValueBlockElement.appendChild(deleteBlockImageElement);
 		deleteBlockImageElement.setAttribute("src","img/delete.png");
-		deleteBlockImageElement.setAttribute("alt","Delete Property");
+		deleteBlockImageElement.setAttribute("alt", translator.getStr("labelDeleteProperty"));
 		deleteBlockImageElement.setAttribute("width","5%");
 		deleteBlockImageElement.setAttribute("height","3%");
 		deleteBlockImageElement.onclick = async function() {
@@ -802,7 +805,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	
 	attributeValueBlockElement.appendChild(document.createElement("br"));
 	
-	attributeValueBlockElement.appendChild(document.createTextNode("Value: "));
+	attributeValueBlockElement.appendChild(document.createTextNode(translator.getStr("labelValue") + ": "));
 	
 	if (attributeDomainValueVO.attributeDomain == "") {
 		var loopInd, isTranslatable;
@@ -847,7 +850,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	
 	attributeValueBlockElement.appendChild(document.createElement("br"));
 	
-	attributeValueBlockElement.appendChild(document.createTextNode("Is Accurate: "));
+	attributeValueBlockElement.appendChild(document.createTextNode(translator.getStr("labelIsAccurate") + ": "));
 	isAccurateElement = document.createElement("input");
 	attributeValueBlockElement.appendChild(isAccurateElement);
 	isAccurateElement.setAttribute("type","checkbox");
@@ -858,7 +861,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	if (attributeDomainValueVO.repetitionType != FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED) {
 		attributeValueBlockElement.appendChild(document.createElement("br"));
 		
-		attributeValueBlockElement.appendChild(document.createTextNode("Start Date: "));
+		attributeValueBlockElement.appendChild(document.createTextNode(translator.getStr("labelStartDate") + ": "));
 		startDateElement = document.createElement("input");
 		attributeValueBlockElement.appendChild(startDateElement);
 		startDateElement.setAttribute("type","text");
@@ -870,7 +873,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 		
 		attributeValueBlockElement.appendChild(document.createElement("br"));
 		
-		attributeValueBlockElement.appendChild(document.createTextNode("End Date: "));
+		attributeValueBlockElement.appendChild(document.createTextNode(translator.getStr("labelEndDate") + ": "));
 		endDateElement = document.createElement("input");
 		attributeValueBlockElement.appendChild(endDateElement);
 		endDateElement.setAttribute("type","text");
@@ -910,7 +913,7 @@ function addPerson(personId = NEW_ENTITY_ID) {
 		});
 	}
 	if (personId == NEW_ENTITY_ID) {
-		s.graph.nodes(NEW_ENTITY_ID).label = 'Yet to be Added';
+		s.graph.nodes(NEW_ENTITY_ID).label = translator.getStr('labelYetToBeAdded');
 	}
 	s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(personId)});
 }
@@ -925,7 +928,7 @@ function searchPerson() {
 			type: 'goo'
 		});
 	}
-	s.graph.nodes(SEARCH_ENTITY_ID).label = 'Yet to be Searched';
+	s.graph.nodes(SEARCH_ENTITY_ID).label = translator.getStr('labelYetToBeSearched');
 	s.renderers[0].dispatchEvent('clickNode', {node: s.graph.nodes(SEARCH_ENTITY_ID)});
 }
 
@@ -947,15 +950,15 @@ function relatePersons() {
 	var actionButtonElement, parentChildRadioElement;
 	
 	clearSidebar();
-	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Relate</button>";
-	document.getElementById("sidebartitle").textContent = "Related Persons";
+	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>" + translator.getStr("labelRelate") + "</button>";
+	document.getElementById("sidebartitle").textContent = translator.getStr("labelRelatedPersons");
 
 	rightBarElement = document.getElementById("sidebarbody");
 	rightBarElement.innerHTML = `<input type="radio" id="PC" name="relGrp" value="PC" checked onclick="switchRelGrp(this);"/>
-					<label for="PC">Parent-Child</label>
+					<label for="PC">${translator.getStr("labelParentChild")}</label>
 					<input type="radio" id="Sp" name="relGrp" value="Sp" onclick="switchRelGrp(this);"/>
-					<label for="Sp">Spouse</label>
-					<div id="relatedPersons"></div>`
+					<label for="Sp">${translator.getStr("labelSpouse")}</label>
+					<div id="relatedPersons"></div>`;
 	parentChildRadioElement = document.getElementById("PC");
 	switchRelGrp(parentChildRadioElement);
 	
@@ -1020,34 +1023,34 @@ async function switchRelGrp(clickedRadioElement) {
 	
 	if (clickedRadioElement.value == "PC") {
 		
-		relatedPersonsElement.appendChild(document.createTextNode("Father: "));
+		relatedPersonsElement.appendChild(document.createTextNode(translator.getStr("labelFather") + ": "));
 		fatherPersonElement = malePersonsSelectElement.cloneNode(true);
 		makeDropdownOptional(fatherPersonElement);
 		fatherPersonElement.setAttribute("id", "fatherPerson");
 		relatedPersonsElement.appendChild(fatherPersonElement);
 		relatedPersonsElement.appendChild(document.createElement("br"));
 		
-		relatedPersonsElement.appendChild(document.createTextNode("Mother: "));
+		relatedPersonsElement.appendChild(document.createTextNode(translator.getStr("labelMother") + ": "));
 		motherPersonElement = femalePersonsSelectElement.cloneNode(true);
 		makeDropdownOptional(motherPersonElement);
 		motherPersonElement.setAttribute("id", "motherPerson");
 		relatedPersonsElement.appendChild(motherPersonElement);
 		relatedPersonsElement.appendChild(document.createElement("br"));
 		
-		relatedPersonsElement.appendChild(document.createTextNode("Son/Daughter: "));
+		relatedPersonsElement.appendChild(document.createTextNode(translator.getStr("labelSonDaughter") + ": "));
 		childPersonElement = allPersonsSelectElement.cloneNode(true);
 		childPersonElement.setAttribute("id", "childPerson");
 		relatedPersonsElement.appendChild(childPersonElement);
 		relatedPersonsElement.appendChild(document.createElement("br"));
 	}
 	else {
-		relatedPersonsElement.appendChild(document.createTextNode("Husband: "));
+		relatedPersonsElement.appendChild(document.createTextNode(translator.getStr("labelHusband") + ": "));
 		husbandPersonElement = malePersonsSelectElement.cloneNode(true);
 		husbandPersonElement.setAttribute("id", "husbandPerson");
 		relatedPersonsElement.appendChild(husbandPersonElement);
 		relatedPersonsElement.appendChild(document.createElement("br"));
 		
-		relatedPersonsElement.appendChild(document.createTextNode("Wife: "));
+		relatedPersonsElement.appendChild(document.createTextNode(translator.getStr("labelWife") + ": "));
 		wifePersonElement = femalePersonsSelectElement.cloneNode(true);
 		wifePersonElement.setAttribute("id", "wifePerson");
 		relatedPersonsElement.appendChild(wifePersonElement);
@@ -1059,8 +1062,8 @@ async function ascertainRelation() {
 	var actionButtonElement;
 	
 	clearSidebar();
-	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Ascertain</button>";
-	document.getElementById("sidebartitle").textContent = "Ascertain Relation";
+	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>" + translator.getStr("labelAscertain") + "</button>";
+	document.getElementById("sidebartitle").textContent = translator.getStr("labelAscertainRelation");
 
 	await getPersonsPair();
 	
@@ -1093,7 +1096,7 @@ async function getPersonsPair(person1Id, person2Id, excludeRelationIdCsv) {
 	rightBarElement = document.getElementById("sidebarbody");
 	
 	rightBarElement.innerHTML = "";
-	rightBarElement.appendChild(document.createTextNode("Person 1: "));
+	rightBarElement.appendChild(document.createTextNode(translator.getStr("labelPerson") + " 1: "));
 	person1Element = allPersonsSelectElement.cloneNode(true);
 	person1Element.setAttribute("id", "person1");
 	if (person1Id != null) {
@@ -1102,7 +1105,7 @@ async function getPersonsPair(person1Id, person2Id, excludeRelationIdCsv) {
 	rightBarElement.appendChild(person1Element);
 	
 	rightBarElement.appendChild(document.createElement("br"));
-	rightBarElement.appendChild(document.createTextNode("Person 2: "));
+	rightBarElement.appendChild(document.createTextNode(translator.getStr("labelPerson") + " 2: "));
 	person2Element = allPersonsSelectElement.cloneNode(true);
 	person2Element.setAttribute("id", "person2");
 	if (person2Id != null) {
@@ -1111,7 +1114,7 @@ async function getPersonsPair(person1Id, person2Id, excludeRelationIdCsv) {
 	rightBarElement.appendChild(person2Element);
 	
 	rightBarElement.appendChild(document.createElement("br"));
-	rightBarElement.appendChild(document.createTextNode("Exclude Relations: "));
+	rightBarElement.appendChild(document.createTextNode(translator.getStr("labelExcludeRelations") + ": "));
 	exclrelElement = document.createElement("input");
 	exclrelElement.setAttribute("type","text");
 	exclrelElement.setAttribute("id", "exclrelids");
@@ -1165,7 +1168,7 @@ function makeDropdownOptional(ddElement) {
 	var optionElement;
 	optionElement = document.createElement("option");
 	optionElement.setAttribute("value", -1);
-	optionElement.appendChild(document.createTextNode("-- Select --"));
+	optionElement.appendChild(document.createTextNode("-- " + translator.getStr("labelSelect") + " --"));
 	ddElement.prepend(optionElement);
 }
 
@@ -1197,6 +1200,7 @@ async function switchLanguage() {
 	await invokeService("projectuser/switchLanguage", document.getElementById("language").value);
 	await retrieveAppStartValues();
 	location.reload();
+	translator = await new Language(domainValueVOMap.get(document.getElementById("language").value).languageCode);
 	alert("Language switched successfully");
 }
 
@@ -1289,8 +1293,8 @@ async function uploadPrData() {
 	var actionButtonElement, rightBarElement, pRDataCsvInputElement, formData;
 	
 	clearSidebar();
-	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>Upload</button>";
-	document.getElementById("sidebartitle").textContent = "Upload Persons & Relations";
+	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>" + translator.getStr("labelUpload") + "</button>";
+	document.getElementById("sidebartitle").textContent = translator.getStr("labelPersonsNRelationsUpload");
 
 	rightBarElement = document.getElementById("sidebarbody");
 	rightBarElement.innerHTML = "<input id='pRDataCsvInput' type='file' accept='.csv' />";

@@ -27,14 +27,8 @@ public class PersonVO implements Comparable<PersonVO>{
 				(firstName == null || personLabel  == null ? "" : "/") + (personLabel == null ? "" : personLabel);
 	}
 
-	public void determineGender(String genderId) {
-		if (genderId.equals(Constants.GENDER_NAME_MALE)) {
-			this.gender = "M";
-		} else if (genderId.equals(Constants.GENDER_NAME_FEMALE)) {
-			this.gender = "F";
-		} else {
-			this.gender = "-";			
-		}
+	public void determineGender(String genderDvValue) {
+		gender = genderDvValue.substring(0,1);	// TODO: Incorrect logic (In some languages, duplicates can be there; In some languages, a single character could be made up of multiple unicodes)
 	}
 
 	public int compareTo(PersonVO personVO) {

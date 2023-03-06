@@ -21,10 +21,12 @@ public class RelationVO {
 	private String type;
 	@JsonIgnore private String relationLabel;
 	@JsonIgnore private Map<Long, String> attributeMap;
+	@JsonIgnore private Map<Long, String> attributeTranslatedMap;
 	@JsonIgnore private boolean toSwap;
 
 	public RelationVO() {
 		attributeMap = new HashMap<Long, String>();
+		attributeTranslatedMap = new HashMap<Long, String>();
 	}
 	
 	public void determineSource(String source) {
@@ -48,7 +50,7 @@ public class RelationVO {
 			return;
 		}
 		label = Constants.RELATION_LABEL_TEMPLATE;
-		for (Map.Entry<Long, String> attributeEntry : attributeMap.entrySet()) {
+		for (Map.Entry<Long, String> attributeEntry : attributeTranslatedMap.entrySet()) {
 			label = label.replaceAll("@@" + attributeEntry.getKey() + "@@", attributeEntry.getValue());
 		}
 		// Beware: Because of the ids 34, 35, 36, 61, 62, the pattern \d\d is used below
@@ -63,21 +65,27 @@ public class RelationVO {
 		}
 	}
 
-	public void setAttribute(long attributeDvId, String attributeValue) {
+	public void setAttribute(long attributeDvId, String attributeValue, String translatedValue) {
 		if (toSwap) {
 			if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2) {
 				attributeMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1, attributeValue);
+				attributeTranslatedMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1, translatedValue);
 			} else if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1) {
 				attributeMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, attributeValue);
+				attributeTranslatedMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, translatedValue);
 			} else if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2) {
 				attributeMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1, attributeValue);
+				attributeTranslatedMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1, translatedValue);
 			} else if (attributeDvId == Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1) {
 				attributeMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2, attributeValue);
+				attributeTranslatedMap.put(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON1_FOR_PERSON2, translatedValue);
 			} else {
 				attributeMap.put(attributeDvId, attributeValue);
+				attributeTranslatedMap.put(attributeDvId, translatedValue);
 			}
 		} else {
 			attributeMap.put(attributeDvId, attributeValue);
+			attributeTranslatedMap.put(attributeDvId, translatedValue);
 		}
 	}
 
