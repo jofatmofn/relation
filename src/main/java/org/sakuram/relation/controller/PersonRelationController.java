@@ -1,10 +1,15 @@
 package org.sakuram.relation.controller;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
@@ -64,15 +69,20 @@ public class PersonRelationController {
     @RequestMapping(value = "/exportTree", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public void exportTree(HttpSession httpSession, HttpServletResponse response, @RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) throws IOException {
     	List<List<Object>> recordList;
-    	
+		ServletOutputStream servletOutputStream;
+		
     	recordList = personRelationService.exportTree(retrieveRelationsRequestVO);
-    	try (CSVPrinter csvPrinter = new CSVPrinter(response.getWriter(), CSVFormat.DEFAULT)) {
+    	
+		servletOutputStream = response.getOutputStream();
+    	try (CSVPrinter csvPrinter = new CSVPrinter(new BufferedWriter(new OutputStreamWriter(servletOutputStream, StandardCharsets.UTF_8)), CSVFormat.DEFAULT)) {
     		for (List<Object> record : recordList) {
     			csvPrinter.printRecord(record);
     		}
     	}
+		
     	response.setContentType("text/csv");
     	response.setHeader("Content-Disposition", "attachment; filename=\"fulltree.csv\"");
+		servletOutputStream.close();
     }
     
     @RequestMapping(value = "/retrieveParceners", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
