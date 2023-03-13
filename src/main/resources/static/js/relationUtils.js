@@ -1,4 +1,4 @@
-async function invokeService(serviceUrl, requestVO, timeout_ms=10000)
+async function invokeService(serviceUrl, requestVO, timeout_ms=30000)
 {
 	return new Promise(function(resolve, reject) 
 	{

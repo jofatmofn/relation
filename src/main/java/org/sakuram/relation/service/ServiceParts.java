@@ -34,7 +34,7 @@ public class ServiceParts {
 		
 		personVO.setId(String.valueOf(person.getId()));
 		personVO.setSize(5.0);
-		personVO.setColor(Constants.DEFAULT_COLOR);
+		personVO.setColor(Constants.DEFAULT_NODE_COLOR);
 		
 		for (AttributeValue attributeValue : person.getAttributeValueList()) {
     		if ((attributeValue.getStartDate() == null || attributeValue.getStartDate().toLocalDate().isBefore(LocalDate.now())) &&

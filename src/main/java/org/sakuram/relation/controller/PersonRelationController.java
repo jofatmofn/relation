@@ -85,6 +85,11 @@ public class PersonRelationController {
 		servletOutputStream.close();
     }
     
+    @RequestMapping(value = "/retrieveRoots", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public GraphVO retrieveRoots(HttpSession httpSession, @RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+    	return personRelationService.retrieveRoots(retrieveRelationsRequestVO);
+    }
+    
     @RequestMapping(value = "/retrieveParceners", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public GraphVO retrieveParceners(HttpSession httpSession, @RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
     	return personRelationService.retrieveParceners(retrieveRelationsRequestVO);

@@ -19,7 +19,7 @@ public class PersonRepositoryImpl implements PersonRepositoryCustom {
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<Person> executeDynamicQuery(String queryString) {
-    	LogManager.getLogger().debug(queryString);
+    	LogManager.getLogger().info(queryString);
     	Query query;
     	query = entityManager.createNativeQuery(queryString, Person.class);
     	return query.getResultList();

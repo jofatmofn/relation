@@ -74,7 +74,7 @@
 
     <Loggers>
      
-        <Logger name="org.sakuram.relation" additivity="false" level="debug">
+        <Logger name="org.sakuram.relation" additivity="false" level="info">
             <AppenderRef ref="debugLog" />
             <AppenderRef ref="infoLog"  />
             <AppenderRef ref="errorLog"  />

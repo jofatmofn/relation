@@ -85,6 +85,8 @@ async function drawGraph() {
 			s.graph.clear();
 			if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "drel") {
 				s.graph.read(await invokeService("basic/retrieveRelations", {startPersonId : e.data.node.id}));
+			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "roots") {
+				s.graph.read(await invokeService("basic/retrieveRoots", {startPersonId : e.data.node.id}));
 			}
 			else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "parceners") {
 				s.graph.read(await invokeService("basic/retrieveParceners", {startPersonId : e.data.node.id}));
@@ -95,7 +97,7 @@ async function drawGraph() {
 						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
 				} else {
 					data = await invokeService("basic/exportTree", {startPersonId : e.data.node.id, 
-						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}, timeout_ms=200000)
+						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}, timeout_ms=0);
 					// https://stackoverflow.com/questions/46638343/download-csv-file-as-response-on-ajax-request
 					const downloadData = (function() {
 					    const a = document.createElement("a");

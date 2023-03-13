@@ -81,6 +81,8 @@
 					<br/>
 					&emsp;<input type="radio" id="exportTree" name="viewOrExportTree" value="export" disabled/>
 					<label for="exportTree" th:utext="#{label.export}"></label><br/>
+					<input type="radio" id="roots" name="cfgPersonDblClk" value="roots" onclick="enDisableDepth(this);"/>
+					<label for="roots" th:utext="#{label.roots}"></label><br/>
 					<input type="radio" id="parceners" name="cfgPersonDblClk" value="parceners" onclick="enDisableDepth(this);"/>
 					<label for="parceners" th:utext="#{label.parceners}"></label><br/>
 				</div>

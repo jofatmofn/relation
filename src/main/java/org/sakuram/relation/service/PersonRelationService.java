@@ -211,7 +211,6 @@ public class PersonRelationService {
     	int level, sequence, readInd, currentLevel, ind;
     	double lastY;
     	List<Integer> seqAtLevel;
-    	List<String> requiredRelationsList;
     	List<Person> excludeSpouseList;
     	
     	GraphVO retrieveRelationsResponseVO;
@@ -235,7 +234,6 @@ public class PersonRelationService {
 		currentPersonVO.setX(1);
 		currentPersonVO.setY(1);
 		
-		requiredRelationsList = Objects.equals(retrieveRelationsRequestVO.getIsSonOnly(), true) ? Arrays.asList(Constants.RELATION_NAME_SON) : Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE, Constants.RELATION_NAME_SON, Constants.RELATION_NAME_DAUGHTER);
 		relatedPerson2VO =  new RelatedPerson2VO();
 		relatedPerson2VOList.add(relatedPerson2VO);
 		relatedPerson2VO.person = startPerson;
@@ -246,7 +244,7 @@ public class PersonRelationService {
 		while (true) {
 			currentPerson = relatedPerson2VOList.get(readInd).person;
 			currentLevel = relatedPerson2VOList.get(readInd).level;
-			LogManager.getLogger().info("Current person: " + currentPerson.getId() + " at level " + currentLevel);
+			LogManager.getLogger().debug("Current person: " + currentPerson.getId() + " at level " + currentLevel);
 			if (currentLevel == retrieveRelationsRequestVO.getMaxDepth()) {
 				break;
 			}
@@ -255,7 +253,7 @@ public class PersonRelationService {
 			}
 			else {
 			currentPersonVO = personVOMap.get(currentPerson.getId());
-	    	for (RelatedPerson1VO relatedPerson1VO : retrieveRelatives(currentPerson, requiredRelationsList)) {
+	    	for (RelatedPerson1VO relatedPerson1VO : retrieveRelatives(currentPerson, retrieveRelationsRequestVO.getRequiredRelationsList())) {
 				if (relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_HUSBAND) ||
 						relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_WIFE) ||
 						currentLevel < retrieveRelationsRequestVO.getMaxDepth() - 1) {
@@ -284,15 +282,15 @@ public class PersonRelationService {
 						relatedPersonVO.setX(sequence * 20 + 1);
 						relatedPersonVO.setY(level * 10 + 1);
 		    		}
-		    		LogManager.getLogger().info("Added person: " + relatedPerson2VO.person.getId() + " at level " + relatedPerson2VO.level);
+		    		LogManager.getLogger().debug("Added person: " + relatedPerson2VO.person.getId() + " at level " + relatedPerson2VO.level);
 
 				}
-				else LogManager.getLogger().info("Skipped (due to duplicate) person: " + relatedPerson1VO.person.getId());
+				else LogManager.getLogger().debug("Skipped (due to duplicate) person: " + relatedPerson1VO.person.getId());
 				if (relatedRelationIdSet.add(relatedPerson1VO.relation.getId())) {
 					serviceParts.addToRelationVOList(relationVOList, relatedPerson1VO.relation, currentPerson, false);
 				}
 				}
-				else LogManager.getLogger().info("Skipped (due to higher depth) person: " + relatedPerson1VO.person.getId());
+				else LogManager.getLogger().debug("Skipped (due to higher depth) person: " + relatedPerson1VO.person.getId());
 			}
 			}
 	    	readInd++;
@@ -302,7 +300,7 @@ public class PersonRelationService {
 		}
 		
 		for (Person spouse : excludeSpouseList) {
-	    	for (RelatedPerson1VO relatedPerson1VO : retrieveRelatives(spouse, requiredRelationsList)) {
+	    	for (RelatedPerson1VO relatedPerson1VO : retrieveRelatives(spouse, retrieveRelationsRequestVO.getRequiredRelationsList())) {
 				if (relatedPersonIdSet.contains(relatedPerson1VO.person.getId()) && relatedRelationIdSet.add(relatedPerson1VO.relation.getId())) {
 					serviceParts.addToRelationVOList(relationVOList, relatedPerson1VO.relation, spouse, false);
 				}
@@ -338,9 +336,10 @@ public class PersonRelationService {
 		
 		treeCsvContents = new ArrayList<List<Object>>();
 		retrieveRelationsRequestVO.setMaxDepth(Constants.EXPORT_TREE_MAX_DEPTH);
+		retrieveRelationsRequestVO.setRequiredRelationsList(Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE, Constants.RELATION_NAME_SON, Constants.RELATION_NAME_DAUGHTER));
 		treeGraphVO = retrieveTree(retrieveRelationsRequestVO);
-		LogManager.getLogger().info("treeGraphVO nodes: " + treeGraphVO.getNodes().size());
-		LogManager.getLogger().info("treeGraphVO edges: " + treeGraphVO.getEdges().size());
+		LogManager.getLogger().debug("treeGraphVO nodes: " + treeGraphVO.getNodes().size());
+		LogManager.getLogger().debug("treeGraphVO edges: " + treeGraphVO.getEdges().size());
 		
 		personsMap = new HashMap<String, PersonVO>();
 		for(PersonVO node : treeGraphVO.getNodes()) {
@@ -361,7 +360,7 @@ public class PersonRelationService {
 			treeCsvRow.add("Level " + (ind2 + 1) + " Spouse");
 		}
 		
-		LogManager.getLogger().info("Exported rows: " + treeCsvContents.size());
+		LogManager.getLogger().debug("Exported rows: " + treeCsvContents.size());
 		return treeCsvContents;
 	}
 	
@@ -435,7 +434,7 @@ public class PersonRelationService {
 				UtilFuncs.listSet(spousesList, sequenceNo, spouseId, null);
 			}
 		}
-		LogManager.getLogger().info(personId + "'s spouses: " +  spousesList.size());
+		LogManager.getLogger().debug(personId + "'s spouses: " +  spousesList.size());
 		return spousesList.size() == 0 ? spousesList : spousesList.subList(1, spousesList.size());
 	}
 	
@@ -480,8 +479,14 @@ public class PersonRelationService {
 			}
 		}
 		Collections.sort(kidsList, (m1, m2) -> m1.getValue1().compareTo(m2.getValue1()));
-		LogManager.getLogger().info(parent1Id + "-" + parent2Id + "'s kids: " +  kidsList.size());
+		LogManager.getLogger().debug(parent1Id + "-" + parent2Id + "'s kids: " +  kidsList.size());
 		return kidsList.stream().map(Pair<String, Float>::getValue0).collect(Collectors.toCollection(ArrayList::new));
+	}
+	
+	public GraphVO retrieveRoots(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+    	retrieveRelationsRequestVO.setMaxDepth(Constants.EXPORT_TREE_MAX_DEPTH);
+    	retrieveRelationsRequestVO.setRequiredRelationsList(Arrays.asList(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_MOTHER));
+		return retrieveTree(retrieveRelationsRequestVO);
 	}
 	
 	public GraphVO retrieveParceners(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
@@ -500,7 +505,7 @@ public class PersonRelationService {
     	retrieveRelationsRequestVO2 = new RetrieveRelationsRequestVO();
     	retrieveRelationsRequestVO2.setStartPersonId(startPerson.getId());
     	retrieveRelationsRequestVO2.setMaxDepth(depth);
-    	retrieveRelationsRequestVO2.setIsSonOnly(true);
+    	retrieveRelationsRequestVO2.setRequiredRelationsList(Arrays.asList(Constants.RELATION_NAME_SON));
 		return retrieveTree(retrieveRelationsRequestVO2);
 	}
 	
@@ -688,7 +693,7 @@ public class PersonRelationService {
     	DomainValue attributeDv;
     	
 		toDeleteAttributeValueList = (person != null ? person.getAttributeValueList() : relation.getAttributeValueList());
-		LogManager.getLogger().info("1. Before update, no. of attributes in DB: " + (toDeleteAttributeValueList == null ? 0 : toDeleteAttributeValueList.size()));
+		LogManager.getLogger().debug("1. Before update, no. of attributes in DB: " + (toDeleteAttributeValueList == null ? 0 : toDeleteAttributeValueList.size()));
     	incomingAttributeValueWithIdList = new ArrayList<Long>();
     	insertedAttributeValueIdList = new ArrayList<Long>();
     	domainValueFlags = new DomainValueFlags();
@@ -748,7 +753,7 @@ public class PersonRelationService {
     		}
     	}
     	
-    	LogManager.getLogger().info("2. Before update, no. of attributes in DB: " + (toDeleteAttributeValueList == null ? 0 : toDeleteAttributeValueList.size()));
+    	LogManager.getLogger().debug("2. Before update, no. of attributes in DB: " + (toDeleteAttributeValueList == null ? 0 : toDeleteAttributeValueList.size()));
 		if (toDeleteAttributeValueList != null) {	// Delete AV
 	    	for(AttributeValue toDeleteAttributeValue : toDeleteAttributeValueList) {
 	    		domainValueFlags.setDomainValue(toDeleteAttributeValue.getAttribute());
