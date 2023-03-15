@@ -1,7 +1,5 @@
 package org.sakuram.relation.valueobject;
 
-import org.sakuram.relation.util.Constants;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Getter;

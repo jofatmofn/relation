@@ -66,6 +66,11 @@ public class PersonRelationController {
     	return personRelationService.retrieveTree(retrieveRelationsRequestVO);
     }
     
+    @RequestMapping(value = "/displayTree", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public GraphVO displayTree(HttpSession httpSession, @RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+    	return personRelationService.displayTree(retrieveRelationsRequestVO);
+    }
+    
     @RequestMapping(value = "/exportTree", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public void exportTree(HttpSession httpSession, HttpServletResponse response, @RequestBody RetrieveRelationsRequestVO retrieveRelationsRequestVO) throws IOException {
     	List<List<Object>> recordList;

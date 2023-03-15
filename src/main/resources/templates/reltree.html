@@ -69,7 +69,7 @@
 					<label for="ftree" th:utext="#{label.relationTree}"></label>
 					<br/>
 					&emsp;<input type="radio" id="viewTree" name="viewOrExportTree" value="view" checked disabled/>
-					<label for="viewTree" th:utext="#{label.view}"></label>&emsp;
+					<label for="viewTree" th:utext="#{label.view} + '-1'"></label>&emsp;
 					(
 					<label for="depth" th:utext="#{label.maxDepth}"></label>
 					<select id="depth" name="depth" disabled>
@@ -79,6 +79,8 @@
 					</select>
 					)
 					<br/>
+					&emsp;<input type="radio" id="displayTree" name="viewOrExportTree" value="display" disabled/>
+					<label for="displayTree" th:utext="#{label.view} + '-2'"></label><br/>
 					&emsp;<input type="radio" id="exportTree" name="viewOrExportTree" value="export" disabled/>
 					<label for="exportTree" th:utext="#{label.export}"></label><br/>
 					<input type="radio" id="roots" name="cfgPersonDblClk" value="roots" onclick="enDisableDepth(this);"/>

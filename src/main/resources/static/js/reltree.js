@@ -95,6 +95,8 @@ async function drawGraph() {
 				if (document.querySelector('input[type="radio"][name="viewOrExportTree"]:checked').value == "view") {
 					s.graph.read(await invokeService("basic/retrieveTree", {startPersonId : e.data.node.id, 
 						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
+				} else if (document.querySelector('input[type="radio"][name="viewOrExportTree"]:checked').value == "display") {
+					s.graph.read(await invokeService("basic/displayTree", {startPersonId : e.data.node.id}));
 				} else {
 					data = await invokeService("basic/exportTree", {startPersonId : e.data.node.id, 
 						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}, timeout_ms=0);
@@ -1183,11 +1185,13 @@ function enDisableDepth(clickedRadioElement) {
 	if (clickedRadioElement.value == "ftree") {
 		document.getElementById("depth").removeAttribute("disabled");
 		document.getElementById("viewTree").removeAttribute("disabled");
+		document.getElementById("displayTree").removeAttribute("disabled");
 		document.getElementById("exportTree").removeAttribute("disabled");
 	}
 	else {
 		document.getElementById("depth").setAttribute("disabled","");
 		document.getElementById("viewTree").setAttribute("disabled","");
+		document.getElementById("displayTree").setAttribute("disabled","");
 		document.getElementById("exportTree").setAttribute("disabled","");
 	}
 }

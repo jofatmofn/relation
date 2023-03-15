@@ -233,6 +233,9 @@ public class PersonRelationService {
 		currentPersonVO = serviceParts.addToPersonVOMap(personVOMap, startPerson);
 		currentPersonVO.setX(1);
 		currentPersonVO.setY(1);
+		if (retrieveRelationsRequestVO.getRequiredRelationsList() == null || retrieveRelationsRequestVO.getRequiredRelationsList().isEmpty()) {
+			retrieveRelationsRequestVO.setRequiredRelationsList(Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE, Constants.RELATION_NAME_SON, Constants.RELATION_NAME_DAUGHTER));
+		}
 		
 		relatedPerson2VO =  new RelatedPerson2VO();
 		relatedPerson2VOList.add(relatedPerson2VO);
@@ -336,32 +339,46 @@ public class PersonRelationService {
 		
 		treeCsvContents = new ArrayList<List<Object>>();
 		retrieveRelationsRequestVO.setMaxDepth(Constants.EXPORT_TREE_MAX_DEPTH);
-		retrieveRelationsRequestVO.setRequiredRelationsList(Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE, Constants.RELATION_NAME_SON, Constants.RELATION_NAME_DAUGHTER));
 		treeGraphVO = retrieveTree(retrieveRelationsRequestVO);
-		LogManager.getLogger().debug("treeGraphVO nodes: " + treeGraphVO.getNodes().size());
-		LogManager.getLogger().debug("treeGraphVO edges: " + treeGraphVO.getEdges().size());
 		
 		personsMap = new HashMap<String, PersonVO>();
 		for(PersonVO node : treeGraphVO.getNodes()) {
 			personsMap.put(node.getId(), node);
 		}
 
-		/* for(RelationVO edge : treeGraphVO.getEdges()) {
-			System.out.println(personsMap.get(edge.getSource()).getFirstName() + ":" + personsMap.get(edge.getTarget()).getFirstName() + ":" + edge.getLabel());
-		} */
-	
 		maxLevel = 0;
 		exportWriteTree(String.valueOf(retrieveRelationsRequestVO.getStartPersonId()), 0, personsMap, treeGraphVO.getEdges(), treeCsvContents);
 		
 		treeCsvRow = new ArrayList<Object>((maxLevel + 1) * 2);
 		treeCsvContents.add(0, treeCsvRow);
-		for(int ind2 = 0; ind2 <= maxLevel; ind2++) {
+		for(int ind2 = 0; ind2 <= maxLevel; ind2++) {	// TODO: Multi-language support for the following column titles
 			treeCsvRow.add("Level " + (ind2 + 1));
 			treeCsvRow.add("Level " + (ind2 + 1) + " Spouse");
 		}
 		
 		LogManager.getLogger().debug("Exported rows: " + treeCsvContents.size());
 		return treeCsvContents;
+	}
+	
+	public GraphVO displayTree(RetrieveRelationsRequestVO retrieveRelationsRequestVO) {
+		List<List<Object>> treeCsvContents;
+		GraphVO treeGraphVO;
+		Map<String, PersonVO> personsMap;
+		
+		treeCsvContents = new ArrayList<List<Object>>();
+		retrieveRelationsRequestVO.setMaxDepth(Constants.EXPORT_TREE_MAX_DEPTH);
+		treeGraphVO = retrieveTree(retrieveRelationsRequestVO);
+		
+		// Rest of the logic is a round-about way of setting X and Y :(
+		personsMap = new HashMap<String, PersonVO>();
+		for(PersonVO node : treeGraphVO.getNodes()) {
+			personsMap.put(node.getId(), node);
+		}
+
+		maxLevel = 0;
+		exportWriteTree(String.valueOf(retrieveRelationsRequestVO.getStartPersonId()), 0, personsMap, treeGraphVO.getEdges(), treeCsvContents);
+		
+		return treeGraphVO;
 	}
 	
 	private void exportWriteTree(String personId, int level, Map<String, PersonVO> personsMap, List<RelationVO> relationsList, List<List<Object>> treeCsvContents) {
@@ -398,6 +415,7 @@ public class PersonRelationService {
 	
 	private void exportWriteRow(String personId, int index, boolean toReuseLastRow, Map<String, PersonVO> personsMap, List<List<Object>> treeCsvContents) {
 		List<Object> treeCsvRow;
+		PersonVO personVO;
 		
 		if (toReuseLastRow) {
 			treeCsvRow = treeCsvContents.get(treeCsvContents.size() - 1);
@@ -406,9 +424,13 @@ public class PersonRelationService {
 			treeCsvContents.add(treeCsvRow);
 		}
 		if(personsMap.containsKey(personId)) {
-			UtilFuncs.listSet(treeCsvRow, index, personsMap.get(personId).getLabel(), null);
+			personVO = personsMap.get(personId);
+			UtilFuncs.listSet(treeCsvRow, index, personVO.getLabel(), null);
+			personVO.setY(treeCsvContents.indexOf(treeCsvRow));
+			personVO.setX(index);
 		} else {
-			UtilFuncs.listSet(treeCsvRow, index, personId, null);
+			throw new AppException("Application in inconsistent state?! PersonId: " + personId, null);
+			// UtilFuncs.listSet(treeCsvRow, index, personId, null);
 		}
 	}
 	
