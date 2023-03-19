@@ -12,7 +12,8 @@ async function drawGraph() {
 	{
 		if (event.reason.stack != undefined && event.reason.stack.startsWith("sigma.")) {
 			console.log(event);
-			alert("System ran into trouble. Kindly refresh the screen, by pressing F5.");
+			alert("System ran into trouble. Hence going to refresh the screen.");
+			location.reload();
 		}
 		else {
 			alert(event.reason);
@@ -1204,10 +1205,9 @@ async function switchProject() {
 
 async function switchLanguage() {
 	await invokeService("projectuser/switchLanguage", document.getElementById("language").value);
-	await retrieveAppStartValues();
-	location.reload();
 	translator = await new Language(domainValueVOMap.get(document.getElementById("language").value).languageCode);
 	alert("Language switched successfully");
+	location.reload();
 }
 
 async function logout() {
