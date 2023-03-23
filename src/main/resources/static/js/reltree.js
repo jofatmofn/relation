@@ -97,7 +97,7 @@ async function drawGraph() {
 					s.graph.read(await invokeService("basic/retrieveTree", {startPersonId : e.data.node.id, 
 						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
 				} else if (document.querySelector('input[type="radio"][name="viewOrExportTree"]:checked').value == "display") {
-					s.graph.read(await invokeService("basic/displayTree", {startPersonId : e.data.node.id}));
+					s.graph.read(await invokeService("basic/displayTree", {startPersonId : e.data.node.id}), timeout_ms=0);
 				} else {
 					data = await invokeService("basic/exportTree", {startPersonId : e.data.node.id, 
 						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}, timeout_ms=0);
@@ -1205,7 +1205,7 @@ async function switchProject() {
 
 async function switchLanguage() {
 	await invokeService("projectuser/switchLanguage", document.getElementById("language").value);
-	translator = await new Language(domainValueVOMap.get(document.getElementById("language").value).languageCode);
+	translator = await new Language(domainValueVOMap.get(parseInt(document.getElementById("language").value)).languageCode);
 	alert("Language switched successfully");
 	location.reload();
 }

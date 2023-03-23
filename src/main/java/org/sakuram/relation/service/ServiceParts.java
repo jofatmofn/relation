@@ -127,11 +127,19 @@ public class ServiceParts {
 		}
     }
     
-    protected class RelatedPerson1VO {
+    protected class RelatedPerson1VO  implements Comparable<RelatedPerson1VO> {
     	Person person;
     	Relation relation;
     	String relationDvId;
-    	float seqNo;
+    	double seqNo;
+    	public int compareTo(RelatedPerson1VO relatedPerson1VO) {	// Assuming the list contains same person
+    		if ((this.relationDvId.equals(Constants.RELATION_NAME_SON) || this.relationDvId.equals(Constants.RELATION_NAME_DAUGHTER)) &&
+    				(relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_SON) || relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_DAUGHTER))) {
+    			return this.seqNo < relatedPerson1VO.seqNo ? -1 : (this.seqNo > relatedPerson1VO.seqNo ? 1 : 0);
+    		}
+    		return (Integer.parseInt(this.relationDvId) < Integer.parseInt(relatedPerson1VO.relationDvId) ? -1 : (Integer.parseInt(this.relationDvId) > Integer.parseInt(relatedPerson1VO.relationDvId) ? 1 : 
+    			(this.seqNo < relatedPerson1VO.seqNo ? -1 : (this.seqNo > relatedPerson1VO.seqNo ? 1 : 0))));
+    	}
     }
 
 }
