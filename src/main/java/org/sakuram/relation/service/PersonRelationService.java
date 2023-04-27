@@ -272,15 +272,21 @@ public class PersonRelationService {
 							relatedPerson2VOList.add(relatedPerson2VO);
 							relatedPerson2VO.person = relatedPerson1VO.person;
 				    		relatedPersonVO = serviceParts.addToPersonVOMap(personVOMap, relatedPerson1VO.person);
+							LogManager.getLogger().debug("Added person: " + relatedPersonVO.getLabel());
 				    		if (relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_HUSBAND) || relatedPerson1VO.relationDvId.equals(Constants.RELATION_NAME_WIFE)) {
 				    			relatedPerson2VO.level = currentLevel;
 				    			relatedPerson2VO.isSpouse = true;
 			    				sequence = currentPersonVO.getX() + relatedPerson1VO.seqNo;
+								LogManager.getLogger().debug("currentPersonVO.getX(): " + currentPersonVO.getX() + ". relatedPerson1VO.seqNo: " + relatedPerson1VO.seqNo);
+								LogManager.getLogger().debug("relatedPerson2VO.level: " + relatedPerson2VO.level + ". Initial sequence: " + sequence);
 			    				for (int ind = currentLevel; ind > -1; ind--) {
 			    					shiftX(personVOMap, sequence, ind, 1);
 			    				}
 								relatedPersonVO.setX(sequence);
 								relatedPersonVO.setY(currentPersonVO.getY());
+								if (sequence > seqAtLevel.get(currentLevel)) {
+					    			seqAtLevel.set(currentLevel, sequence);
+								}
 				    		}
 				    		else if (currentLevel < retrieveRelationsRequestVO.getMaxDepth() - 1) {
 				    			level = currentLevel + 1;
@@ -299,11 +305,14 @@ public class PersonRelationService {
 				    					sequence = currentPersonVO.getX();
 				    				} else {	// Alter the position of parent
 				    					shiftX(personVOMap, currentPersonVO.getX(), currentLevel, (float) (sequence - currentPersonVO.getX()));
+										LogManager.getLogger().debug("Parent Shift");
+										LogManager.getLogger().debug("currentLevel" + ": " + currentLevel + ". From " + seqAtLevel.get(currentLevel) + " to " + (seqAtLevel.get(currentLevel) + sequence - currentPersonVO.getX()));
 						    			seqAtLevel.set(currentLevel, seqAtLevel.get(currentLevel) + sequence - currentPersonVO.getX());
 				    				}
 				    				isFirstKid = false;
 				    			}
 				    			// UtilFuncs.listSet(relatedPerson2VOList, sequence, relatedPerson2VO, null);
+								LogManager.getLogger().debug("sequence: " + sequence);
 				    			seqAtLevel.set(level, sequence);
 								relatedPersonVO.setX(sequence);
 								relatedPersonVO.setY(level);
@@ -334,6 +343,9 @@ public class PersonRelationService {
 		}
     	
 		personVOList = new ArrayList<PersonVO>(personVOMap.values());
+		for (PersonVO personVO : personVOList) {
+			LogManager.getLogger().debug(personVO.getId() + "/"  + personVO.getFirstName() + "/" + personVO.getY() + "/" + personVO.getX());
+		}
     	retrieveRelationsResponseVO.setNodes(personVOList);
     	return retrieveRelationsResponseVO;
     }
@@ -342,6 +354,7 @@ public class PersonRelationService {
 		
 		for (PersonVO personVO : personVOMap.values()) {
 			if (personVO.getY() == criteriaY && personVO.getX() >= fromX) {
+				LogManager.getLogger().debug("Shift: " + personVO.getY() + ", " + personVO.getX() + ", " + shiftBy);
 				personVO.setX(personVO.getX() + shiftBy);
 			}
 		}
@@ -444,6 +457,7 @@ public class PersonRelationService {
 			UtilFuncs.listSet(treeCsvRow, index, personVO.getLabel(), null);
 			personVO.setY(treeCsvContents.indexOf(treeCsvRow));
 			personVO.setX(index);
+			LogManager.getLogger().debug(personVO.getId() + ":"  + personVO.getFirstName() + ":" + personVO.getY() + ":" + personVO.getX());
 		} else {
 			throw new AppException("Application in inconsistent state?! PersonId: " + personId, null);
 			// UtilFuncs.listSet(treeCsvRow, index, personId, null);
