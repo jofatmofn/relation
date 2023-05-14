@@ -86,40 +86,36 @@ async function drawGraph() {
 			s.graph.clear();
 			if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "drel") {
 				s.graph.read(await invokeService("basic/retrieveRelations", {startPersonId : e.data.node.id}));
-			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "roots") {
-				s.graph.read(await invokeService("basic/retrieveRoots", {startPersonId : e.data.node.id}));
-			}
-			else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "parceners") {
-				s.graph.read(await invokeService("basic/retrieveParceners", {startPersonId : e.data.node.id}));
-			}
-			else {
-				if (document.querySelector('input[type="radio"][name="viewOrExportTree"]:checked').value == "view") {
+			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "view") {
 					s.graph.read(await invokeService("basic/retrieveTree", {startPersonId : e.data.node.id, 
 						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
-				} else if (document.querySelector('input[type="radio"][name="viewOrExportTree"]:checked').value == "display") {
+			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "display") {
 					s.graph.read(await invokeService("basic/displayTree", {startPersonId : e.data.node.id}), timeout_ms=0);
-				} else {
-					data = await invokeService("basic/exportTree", {startPersonId : e.data.node.id, 
-						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}, timeout_ms=0);
-					// https://stackoverflow.com/questions/46638343/download-csv-file-as-response-on-ajax-request
-					const downloadData = (function() {
-					    const a = document.createElement("a");
-					    document.body.appendChild(a);
-					    a.style = "display: none";
-					    return function (data, fileName) {
-					        const blob = new Blob([data], {type: "octet/stream"}),
-					            url = window.URL.createObjectURL(blob);
-					        a.href = url;
-					        a.download = fileName;
-					        a.click();
-					            setTimeout(function() {
-					                window.URL.revokeObjectURL(url);
-					            }, 100);
-					    };
-					}());
+			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "export") {
+				data = await invokeService("basic/exportTree", {startPersonId : e.data.node.id, 
+					maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}, timeout_ms=0);
+				// https://stackoverflow.com/questions/46638343/download-csv-file-as-response-on-ajax-request
+				const downloadData = (function() {
+				    const a = document.createElement("a");
+				    document.body.appendChild(a);
+				    a.style = "display: none";
+				    return function (data, fileName) {
+				        const blob = new Blob([data], {type: "octet/stream"}),
+				            url = window.URL.createObjectURL(blob);
+				        a.href = url;
+				        a.download = fileName;
+				        a.click();
+				            setTimeout(function() {
+				                window.URL.revokeObjectURL(url);
+				            }, 100);
+				    };
+				}());
 
-					downloadData(data, "tree.csv");
-				}
+				downloadData(data, "tree.csv");
+			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "roots") {
+				s.graph.read(await invokeService("basic/retrieveRoots", {startPersonId : e.data.node.id}));
+			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "parceners") {
+				s.graph.read(await invokeService("basic/retrieveParceners", {startPersonId : e.data.node.id}));
 			}
 			s.refresh();
 		}
@@ -1183,17 +1179,11 @@ function printGraph() {
 }
 
 function enDisableDepth(clickedRadioElement) {
-	if (clickedRadioElement.value == "ftree") {
+	if (clickedRadioElement.value == "view") {
 		document.getElementById("depth").removeAttribute("disabled");
-		document.getElementById("viewTree").removeAttribute("disabled");
-		document.getElementById("displayTree").removeAttribute("disabled");
-		document.getElementById("exportTree").removeAttribute("disabled");
 	}
 	else {
 		document.getElementById("depth").setAttribute("disabled","");
-		document.getElementById("viewTree").setAttribute("disabled","");
-		document.getElementById("displayTree").setAttribute("disabled","");
-		document.getElementById("exportTree").setAttribute("disabled","");
 	}
 }
 

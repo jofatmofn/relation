@@ -65,10 +65,10 @@
 					<span th:utext="#{label.doubleClickFunction}"></span><br/>
 					<input type="radio" id="drel" name="cfgPersonDblClk" value="drel" checked onclick="enDisableDepth(this);"/>
 					<label for="drel" th:utext="#{label.directRelations}"></label><br/>
-					<input type="radio" id="ftree" name="cfgPersonDblClk" value="ftree" onclick="enDisableDepth(this);"/>
-					<label for="ftree" th:utext="#{label.relationTree}"></label>
+					<input type="radio" id="ftree" value="ftree" disabled/>
+					<label th:utext="#{label.relationTree}"></label>
 					<br/>
-					&emsp;<input type="radio" id="viewTree" name="viewOrExportTree" value="view" checked disabled/>
+					&emsp;<input type="radio" id="viewTree" name="cfgPersonDblClk" value="view" onclick="enDisableDepth(this);"/>
 					<label for="viewTree" th:utext="#{label.view} + '-1'"></label>&emsp;
 					(
 					<label for="depth" th:utext="#{label.maxDepth}"></label>
@@ -79,9 +79,9 @@
 					</select>
 					)
 					<br/>
-					&emsp;<input type="radio" id="displayTree" name="viewOrExportTree" value="display" disabled/>
+					&emsp;<input type="radio" id="displayTree" name="cfgPersonDblClk" value="display" onclick="enDisableDepth(this);"/>
 					<label for="displayTree" th:utext="#{label.view} + '-2'"></label><br/>
-					&emsp;<input type="radio" id="exportTree" name="viewOrExportTree" value="export" disabled/>
+					&emsp;<input type="radio" id="exportTree" name="cfgPersonDblClk" value="export" onclick="enDisableDepth(this);"/>
 					<label for="exportTree" th:utext="#{label.export}"></label><br/>
 					<input type="radio" id="roots" name="cfgPersonDblClk" value="roots" onclick="enDisableDepth(this);"/>
 					<label for="roots" th:utext="#{label.roots}"></label><br/>

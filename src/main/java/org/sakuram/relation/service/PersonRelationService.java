@@ -1178,7 +1178,7 @@ public class PersonRelationService {
     	DomainValue firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv, person1ForPerson2RelAttributeDv, person2ForPerson1RelAttributeDv, sequenceOfPerson2ForPerson1RelAttributeDv;
     	List<Person> malePersonList, femalePersonList;
     	ParsedCellContentVO parsedCellContentVO;
-    	Integer withinSpouseSequenceNo, withinParentSequenceNo;
+    	Double withinSpouseSequenceNo, withinParentSequenceNo;
     	
 		firstNamePersAttributeDv = domainValueRepository.findById(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME)
 				.orElseThrow(() -> new AppException("Attribute Dv Id missing: " + Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME, null));
@@ -1259,7 +1259,7 @@ public class PersonRelationService {
 	    	    		attributeValueRepository.save(attributeValue);
 	    	    		
 	    	    		if (withinSpouseSequenceNo != null) {
-		    				attributeValue = new AttributeValue(sequenceOfPerson2ForPerson1RelAttributeDv, withinSpouseSequenceNo.toString(), null, relation);
+		    				attributeValue = new AttributeValue(sequenceOfPerson2ForPerson1RelAttributeDv, formatSequenceNo(withinSpouseSequenceNo), null, relation);
 		    	    		attributeValueRepository.save(attributeValue);
 	    	    		}
         	    	}
@@ -1294,29 +1294,34 @@ public class PersonRelationService {
     	String[] personAttributeValuesArr;
     	AttributeValue attributeValue;
     	ParsedCellContentVO parsedCellContentVO;
-    	Integer sequenceNo;
+    	Double sequenceNo;
     	boolean isMale;
     	
+		personAttributeValuesArr = cellContents.split("#", -1);
+		
+		if (personAttributeValuesArr.length != 2 && personAttributeValuesArr.length != 4) {
+			throw new AppException("Person Details missing required components: " + cellContents, null);
+		}
+		
     	sequenceNo = null;
-    	try {
-    		personId = Long.parseLong(cellContents);
+		if (!personAttributeValuesArr[0].equals("")) {
+	    	try {
+	    		sequenceNo = Double.parseDouble(personAttributeValuesArr[0]);
+	    	} catch(NumberFormatException nfe) {
+    			throw new AppException("Invalid Sequence No.: " + personAttributeValuesArr[0], null);
+	    	}
+		}
+		
+		if (personAttributeValuesArr.length == 2) {
+	    	try {
+	    		personId = Long.parseLong(personAttributeValuesArr[1]);
+	    	} catch(NumberFormatException e) {
+	    		throw new AppException("Invalid Person Id " + personAttributeValuesArr[1], null);
+	    	}
     		person = personRepository.findByIdAndTenant(personId, SecurityContext.getCurrentTenant())
-    				.orElseThrow(() -> new AppException("Invalid Person Id " + personId, null));
-    	} catch(NumberFormatException e) {
-    		personAttributeValuesArr = cellContents.split("#", -1);
-    		
-    		if (personAttributeValuesArr.length != 4) {
-    			throw new AppException("Person Details missing four components: " + cellContents, null);
-    		}
-    		
-    		if (!personAttributeValuesArr[0].equals("")) {
-    	    	try {
-    	    		sequenceNo = Integer.parseInt(personAttributeValuesArr[0]);
-    	    	} catch(NumberFormatException nfe) {
-        			throw new AppException("Invalid Sequence No.: " + personAttributeValuesArr[0], null);
-    	    	}
-    		}
-    		
+    				.orElseThrow(() -> new AppException("Invalid Person Id " + personAttributeValuesArr[1], null));
+		} else {
+	    	
     		if (personAttributeValuesArr[1].equals("")) {
     			throw new AppException("First name cannot be empty. Person Details: " + cellContents, null);
     		}
@@ -1357,7 +1362,7 @@ public class PersonRelationService {
     	return parsedCellContentVO;
     }
     
-    private void establishParent(Person mainPerson, AttributeValue mainPersonGenderAv, Integer sequenceNo, int level, String parentRelationName, List<Person> personList, DomainValue person1ForPerson2RelAttributeDv, DomainValue person2ForPerson1RelAttributeDv, DomainValue sequenceOfPerson2ForPerson1RelAttributeDv) {
+    private void establishParent(Person mainPerson, AttributeValue mainPersonGenderAv, Double sequenceNo, int level, String parentRelationName, List<Person> personList, DomainValue person1ForPerson2RelAttributeDv, DomainValue person2ForPerson1RelAttributeDv, DomainValue sequenceOfPerson2ForPerson1RelAttributeDv) {
     	AttributeValue attributeValue;
     	Relation relation;
 
@@ -1379,13 +1384,21 @@ public class PersonRelationService {
     		attributeValueRepository.save(attributeValue);
     		
     		if (sequenceNo != null) {
-				attributeValue = new AttributeValue(sequenceOfPerson2ForPerson1RelAttributeDv, sequenceNo.toString(), null, relation);
+				attributeValue = new AttributeValue(sequenceOfPerson2ForPerson1RelAttributeDv, formatSequenceNo(sequenceNo), null, relation);
 	    		attributeValueRepository.save(attributeValue);
     		}
     	}
     		
     }
 
+    private String formatSequenceNo(Double sequenceNo) {
+		if (sequenceNo.doubleValue() == sequenceNo.intValue()) {
+			return String.format("%d", sequenceNo.intValue());
+		} else {
+			return String.format("%.1f", sequenceNo);	// Only one digit after decimal
+		}
+    }
+    
     // Classes that can be avoided with JavaTuples
     protected class RelatedPerson2VO {
     	Person person;
@@ -1420,6 +1433,6 @@ public class PersonRelationService {
     
     protected class ParsedCellContentVO {
     	Person person;
-    	Integer sequenceNo;
+    	Double sequenceNo;
     }
 }
