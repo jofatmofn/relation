@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+
+import org.apache.commons.math3.util.CombinatoricsUtils;
 
 public class UtilFuncs {
 	private static final List<String> SINGLE_ATTRIBUTE_CLASS_NAME_LIST = Arrays.asList(new String[] {"java.lang.Boolean", "java.lang.Byte", "java.lang.Character", "java.lang.Float", "java.lang.Integer", "java.lang.Long", "java.lang.Short", "java.lang.String", "java.lang.Double"});
@@ -63,13 +66,21 @@ public class UtilFuncs {
     	StringBuilder sb;
     	char[] inCharArray;
     	int inputLength;
+    	Iterator<int[]> iterator;
     	
     	wordsList = new ArrayList<String>();
     	inputLength = inStr.length();
     	sb = new StringBuilder(inputLength);
     	inCharArray = inStr.toLowerCase().toCharArray();
     	for (int i = 0; i < inputLength; i++) {
-    		if (inCharArray[i] == 'y') {
+			if (i < inputLength - 1 && (inCharArray[i] == ' ' || inCharArray[i] == '.') && (inCharArray[i+1] == ' ' || inCharArray[i+1] == '.')) {
+				// Skip current occurrence
+			} else if (inCharArray[i] == ' ' || inCharArray[i] == '.') {
+				if (sb.length() > 0) {
+					wordsList.add(normaliseWordLevel(sb.toString()));
+					sb = new StringBuilder(inputLength);
+				}
+			} else if (inCharArray[i] == 'y') {
 				sb.append('i');
     			if (i < inputLength - 1 && inCharArray[i+1] == 'y') {
     				i++; // Skip second y
@@ -81,13 +92,6 @@ public class UtilFuncs {
     				sb.append(inCharArray[i]);
     			}
     			i++;	// Skip h
-    		} else if (i < inputLength - 1 && (inCharArray[i] == ' ' || inCharArray[i] == '.') && (inCharArray[i+1] == ' ' || inCharArray[i+1] == '.')) {
-    			// Skip current occurrence
-    		} else if (inCharArray[i] == ' ' || inCharArray[i] == '.') {
-    			if (sb.length() > 0) {
-    				wordsList.add(normaliseWordLevel(sb.toString()));
-    				sb = new StringBuilder(inputLength);
-    			}
     		} else if (inCharArray[i] == 'd') {
     			sb.append('t');
     		} else if (i < inputLength - 1 && inCharArray[i] == 'e' && inCharArray[i+1] == 'e') {
@@ -119,13 +123,18 @@ public class UtilFuncs {
 		}
     	
     	outStrList = new ArrayList<String>();
-		sb = new StringBuilder(inputLength);
 		// Same order of names, no permutations
-		// TODO: All combinations with all values of k: 1 to outStrList.size()
-    	for (int i = 0; i < wordsList.size(); i++) {	// k = outStrList.size()
-    		sb.append(wordsList.get(i));
-    	}
-    	outStrList.add(sb.toString());
+		for (int i = 1; i <= wordsList.size(); i++) {
+		    iterator = CombinatoricsUtils.combinationsIterator(wordsList.size(), i);
+		    while (iterator.hasNext()) {
+				sb = new StringBuilder(inputLength);
+		        final int[] combination = iterator.next();
+		        for (int j = 0; j < i; j++) {
+		        	sb.append(wordsList.get(combination[j]));
+		        }
+			    outStrList.add(sb.toString());
+		    }
+		}
     	return outStrList;
     	
     }
