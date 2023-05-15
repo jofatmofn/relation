@@ -26,7 +26,9 @@ import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
 import org.hibernate.annotations.Where;
+import org.sakuram.relation.util.Constants;
 import org.sakuram.relation.util.SecurityContext;
+import org.sakuram.relation.util.UtilFuncs;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
@@ -67,6 +69,9 @@ public class AttributeValue {
 	
 	@Column(name="attribute_value", nullable=false)
 	private String attributeValue;
+	
+	@Column(name="normalised_value", nullable=true)		// For Search purpose, applicable to free-text values
+	private String normalisedValue;
 	
 	@Column(name="is_value_accurate", nullable=false)
 	private boolean isValueAccurate;
@@ -134,7 +139,19 @@ public class AttributeValue {
 	@PrePersist
 	@PreUpdate
 	public void prePersist() {
+	    StringBuilder sb;
+	    
 	    tenant = SecurityContext.getCurrentTenant();
+	    
+	    if (attribute.getFlagsCsv().contains(Constants.TRANSLATABLE_REGEX)) {	// CONTAINS is not good, however it is simpler than using DomainValueFlags
+		    sb = new StringBuilder();
+		    for (String alternative : UtilFuncs.normaliseForSearch(this.attributeValue)) {
+		    	sb.append("/");
+		    	sb.append(alternative);
+		    }
+	    	sb.append("/");
+		    normalisedValue = sb.toString();
+	    }
 	}
 
 	@PostLoad

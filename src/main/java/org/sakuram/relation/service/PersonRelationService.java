@@ -870,9 +870,21 @@ public class PersonRelationService {
 				domainValue = domainValueRepository.findById(Long.valueOf(attributeValueVO.getAttributeDvId()))
 						.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValueVO.getAttributeDvId(), null));
 				domainValueFlags.setDomainValue(domainValue);
-	    		querySB.append(" AND (LOWER(av.attribute_value) LIKE '%");	// Beware: PostgreSQL specific syntax
-	    		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
-	    		querySB.append("%'");
+				querySB.append(" AND (");
+				if (Objects.equals(domainValueFlags.getValidationJsRegEx(), Constants.TRANSLATABLE_REGEX)) {	// Beware: PostgreSQL specific syntax
+					querySB.append("(");
+				    for (String alternative : UtilFuncs.normaliseForSearch(attributeValueVO.getAttributeValue())) {
+			    		querySB.append(" av.normalised_value LIKE '%");
+			    		querySB.append(alternative);
+			    		querySB.append("%' OR");
+				    }
+				    querySB.delete(querySB.length() - 3, querySB.length());
+					querySB.append(")");
+				} else {
+		    		querySB.append(" LOWER(av.attribute_value) LIKE '%");
+		    		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
+		    		querySB.append("%'");
+				}
 	    		if (domainValueFlags.getIsTranslatable() && !SecurityContext.getCurrentLanguageDvId().equals(Constants.DEFAULT_LANGUAGE_DV_ID)) {
 		    		querySB.append(" OR EXISTS (SELECT 1 FROM translation t WHERE t.attribute_value_fk = av.id AND LOWER(t.value) LIKE '%");	// Beware: PostgreSQL specific syntax
 		    		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
