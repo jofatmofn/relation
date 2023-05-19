@@ -221,7 +221,7 @@ async function retrieveAppStartValues() {
 	
 	paSearchXtraOptions = [];
 	ind = 0;
-	for (label of ["labelPersonId", "labelParents", "labelSpouses"]) {
+	for (label of ["labelPersonId", "labelParents", "labelSpouses", "labelChildren"]) {
 		optionElement = document.createElement("option");
 		optionElement.setAttribute("value", --ind);
 		optionElement.appendChild(document.createTextNode(translator.getStr(label)));
@@ -387,7 +387,7 @@ async function editEntityAttributes(e) {
 		selectElement = (isPersonNode ? paSelectElement : raSelectElement).cloneNode(true);
 		if (action == ACTION_SEARCH) {
 			for (optionElement of paSearchXtraOptions) {
-				selectElement.appendChild(optionElement);
+				selectElement.appendChild(optionElement.cloneNode(true));
 			}
 		}
 		attributeValueBlockElement.appendChild(selectElement);

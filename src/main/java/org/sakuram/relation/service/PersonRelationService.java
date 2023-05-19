@@ -846,14 +846,16 @@ public class PersonRelationService {
     	int searchResultAttributesListSize;
     	SearchResultsVO searchResultsVO;
     	Map<Long, Integer> attributeVsColumnMap;
-    	List<List<String>> searchResultsList, searchResultsPostXtraFilterList;
+    	List<List<String>> searchResultsList, searchResultsPostXtraFilterList, searchResultsFinal;
     	List<String> personAttributesList;
     	DomainValueFlags domainValueFlags;
-    	String attrVal, parentNamesSsv, spouseNamesSsv, parentsCriteria, spousesCriteria;
+    	String attrVal, parentNamesSsv, spouseNamesSsv, childNamesSsv, parentsCriteria, spousesCriteria, childrenCriteria;
     	DomainValue domainValue;
+    	boolean[] nonEmptyColumnArr;
     	
     	parentsCriteria = null;
     	spousesCriteria = null;
+    	childrenCriteria = null;
     	domainValueFlags = new DomainValueFlags();
     	querySB = new StringBuilder();
     	querySB.append("SELECT * FROM person p LEFT OUTER JOIN tenant t ON p.tenant_fk = t.id WHERE p.overwritten_by_fk IS NULL AND p.deleter_fk IS NULL");
@@ -901,6 +903,8 @@ public class PersonRelationService {
     		}
     		else if (attributeValueVO.getAttributeDvId() == -3) {
     			spousesCriteria = attributeValueVO.getAttributeValue().toLowerCase();
+    		} else if (attributeValueVO.getAttributeDvId() == -4) {
+    			childrenCriteria = attributeValueVO.getAttributeValue().toLowerCase();
     		}
     	}
 		querySB.append(" ORDER BY p.id;");
@@ -944,15 +948,19 @@ public class PersonRelationService {
     			}
     		}
     	}
-		// Add parents & spouses; Also apply search criteria based on parents & spouses
+		// Add parents, spouses & children; Also apply search criteria based on them
     	searchResultsPostXtraFilterList = new ArrayList<List<String>>(searchResultsList.size());
 		searchResultAttributesListSize = searchResultsList.get(0).size();
 		UtilFuncs.listSet(searchResultsList.get(0), searchResultAttributesListSize, "Parents", "");
 		UtilFuncs.listSet(searchResultsList.get(0), searchResultAttributesListSize + 1, "Spouses", "");
+		UtilFuncs.listSet(searchResultsList.get(0), searchResultAttributesListSize + 2, "Children", "");
     	searchResultsCount = 0;
+		searchResultsPostXtraFilterList.add(0, searchResultsList.get(0));
+    	nonEmptyColumnArr = new boolean[searchResultsList.get(0).size()];
     	for (int ind = 1; ind < searchResultsList.size(); ind++) {
 			parentNamesSsv = "";
 			spouseNamesSsv = "";
+			childNamesSsv = "";
     		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_MOTHER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME))) {
     			parentNamesSsv += "/" + relativeAttributeEntry.getValue().getAvValue();
     		}
@@ -965,9 +973,21 @@ public class PersonRelationService {
     		if (spousesCriteria != null && (spouseNamesSsv.equals("") || !spouseNamesSsv.toLowerCase().contains(spousesCriteria))) {
     			continue;
     		}
+    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_DAUGHTER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME))) {
+    			childNamesSsv += "/" + relativeAttributeEntry.getValue().getAvValue();
+    		}
+    		if (childrenCriteria != null && (childNamesSsv.equals("") || !childNamesSsv.toLowerCase().contains(childrenCriteria))) {
+    			continue;
+    		}
 			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize, parentNamesSsv, "");
 			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize + 1, spouseNamesSsv, "");
+			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize + 2, childNamesSsv, "");
 			searchResultsPostXtraFilterList.add(searchResultsList.get(ind));
+			for (int avInd = 0; avInd < searchResultsList.get(ind).size(); avInd++) {
+				if (!searchResultsList.get(ind).get(avInd).equals("")) {
+					nonEmptyColumnArr[avInd] = true;
+				}
+			}
     		searchResultsCount++;
     		if (searchResultsCount == Constants.SEARCH_RESULTS_MAX_COUNT) {
     			if (ind == searchResultsList.size() - 1) {
@@ -980,12 +1000,27 @@ public class PersonRelationService {
     		}
     	}
     	if (searchResultsCount > 0) {
-    		searchResultsPostXtraFilterList.add(0, searchResultsList.get(0));
-    		searchResultsVO.setResultsList(searchResultsPostXtraFilterList);
+    		// Remove empty columns, caused by above code-based-filter for parents, spouses & children criteria
+    		searchResultsFinal = new ArrayList<List<String>>(searchResultsPostXtraFilterList.size());
+    		searchResultsVO.setResultsList(searchResultsFinal);
+    		for (List<String> searchResult : searchResultsPostXtraFilterList) {
+    			searchResultsFinal.add(extractListSpecifiedIndices(searchResult, nonEmptyColumnArr));
+    		}
     	}
     	return searchResultsVO;
     }
 
+    private List<String> extractListSpecifiedIndices(List<String> inList, boolean[] copyFlagsArr) {
+    	List<String> outList;
+    	outList = new ArrayList<String>();
+    	for (int ind = 0; ind < copyFlagsArr.length; ind++) {
+    		if (copyFlagsArr[ind]) {
+    			outList.add(inList.get(ind));
+    		}
+    	}
+    	return outList;
+    }
+    
     private List<Map.Entry<Person, AttributeValue>> retrieveRelativesAndAttributes(Person forPerson, List<String> requiredRelationTypesList, List<Long> requiredAttributeTypesList) {
     	List<Map.Entry<Person, AttributeValue>> personAttributeValueList;
     	
