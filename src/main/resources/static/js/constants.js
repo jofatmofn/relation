@@ -83,6 +83,7 @@ var eng = {
 	labelPersonsNRelationsUpload: "Persons & Relations Upload",
 	labelSave: "Save",
 	labelSearch: "Search",
+	labelIsLenient: "Lenient",
 	labelParentChild: "Parent-Child",
 	labelSpouse: "Spouse"
 };
@@ -124,6 +125,7 @@ var tam = {
 	labelPersonsNRelationsUpload: "நபர்கள் & உறவுகள் பதிவேற்று",
 	labelSave: "சேமி",
 	labelSearch: "தேடு",
+	labelIsLenient: "துல்லியமில்லா",
 	labelParentChild: "பெற்றோர்-பிள்ளை",
 	labelSpouse: "வாழ்க்கைத் துணை"
 };

@@ -349,7 +349,9 @@ async function editEntityAttributes(e) {
 		}
 	}
 	
-	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">+</button><button id='actionbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">" + translator.getStr("label" + action) + "</button>";
+	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">+</button>" +
+		"<button id='actionbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">" + translator.getStr("label" + action) + "</button>" +
+		(action == ACTION_SEARCH ? "<input type='checkbox' id='isLenient' checked><label for='isLenient'>" + translator.getStr("labelIsLenient") + "</label>" : "");
 	if (action == ACTION_SAVE) {
 		if (isPersonNode) {
 			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly || highlightedEntity.id == NEW_ENTITY_ID ? " disabled" : "") + ">" + translator.getStr("labelDeletePerson") + "</button>";
@@ -439,7 +441,7 @@ async function editEntityAttributes(e) {
 		var ind1, ind2, attributeValueNBlkList, searchedPersonId, saveAttributesResponseVO;
 		var toInsertAttributeValueDummyId, relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
 		var searchResultsWindowElement, searchResultsTableElement, searchCloseButtonElement, searchReturnButtonElement, searchResultsVO, searchResultsList, srInputElement, srRowNo, searchMessageElement;
-		var isTranslatable, personIdsList, photoInputElement, file;
+		var isTranslatable, personIdsList, photoInputElement, file, personSearchCriteriaVO;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
@@ -632,7 +634,8 @@ async function editEntityAttributes(e) {
 						}
 					}
 				}
-				searchResultsVO = await invokeService("basic/searchPerson", attributeValueVOList);
+				personSearchCriteriaVO = {lenient: document.getElementById("isLenient").checked, attributeValueVOList: attributeValueVOList};
+				searchResultsVO = await invokeService("basic/searchPerson", personSearchCriteriaVO);
 				if (searchResultsVO.resultsList == null) {
 					searchedPersonId = NEW_ENTITY_ID;
 				}

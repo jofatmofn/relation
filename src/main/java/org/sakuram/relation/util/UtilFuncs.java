@@ -80,20 +80,19 @@ public class UtilFuncs {
 					wordsList.add(normaliseWordLevel(sb.toString()));
 					sb = new StringBuilder(inputLength);
 				}
-			} else if (inCharArray[i] == 'y') {
-				sb.append('i');
-    			if (i < inputLength - 1 && inCharArray[i+1] == 'y') {
-    				i++; // Skip second y
+			} else if (i > 0 && (inCharArray[i] == 'a' || inCharArray[i] == 'e' || inCharArray[i] == 'i' || inCharArray[i] == 'o'  || inCharArray[i] == 'u'  || inCharArray[i] == 'y')) {
+    		} else if (inCharArray[i] == 'h') {
+    			if (i > 0 && (inCharArray[i-1] == 'a' || inCharArray[i-1] == 'e' || inCharArray[i-1] == 'i' || inCharArray[i-1] == 'o'  || inCharArray[i-1] == 'u')) {
+    				sb.append('k');
     			}
-    		} else if (i < inputLength - 1 && inCharArray[i] != 'a' && inCharArray[i] != 'e' && inCharArray[i] != 'i' && inCharArray[i] != 'o'  && inCharArray[i] != 'u' && inCharArray[i+1] == 'h') {
-    			if (inCharArray[i] == 'd') {
-        			sb.append('t');
-    			} else {
-    				sb.append(inCharArray[i]);
-    			}
-    			i++;	// Skip h
+    			// else skip h
+    		} else if (inCharArray[i] == 'g') {
+    			sb.append('k');
     		} else if (inCharArray[i] == 'd') {
     			sb.append('t');
+    		} else if (i < inputLength - 1 && inCharArray[i] == 'c' && inCharArray[i+1] == 'y') {
+    			sb.append("si");
+    			i++;	// Skip y
     		} else if (i < inputLength - 1 && inCharArray[i] == 'e' && inCharArray[i+1] == 'e') {
     			sb.append('i');
     			i++;	// Skip second e
@@ -103,8 +102,6 @@ public class UtilFuncs {
     		} else if (i < inputLength - 1 && inCharArray[i] == 'z' && inCharArray[i+1] == 'h') {
     			sb.append('l');
     			i++;	// Skip next
-    		} else if (inCharArray[i] == 'e') {
-    			sb.append('a');
     		} else if (i < inputLength - 1 && (inCharArray[i] == 'a' || inCharArray[i] == 'k' || inCharArray[i] == 'r' || inCharArray[i] == 's') && inCharArray[i] == inCharArray[i+1]) {
     			sb.append(inCharArray[i]);
     			i++;	// Skip second occurrence
@@ -114,6 +111,9 @@ public class UtilFuncs {
     		} else if (i < inputLength - 2 && inCharArray[i] == 'k' && inCharArray[i+1] == 's' && inCharArray[i+2] == 'h') {
     			sb.append("x");
     			i += 2;	// Skip sh
+    		} else if (i < inputLength - 2 && inCharArray[i] == 't' && inCharArray[i+1] == 'c' && inCharArray[i+2] == 'h') {
+    			sb.append("x");
+    			i += 2;	// Skip ch
     		} else {
     			sb.append(inCharArray[i]);
     		}

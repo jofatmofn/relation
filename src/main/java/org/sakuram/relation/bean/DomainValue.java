@@ -1,7 +1,5 @@
 package org.sakuram.relation.bean;
 
-import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.List;
 
 import javax.persistence.Cacheable;
@@ -21,7 +19,6 @@ import org.springframework.context.annotation.ComponentScan;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @EnableAutoConfiguration

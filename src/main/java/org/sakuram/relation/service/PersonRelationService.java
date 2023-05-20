@@ -38,6 +38,7 @@ import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.DomainValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
+import org.sakuram.relation.valueobject.PersonSearchCriteriaVO;
 import org.sakuram.relation.valueobject.PersonVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
 import org.sakuram.relation.valueobject.SaveAttributesResponseVO;
@@ -839,7 +840,8 @@ public class PersonRelationService {
 		return attributeValueRepository.save(attributeValue);
     }
 
-    public SearchResultsVO searchPerson(List<AttributeValueVO> attributeValueVOList) {
+    public SearchResultsVO searchPerson(PersonSearchCriteriaVO personSearchCriteriaVO) {
+    	List<AttributeValueVO> attributeValueVOList;
     	StringBuilder querySB;
     	List<Person> personList;
     	long searchResultsCount;
@@ -853,6 +855,7 @@ public class PersonRelationService {
     	DomainValue domainValue;
     	boolean[] nonEmptyColumnArr;
     	
+    	attributeValueVOList = personSearchCriteriaVO.getAttributeValueVOList();
     	parentsCriteria = null;
     	spousesCriteria = null;
     	childrenCriteria = null;
@@ -873,7 +876,8 @@ public class PersonRelationService {
 						.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValueVO.getAttributeDvId(), null));
 				domainValueFlags.setDomainValue(domainValue);
 				querySB.append(" AND (");
-				if (Objects.equals(domainValueFlags.getValidationJsRegEx(), Constants.TRANSLATABLE_REGEX)) {	// Beware: PostgreSQL specific syntax
+				if (Objects.equals(domainValueFlags.getValidationJsRegEx(), Constants.TRANSLATABLE_REGEX) &&
+						personSearchCriteriaVO.isLenient()) {	// Beware: PostgreSQL specific syntax
 					querySB.append("(");
 				    for (String alternative : UtilFuncs.normaliseForSearch(attributeValueVO.getAttributeValue())) {
 			    		querySB.append(" av.normalised_value LIKE '%");

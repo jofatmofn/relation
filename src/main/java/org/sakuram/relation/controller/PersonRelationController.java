@@ -5,7 +5,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -19,9 +18,9 @@ import org.apache.commons.csv.CSVPrinter;
 import org.sakuram.relation.service.PersonRelationService;
 import org.sakuram.relation.util.Constants;
 import org.sakuram.relation.util.SecurityContext;
-import org.sakuram.relation.valueobject.AttributeValueVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsRequestVO;
 import org.sakuram.relation.valueobject.GraphVO;
+import org.sakuram.relation.valueobject.PersonSearchCriteriaVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
 import org.sakuram.relation.valueobject.SaveAttributesResponseVO;
 import org.sakuram.relation.valueobject.SearchResultsVO;
@@ -139,8 +138,8 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/searchPerson", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public SearchResultsVO searchPerson(HttpSession httpSession, @RequestBody List<AttributeValueVO> attributeValueVOList) {
-    	return personRelationService.searchPerson(attributeValueVOList);
+    public SearchResultsVO searchPerson(HttpSession httpSession, @RequestBody PersonSearchCriteriaVO personSearchCriteriaVO) {
+    	return personRelationService.searchPerson(personSearchCriteriaVO);
     }
     
     @RequestMapping(value = "/saveRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
