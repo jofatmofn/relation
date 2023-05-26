@@ -15,6 +15,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.CSVRecord;
 import org.sakuram.relation.service.PersonRelationService;
 import org.sakuram.relation.util.Constants;
 import org.sakuram.relation.util.SecurityContext;
@@ -31,9 +32,7 @@ import org.sakuram.relation.valueobject.RetrievePersonAttributesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationAttributesResponseVO;
 import org.sakuram.relation.valueobject.RetrieveRelationsBetweenRequestVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -157,17 +156,24 @@ public class PersonRelationController {
     	personRelationService.deletePerson(personId);
     }
 
-    @RequestMapping(value = "/importPrData", method = RequestMethod.POST)
-    public ResponseEntity<?> importPrData(HttpSession httpSession, @RequestParam("file") MultipartFile file) {
+    @RequestMapping(value = "/importPrData", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void importPrData(HttpSession httpSession, HttpServletResponse response, @RequestParam("file") MultipartFile file) throws IOException {
+    	List<List<Object>> recordList;
     	CSVParser csvParser;
-    	try {
-    		csvParser = new CSVParser(new BufferedReader(new InputStreamReader(file.getInputStream(), "UTF-8")), CSVFormat.DEFAULT);
-    		personRelationService.importPrData(csvParser.getRecords());
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+    	
+		csvParser = new CSVParser(new BufferedReader(new InputStreamReader(file.getInputStream(), "UTF-8")), CSVFormat.DEFAULT);
+		List<CSVRecord> inRecordsList = csvParser.getRecords();
+    	recordList = personRelationService.importPrData(inRecordsList);
+    	
+		try (ServletOutputStream servletOutputStream = response.getOutputStream();
+				CSVPrinter csvPrinter = new CSVPrinter(new BufferedWriter(new OutputStreamWriter(servletOutputStream, StandardCharsets.UTF_8)), CSVFormat.DEFAULT)) {
+    		for (List<Object> record : recordList) {
+    			csvPrinter.printRecord(record);
+    		}
     	}
-    	return ResponseEntity.ok("File uploaded successfully.");
+		
+    	response.setContentType("text/csv");
+    	response.setHeader("Content-Disposition", "attachment; filename=\"validationMessages.csv\"");
     }
-
+    
 }

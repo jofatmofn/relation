@@ -7,9 +7,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -1215,14 +1217,162 @@ public class PersonRelationService {
     	personRepository.save(person);
     }
 
-    public void importPrData(Iterable<CSVRecord> csvRecords) {
+    public List<List<Object>> importPrData(Iterable<CSVRecord> csvRecords) {
+    	// Two passes, one to validate and one to store into DB. This avoids gap in person/relation/attributeValue ids, caused by exception during storing.
+		List<List<Object>> validationMessageList;
+		List<Object> validationMessage;
+		
+		validationMessageList = validatePrData(csvRecords);
+		if (validationMessageList.size() == 1) {
+			validationMessage = new ArrayList<Object>(1);
+			validationMessageList.set(0, validationMessage);
+			validationMessage.add("File imported Successfully.");
+			try {
+				storePrData(csvRecords);
+			} catch (Exception e) {
+				e.printStackTrace();
+				validationMessage.set(0, e.getMessage());
+			}
+		}
+		
+		return validationMessageList;
+    }
+    
+    public List<List<Object>> validatePrData(Iterable<CSVRecord> csvRecords) {
+		List<List<Object>> validationMessageList;
+		List<Object> validationMessageHeader;
+    	int cellCount, cellInd, lastCellInd, lastRecordLevel;
+    	Iterator<String> strItr;
+    	String cellContent, personAttributeValuesArr[], currentGender, previousGender;
+    	long personId;
+    	Optional<Person> person;
+    	AttributeValue genderAv;
+    	DomainValue genderAttributeDv;
+		
+		validationMessageList = new ArrayList<List<Object>>();
+		validationMessageHeader = new ArrayList<Object>(3);
+		validationMessageList.add(validationMessageHeader);
+		
+		validationMessageHeader.add("Row");
+		validationMessageHeader.add("Column");
+		validationMessageHeader.add("Error");
+		
+		previousGender = null;
+		lastRecordLevel = -1;
+    	recordLoop: for (CSVRecord csvRecord : csvRecords) {
+    		cellCount = 0;
+    		strItr = csvRecord.iterator();	// In this version of CSVRecord, toList() and values() are not public
+    		cellInd = -1;					// and regular iterator doesn't support nextIndex()
+    		lastCellInd = -1;
+    		while (strItr.hasNext()) {
+    			cellInd++;
+    			cellContent = strItr.next();
+    			if (cellContent.equals("")) {
+    				continue;
+    			}
+				cellCount++;
+				if (cellCount > 2) {
+					addValidationMessage(validationMessageList, csvRecord, null, "Invalid record structure: More than two values found.");
+					continue recordLoop;
+				}
+				
+				if (lastCellInd == -1) {	// Current one is first non-null value
+					if (cellInd / 2 > lastRecordLevel + 1) {
+    					addValidationMessage(validationMessageList, csvRecord, null, "Invalid record structure: Atleast one parent should be given.");
+    					lastRecordLevel = cellInd / 2;
+    					continue recordLoop;
+					}
+					 // After this point, don't use lastCellInd, lastRecordLevel
+					lastRecordLevel = cellInd / 2;
+					lastCellInd = cellInd;
+				} else {
+					if (cellInd != lastCellInd + 1) {	// Should be adjacent to each other
+    					addValidationMessage(validationMessageList, csvRecord, null, "Invalid record structure: Two values are not adjacent to each other.");
+    					continue recordLoop;
+					}
+					if (cellInd % 2 == 0) {
+    					addValidationMessage(validationMessageList, csvRecord, null, "Invalid record structure: First value should be in odd column (A, C, E, ...) and second one in even column (B, D, F, ...).");
+    					continue recordLoop;
+					}
+				}
+    			
+    			personAttributeValuesArr = cellContent.split("#", -1);
+    			if (personAttributeValuesArr.length != 2 && personAttributeValuesArr.length != 4) {
+					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Missing or extraneous components.");
+					continue recordLoop;
+    			}
+    			
+    			if (!personAttributeValuesArr[0].equals("")) {
+    		    	try {
+    		    		Double.parseDouble(personAttributeValuesArr[0]);
+    		    	} catch(NumberFormatException nfe) {
+    					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Sequence no. not numeric.");
+    					continue recordLoop;
+    		    	}
+    			}
+    			
+    			currentGender = null;
+    			if (personAttributeValuesArr.length == 2) {
+    		    	try {
+    		    		personId = Long.parseLong(personAttributeValuesArr[1]);
+    		    	} catch(NumberFormatException nfe) {
+    					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Person id not numeric.");
+    					continue recordLoop;
+    		    	}
+    	    		person = personRepository.findByIdAndTenant(personId, SecurityContext.getCurrentTenant());
+    	    		if (!person.isPresent()) {
+    					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Person doesn't exist.");
+    					continue recordLoop;
+    	    		}
+    	    		genderAttributeDv = domainValueRepository.findById(Constants.PERSON_ATTRIBUTE_DV_ID_GENDER)
+    						.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + Constants.PERSON_ATTRIBUTE_DV_ID_GENDER, null));
+    				genderAv = attributeValueRepository.findByPersonAndAttribute(person.get(), genderAttributeDv)
+    						.orElseThrow(() -> new AppException("Invalid gender", null));
+    	    		currentGender = genderAv.getAttributeValue();
+    			} else {
+    	    		if (personAttributeValuesArr[1].equals("")) {
+    					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Person name cannot be empty.");
+    					continue recordLoop;
+    	    		}
+    	    		currentGender = personAttributeValuesArr[2];
+    	    		if (!currentGender.equals("M") && !currentGender.equals("F")) {
+    					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Unsupported Gender.");
+    					continue recordLoop;
+    				}
+    	    		
+    			}
+				if (cellCount == 1) {
+					previousGender = currentGender;
+				} else if (currentGender.equals(previousGender)) {
+					previousGender = null;
+					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cells contents: Same Gender Spouse relation is currently unsupported.");
+					continue recordLoop;
+				}
+    		}
+    	}
+		return validationMessageList;
+    }
+
+    private void addValidationMessage(List<List<Object>> validationMessageList, CSVRecord csvRecord, Integer colInd, String message) {
+		List<Object> validationMessage;
+		
+		validationMessage = new ArrayList<Object>(3);
+		validationMessageList.add(validationMessage);
+		
+		validationMessage.add(csvRecord.getRecordNumber());
+		validationMessage.add(colInd == null ? null : colInd + 1);
+		validationMessage.add(message);
+    	
+    }
+
+    private void storePrData(Iterable<CSVRecord> csvRecords) {
     	/* A cell content (Person details) is either skipped (if person id) or INSERTed.
     	 * For relationship to be INSERTed, no prior relationship should exist between the two persons already.
     	 * There is no DELETE or MODIFY of Person and Relation.
     	 * Special first name DITTO with gender to handle multiple spouses Vs. Empty cell to mean details are not known
     	 * Different sequence within each parent not supported
     	 */
-    	int recordSize, level;
+    	int level, cellCount, cellInd;
     	Person mainPerson, spousePerson;
     	Relation relation;
     	AttributeValue attributeValue, mainPersonGenderAv, spousePersonGenderAv;
@@ -1230,6 +1380,9 @@ public class PersonRelationService {
     	List<Person> malePersonList, femalePersonList;
     	ParsedCellContentVO parsedCellContentVO;
     	Double withinSpouseSequenceNo, withinParentSequenceNo;
+    	boolean isRelationNewlyCreated;
+    	Iterator<String> strItr;
+    	String cellContent;
     	
 		firstNamePersAttributeDv = domainValueRepository.findById(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME)
 				.orElseThrow(() -> new AppException("Attribute Dv Id missing: " + Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME, null));
@@ -1254,83 +1407,86 @@ public class PersonRelationService {
 	    	spousePersonGenderAv = null;
 	    	withinParentSequenceNo = null;
 	    	withinSpouseSequenceNo = null;
-    		recordSize = csvRecord.size();
     		
-    		if (recordSize == 0) {
-    			continue;
-    		}
-    		if (csvRecord.get(recordSize - 1).equals("")) {
-    			throw new AppException("It's likely that there are empty cells towards the end of the record. Use a text editor and remove redundant delimiters.", null);
-    		}
-    		
-    		if (recordSize % 2 != 0) {
-    			// Spouse not given
-    			level = recordSize / 2;
-    	    	parsedCellContentVO = cellContentsToPerson(csvRecord.get(recordSize - 1), level, malePersonList, femalePersonList, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
-    	    	mainPerson = parsedCellContentVO.person;
-    	    	withinParentSequenceNo = parsedCellContentVO.sequenceNo;
-    	    	mainPersonGenderAv = attributeValueRepository.findByPersonAndAttribute(mainPerson, genderPersAttributeDv)
-    	    			.orElseThrow(() -> new AppException("Gender missing", null));
-    		} else {
-    			level = recordSize / 2 - 1;
-    			if (csvRecord.get(recordSize - 2).equals("")) {
-    				// Person not given
-    				parsedCellContentVO = cellContentsToPerson(csvRecord.get(recordSize - 1), level, malePersonList, femalePersonList, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
+    		cellCount = 0;
+    		strItr = csvRecord.iterator();
+    		cellInd = -1;
+    		level = -1;
+    		while (strItr.hasNext()) {
+    			cellInd++;
+    			cellContent = strItr.next();
+    			if (cellContent.equals("")) {
+    				continue;
+    			}
+				cellCount++;
+				if (cellCount == 1) {
+					level = cellInd / 2;
+				}
+    	    	parsedCellContentVO = cellContentsToPerson(cellContent, level, malePersonList, femalePersonList, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
+				if (cellInd % 2 == 0) {
+	    	    	mainPerson = parsedCellContentVO.person;
+	    	    	withinParentSequenceNo = parsedCellContentVO.sequenceNo;
+	    	    	mainPersonGenderAv = parsedCellContentVO.genderAv;
+				} else {
         	    	spousePerson = parsedCellContentVO.person;
-        	    	spousePersonGenderAv = attributeValueRepository.findByPersonAndAttribute(spousePerson, genderPersAttributeDv)
-        	    			.orElseThrow(() -> new AppException("Gender missing", null));
+        	    	spousePersonGenderAv = parsedCellContentVO.genderAv;
+				}
+    		}
+    		
+    		if (mainPerson == null) {
+    			if (spousePerson == null) {
+    				continue;
     			} else {
-    				// Both are given
-    				parsedCellContentVO = cellContentsToPerson(csvRecord.get(recordSize - 2), level, malePersonList, femalePersonList, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
-        	    	mainPerson = parsedCellContentVO.person;
-        	    	withinParentSequenceNo = parsedCellContentVO.sequenceNo;
-        	    	mainPersonGenderAv = attributeValueRepository.findByPersonAndAttribute(mainPerson, genderPersAttributeDv)
-        	    			.orElseThrow(() -> new AppException("Gender missing", null));
-        	    	
-        	    	parsedCellContentVO = cellContentsToPerson(csvRecord.get(recordSize - 1), level, malePersonList, femalePersonList, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
-        	    	spousePerson = parsedCellContentVO.person;
-        	    	withinSpouseSequenceNo = parsedCellContentVO.sequenceNo;
-        	    	
-        	    	if (relationRepository.findRelationGivenPersons(mainPerson.getId(), spousePerson.getId(), SecurityContext.getCurrentTenantId()) != null) {
-        	    		// mainPerson and spousePerson are already related
-        	    	} else {
-	        			if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
-	        				relation = new Relation(mainPerson, spousePerson);
-	        			} else if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE)) {
-	        				relation = new Relation(spousePerson, mainPerson);
-	        			} else {
-	        				throw new AppException("Incomplete support for Gender " + mainPersonGenderAv.getAttributeValue(), null);
-	        			}
-	        	    	relation = relationRepository.save(relation);
-	        	    	
-	    				attributeValue = new AttributeValue(person1ForPerson2RelAttributeDv, Constants.RELATION_NAME_HUSBAND, null, relation);
-	    	    		attributeValueRepository.save(attributeValue);
-	    	    		
-	    				attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_WIFE, null, relation);
-	    	    		attributeValueRepository.save(attributeValue);
-	    	    		
-	    	    		if (withinSpouseSequenceNo != null) {
-		    				attributeValue = new AttributeValue(sequenceOfPerson2ForPerson1RelAttributeDv, formatSequenceNo(withinSpouseSequenceNo), null, relation);
-		    	    		attributeValueRepository.save(attributeValue);
-	    	    		}
-        	    	}
+	    			// Insert a dummy
+	    			if (spousePersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
+	    				cellContent = "#Unknown#F#";
+	    			} else { // if (spousePersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE))
+	    				cellContent = "#Unknown#M#";
+	    			}
+	    			cellCount++;
+	    	    	parsedCellContentVO = cellContentsToPerson(cellContent, level, malePersonList, femalePersonList, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
+	    	    	mainPerson = parsedCellContentVO.person;
+	    	    	mainPersonGenderAv = parsedCellContentVO.genderAv;
     			}
     		}
-    		if (mainPerson != null &&
-    				mainPersonGenderAv != null && mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE) ||
+
+    		if (cellCount == 2) {
+    	    	isRelationNewlyCreated = false;
+    	    	if ((relation = relationRepository.findRelationGivenPersons(mainPerson.getId(), spousePerson.getId(), SecurityContext.getCurrentTenantId())) == null) {
+    	    		isRelationNewlyCreated = true;
+        			if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
+        				relation = new Relation(mainPerson, spousePerson);
+        			} else if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE)) {
+        				relation = new Relation(spousePerson, mainPerson);
+        			}
+        	    	relation = relationRepository.save(relation);
+        	    	
+    				attributeValue = new AttributeValue(person1ForPerson2RelAttributeDv, Constants.RELATION_NAME_HUSBAND, null, relation);
+    	    		attributeValueRepository.save(attributeValue);
+    	    		
+    				attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_WIFE, null, relation);
+    	    		attributeValueRepository.save(attributeValue);
+    	    		
+    	    	}
+    	    	saveSequenceNo(relation, sequenceOfPerson2ForPerson1RelAttributeDv, withinSpouseSequenceNo, isRelationNewlyCreated);
+    			
+    		}
+
+    		if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE) ||
     				spousePerson != null &&
     				spousePersonGenderAv != null && spousePersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE)) {
     			UtilFuncs.listSet(malePersonList, level, mainPerson, null);
     			UtilFuncs.listSet(femalePersonList, level, spousePerson, null);
-    		} else if (mainPerson != null &&
-    				mainPersonGenderAv != null && mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE) ||
+    		} else if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE) ||
     				spousePerson != null &&
     				spousePersonGenderAv != null && spousePersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
     			UtilFuncs.listSet(malePersonList, level, spousePerson, null);
     			UtilFuncs.listSet(femalePersonList, level, mainPerson, null);
-			} else {
-				throw new AppException("Incomplete support for Gender", null);
 			}
+    		for (int ind = level+1; ind < malePersonList.size(); ind++) {
+    			malePersonList.set(ind, null);
+    			femalePersonList.set(ind, null);
+    		}
     		
     		if (mainPerson != null) {
         		establishParent(mainPerson, mainPersonGenderAv, withinParentSequenceNo, level, Constants.RELATION_NAME_FATHER, malePersonList, person1ForPerson2RelAttributeDv, person2ForPerson1RelAttributeDv, sequenceOfPerson2ForPerson1RelAttributeDv);
@@ -1343,45 +1499,35 @@ public class PersonRelationService {
     	long personId;
     	Person person;
     	String[] personAttributeValuesArr;
-    	AttributeValue attributeValue;
+    	AttributeValue attributeValue, genderAv;
     	ParsedCellContentVO parsedCellContentVO;
     	Double sequenceNo;
     	boolean isMale;
     	
 		personAttributeValuesArr = cellContents.split("#", -1);
 		
-		if (personAttributeValuesArr.length != 2 && personAttributeValuesArr.length != 4) {
-			throw new AppException("Person Details missing required components: " + cellContents, null);
-		}
-		
     	sequenceNo = null;
 		if (!personAttributeValuesArr[0].equals("")) {
-	    	try {
-	    		sequenceNo = Double.parseDouble(personAttributeValuesArr[0]);
-	    	} catch(NumberFormatException nfe) {
-    			throw new AppException("Invalid Sequence No.: " + personAttributeValuesArr[0], null);
-	    	}
+    		sequenceNo = Double.parseDouble(personAttributeValuesArr[0]);
 		}
 		
 		if (personAttributeValuesArr.length == 2) {
-	    	try {
-	    		personId = Long.parseLong(personAttributeValuesArr[1]);
-	    	} catch(NumberFormatException e) {
-	    		throw new AppException("Invalid Person Id " + personAttributeValuesArr[1], null);
-	    	}
+    		personId = Long.parseLong(personAttributeValuesArr[1]);
     		person = personRepository.findByIdAndTenant(personId, SecurityContext.getCurrentTenant())
     				.orElseThrow(() -> new AppException("Invalid Person Id " + personAttributeValuesArr[1], null));
+			genderAv = attributeValueRepository.findByPersonAndAttribute(person, genderPersAttributeDv)
+					.orElseThrow(() -> new AppException("Invalid gender", null));
+	    	
+			isMale = false;
+    		if (genderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
+    			isMale = true;
+			}
+    		
 		} else {
 	    	
-    		if (personAttributeValuesArr[1].equals("")) {
-    			throw new AppException("First name cannot be empty. Person Details: " + cellContents, null);
-    		}
+			isMale = false;
     		if (personAttributeValuesArr[2].equals("M")) {
     			isMale = true;
-    		} else if (personAttributeValuesArr[2].equals("F")) {
-    			isMale = false;
-			} else {
-				throw new AppException("Unsupported Gender " + personAttributeValuesArr[2], null);
 			}
     		
     		if (personAttributeValuesArr[1].equalsIgnoreCase("DITTO")) {
@@ -1390,6 +1536,8 @@ public class PersonRelationService {
     			} else {
     				person = femalePersonList.get(level);
     			}
+    			genderAv = attributeValueRepository.findByPersonAndAttribute(person, genderPersAttributeDv)
+    					.orElseThrow(() -> new AppException("Invalid gender", null));
     		} else {
         		person = new Person();
         		person = personRepository.save(person);
@@ -1397,8 +1545,8 @@ public class PersonRelationService {
 	    		attributeValue = new AttributeValue(firstNamePersAttributeDv, personAttributeValuesArr[1], person, null);
 	    		attributeValueRepository.save(attributeValue);
 	    		
-	        	attributeValue = new AttributeValue(genderPersAttributeDv, isMale? Constants.GENDER_NAME_MALE : Constants.GENDER_NAME_FEMALE, person, null);
-	    		attributeValueRepository.save(attributeValue);
+	        	genderAv = new AttributeValue(genderPersAttributeDv, isMale? Constants.GENDER_NAME_MALE : Constants.GENDER_NAME_FEMALE, person, null);
+	    		attributeValueRepository.save(genderAv);
 	    		
 	    		if (!personAttributeValuesArr[3].equals("")) {
 		    		attributeValue = new AttributeValue(labelPersAttributeDv, personAttributeValuesArr[3], person, null);
@@ -1410,43 +1558,61 @@ public class PersonRelationService {
     	parsedCellContentVO = new ParsedCellContentVO();
     	parsedCellContentVO.person = person;
     	parsedCellContentVO.sequenceNo = sequenceNo;
+    	parsedCellContentVO.genderAv = genderAv;
     	return parsedCellContentVO;
     }
     
     private void establishParent(Person mainPerson, AttributeValue mainPersonGenderAv, Double sequenceNo, int level, String parentRelationName, List<Person> personList, DomainValue person1ForPerson2RelAttributeDv, DomainValue person2ForPerson1RelAttributeDv, DomainValue sequenceOfPerson2ForPerson1RelAttributeDv) {
     	AttributeValue attributeValue;
     	Relation relation;
+    	boolean isRelationNewlyCreated;
 
-    	if (level > 0 && personList.get(level - 1) != null &&
-    			relationRepository.findRelationGivenPersons(mainPerson.getId(), personList.get(level - 1).getId(), SecurityContext.getCurrentTenantId()) == null) {
-	    	relation = new Relation(personList.get(level - 1), mainPerson);
-	    	relation = relationRepository.save(relation);
-	    	
-			attributeValue = new AttributeValue(person1ForPerson2RelAttributeDv, parentRelationName, null, relation);
-    		attributeValueRepository.save(attributeValue);
+    	if (level > 0 && personList.get(level - 1) != null) {
     		
-			if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
-				attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_SON, null, relation);
-			} else if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE)) {
-				attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_DAUGHTER, null, relation);
-			} else {
-				throw new AppException("Incomplete support for Gender " + mainPersonGenderAv.getAttributeValue(), null);
-			}
-    		attributeValueRepository.save(attributeValue);
-    		
-    		if (sequenceNo != null) {
-				attributeValue = new AttributeValue(sequenceOfPerson2ForPerson1RelAttributeDv, formatSequenceNo(sequenceNo), null, relation);
+    		isRelationNewlyCreated = false;
+    		if ((relation = relationRepository.findRelationGivenPersons(mainPerson.getId(), personList.get(level - 1).getId(), SecurityContext.getCurrentTenantId())) == null) {
+        		isRelationNewlyCreated = true;
+		    	relation = new Relation(personList.get(level - 1), mainPerson);
+		    	relation = relationRepository.save(relation);
+		    	
+				attributeValue = new AttributeValue(person1ForPerson2RelAttributeDv, parentRelationName, null, relation);
+	    		attributeValueRepository.save(attributeValue);
+	    		
+				if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
+					attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_SON, null, relation);
+				} else { // if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE))
+					attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_DAUGHTER, null, relation);
+				}
 	    		attributeValueRepository.save(attributeValue);
     		}
+    		
+	    	saveSequenceNo(relation, sequenceOfPerson2ForPerson1RelAttributeDv, sequenceNo, isRelationNewlyCreated);
     	}
     		
     }
 
-    private String formatSequenceNo(Double sequenceNo) {
-		if (sequenceNo.doubleValue() == sequenceNo.intValue()) {
-			return String.format("%d", sequenceNo.intValue());
-		} else {
-			return String.format("%.1f", sequenceNo);	// Only one digit after decimal
+    private void saveSequenceNo(Relation relation, DomainValue sequenceOfPerson2ForPerson1RelAttributeDv, Double sequenceNo, boolean isRelationNewlyCreated) {
+    	AttributeValue attributeValue;
+    	String formattedSequenceNo;
+    	
+		if (sequenceNo != null) {
+			if (sequenceNo.doubleValue() == sequenceNo.intValue()) {
+				formattedSequenceNo = String.format("%d", sequenceNo.intValue());
+			} else {
+				formattedSequenceNo = String.format("%.1f", sequenceNo);	// Beware - Only one digit after decimal
+			}
+			if (isRelationNewlyCreated) {
+				attributeValue = null;
+			} else {
+				attributeValue = attributeValueRepository.findByRelationAndAttribute(relation, sequenceOfPerson2ForPerson1RelAttributeDv)
+						.orElseGet(() -> null);
+			}
+			if (attributeValue == null) {
+				attributeValue = new AttributeValue(sequenceOfPerson2ForPerson1RelAttributeDv, formattedSequenceNo, null, relation);
+			} else {
+				attributeValue.setAttributeValue(formattedSequenceNo);
+			}
+    		attributeValueRepository.save(attributeValue);
 		}
     }
     
@@ -1485,5 +1651,6 @@ public class PersonRelationService {
     protected class ParsedCellContentVO {
     	Person person;
     	Double sequenceNo;
+    	AttributeValue genderAv;
     }
 }

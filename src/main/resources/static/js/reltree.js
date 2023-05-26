@@ -351,7 +351,7 @@ async function editEntityAttributes(e) {
 	
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">+</button>" +
 		"<button id='actionbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">" + translator.getStr("label" + action) + "</button>" +
-		(action == ACTION_SEARCH ? "<input type='checkbox' id='isLenient' checked><label for='isLenient'>" + translator.getStr("labelIsLenient") + "</label>" : "");
+		(action == ACTION_SEARCH ? "<input type='checkbox' id='isLenient'><label for='isLenient'>" + translator.getStr("labelIsLenient") + "</label>" : "");
 	if (action == ACTION_SAVE) {
 		if (isPersonNode) {
 			document.getElementById("sidebarbuttons").innerHTML += "<button id='deletebutton'" + (isAppReadOnly || highlightedEntity.id == NEW_ENTITY_ID ? " disabled" : "") + ">" + translator.getStr("labelDeletePerson") + "</button>";
@@ -1319,15 +1319,28 @@ async function uploadPrData() {
 					formData.append("file", pRDataCsvInput.files[0]);
 					// TODO: Using invokeService instead of fetch?
 					await fetch("basic/importPrData", {
-						method: "POST",
-						body: formData
-					}).then(resp => {
-						if(resp.ok) {
-							alert("The file has been uploaded successfully.");
-							return;
-						}
-						return resp.text().then(text => {throw new Error(text)});
-					});
+							method: "POST",
+							body: formData
+						})
+						.then( res => res.blob() )
+						.then( blob => {
+							const downloadData = (function() {
+								const a = document.createElement("a");
+								document.body.appendChild(a);
+								a.style = "display: none";
+								return function (blob, fileName) {
+									const url = window.URL.createObjectURL(blob);
+									a.href = url;
+									a.download = fileName;
+									a.click();
+									setTimeout(function() {
+										window.URL.revokeObjectURL(url);
+									}, 100);
+								};
+							}());
+	
+							downloadData(blob, "messages.csv");
+						});
 					break;
 				default:
 					alert("Only one file is permitted");
