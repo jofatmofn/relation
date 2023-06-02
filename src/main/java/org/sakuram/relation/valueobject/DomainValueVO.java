@@ -7,9 +7,8 @@ import lombok.Setter;
 public class DomainValueVO {
 	private long id;	
 	private String category;	
-	private String value;	
-	private Boolean isRelationParentChild;
-	private Boolean isRelationSpouse;
+	private String value;
+	private String relationGroup;
 	private Boolean isInputAsAttribute;
 	private String repetitionType;
 	private String attributeDomain;

@@ -69,8 +69,8 @@ public class Constants {
 		  { "Cousin-male", "330" },
 		  { "Cousin-female", "331" },
 		  }).collect(Collectors.toMap(data -> data[0], data -> data[1]));	// TODO: Read it from DB?
-	public static final String FLAG_RELATION_TYPE_PARENT_CHILD = "PC";
-	public static final String FLAG_RELATION_TYPE_SPOUSE = "Sp";
+	public static final String FLAG_RELATION_GROUP_PARENT_CHILD = "PC";
+	public static final String FLAG_RELATION_GROUP_SPOUSE = "Sp";
 	
 	public static final String FLAG_ATTRIBUTE_DOMAIN_LANGUAGE = "Language";
 	public static final String FLAG_ATTRIBUTE_DOMAIN_CITY = "City";
@@ -79,12 +79,13 @@ public class Constants {
 	public static final String FLAG_ATTRIBUTE_REPETITION_OVERLAPPING_ALLOWED = "OA";
 	public static final String FLAG_ATTRIBUTE_REPETITION_NON_OVERLAPPING_ALLOWED = "NOA";
 
-	public static final int FLAG_POSITION_RELATION_TYPE = 0;
+	public static final int FLAG_POSITION_RELATION_GROUP = 0;
 	public static final int FLAG_POSITION_INPUT_AS_ATTRIBUTE = 0;
 	public static final int FLAG_POSITION_REPETITION = 1;
 	public static final int FLAG_POSITION_DOMAIN = 2;
 	public static final int FLAG_POSITION_INPUT_MANDATORY = 3;
 	public static final int FLAG_POSITION_VALIDATION_JS_REG_EX = 4;
+	public static final int FLAG_POSITION_REL_ATTR_APPLICABLE_REL_GROUP = 5;
 	public static final int FLAG_POSITION_ISO_LANGUAGE_CODE = 0;
 
 	public static final String EDGE_TYPE_DIRECT_RELATION = "line";

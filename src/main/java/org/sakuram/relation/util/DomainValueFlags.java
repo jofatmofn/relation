@@ -8,8 +8,8 @@ import lombok.Setter;
 @Getter @Setter
 @NoArgsConstructor
 public class DomainValueFlags {
-	private String attributeDomain, repetitionType, validationJsRegEx, languageCode;
-	private Boolean isRelationParentChild, isRelationSpouse, isInputAsAttribute, isInputMandatory, isTranslatable;
+	private String attributeDomain, repetitionType, validationJsRegEx, languageCode, relationGroup;
+	private Boolean isInputAsAttribute, isInputMandatory, isTranslatable;
 	
 	public DomainValueFlags(DomainValue domainValue) {
 		setDomainValue(domainValue);
@@ -22,8 +22,7 @@ public class DomainValueFlags {
 		repetitionType = null;
 		validationJsRegEx = null;
 		languageCode = null;
-		isRelationParentChild = null;
-		isRelationSpouse = null;
+		relationGroup = null;
 		isInputAsAttribute = null;
 		isInputMandatory = null;
 		isTranslatable = null;
@@ -35,17 +34,8 @@ public class DomainValueFlags {
 			flagsArr = new String[0];
 		}
 		if (domainValue.getCategory().equals(Constants.CATEGORY_RELATION_NAME) || domainValue.getCategory().equals(Constants.CATEGORY_RELATION_SUB_TYPE)) {
-			if (flagsArr.length > Constants.FLAG_POSITION_RELATION_TYPE && flagsArr[Constants.FLAG_POSITION_RELATION_TYPE].equals(Constants.FLAG_RELATION_TYPE_PARENT_CHILD)) {
-				isRelationParentChild = true;
-			}
-			else {
-				isRelationParentChild = false;
-			}
-			if (flagsArr.length > Constants.FLAG_POSITION_RELATION_TYPE && flagsArr[Constants.FLAG_POSITION_RELATION_TYPE].equals(Constants.FLAG_RELATION_TYPE_SPOUSE)) {
-				isRelationSpouse = true;
-			}
-			else {
-				isRelationSpouse = false;
+			if (flagsArr.length > Constants.FLAG_POSITION_RELATION_GROUP) {
+				relationGroup = flagsArr[Constants.FLAG_POSITION_RELATION_GROUP];
 			}
 		} else if (domainValue.getCategory().equals(Constants.CATEGORY_PERSON_ATTRIBUTE) || domainValue.getCategory().equals(Constants.CATEGORY_RELATION_ATTRIBUTE)) {
 			isTranslatable = false;
@@ -66,6 +56,9 @@ public class DomainValueFlags {
 				if (validationJsRegEx.equals(Constants.TRANSLATABLE_REGEX)) {
 					isTranslatable = true;
 				}
+			}
+			if (domainValue.getCategory().equals(Constants.CATEGORY_RELATION_ATTRIBUTE) && flagsArr.length > Constants.FLAG_POSITION_REL_ATTR_APPLICABLE_REL_GROUP) {
+				relationGroup = flagsArr[Constants.FLAG_POSITION_REL_ATTR_APPLICABLE_REL_GROUP];
 			}
 		} else if (domainValue.getCategory().equals(Constants.CATEGORY_LANGUAGE)) {
 			if (flagsArr.length > Constants.FLAG_POSITION_ISO_LANGUAGE_CODE) {

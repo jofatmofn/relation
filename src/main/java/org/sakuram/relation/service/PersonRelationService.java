@@ -598,8 +598,7 @@ public class PersonRelationService {
     		domainValueVO.setValue(domainValue.getDvValue());
     		
     		domainValueFlags.setDomainValue(domainValue);
-    		domainValueVO.setIsRelationParentChild(domainValueFlags.getIsRelationParentChild());
-    		domainValueVO.setIsRelationSpouse(domainValueFlags.getIsRelationSpouse());
+    		domainValueVO.setRelationGroup(domainValueFlags.getRelationGroup());
     		domainValueVO.setIsInputAsAttribute(domainValueFlags.getIsInputAsAttribute());
     		domainValueVO.setRepetitionType(domainValueFlags.getRepetitionType());
     		domainValueVO.setAttributeDomain(domainValueFlags.getAttributeDomain());
@@ -652,6 +651,10 @@ public class PersonRelationService {
     	Relation relation;
     	List<AttributeValue> attributeValueList;
     	RetrieveRelationAttributesResponseVO retrieveRelationAttributesResponseVO;
+    	DomainValue domainValue;
+    	AttributeValue attributeValue;
+    	DomainValueFlags domainValueFlags;
+    	String errorMessage;
     	
 		relation = relationRepository.findByIdAndTenant(entityId, SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Relation Id " + entityId, null));
@@ -659,19 +662,27 @@ public class PersonRelationService {
 		
     	retrieveRelationAttributesResponseVO = new RetrieveRelationAttributesResponseVO();
     	retrieveRelationAttributesResponseVO.setPerson1Id(relation.getPerson1().getId());
-    	// Following two for loops can be replaced with attributeValueRepository.findByPersonAndAttribute(relation.getPersonX(), genderAttributeDv)
-    	for(AttributeValue attributeValue : relation.getPerson1().getAttributeValueList()) {
-    		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER && serviceParts.isCurrentValidAttributeValue(attributeValue)) {
-    	    	retrieveRelationAttributesResponseVO.setPerson1GenderDVId(Long.valueOf(attributeValue.getAttributeValue()));
-    	    	break;
-    		}
-    	}
-    	for(AttributeValue attributeValue : relation.getPerson2().getAttributeValueList()) {
-    		if (attributeValue.getAttribute().getId() == Constants.PERSON_ATTRIBUTE_DV_ID_GENDER && serviceParts.isCurrentValidAttributeValue(attributeValue)) {
-    	    	retrieveRelationAttributesResponseVO.setPerson2GenderDVId(Long.valueOf(attributeValue.getAttributeValue()));
-    	    	break;
-    		}
-    	}
+    	
+		domainValue =  domainValueRepository.findById(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)
+				.orElseThrow(() -> new AppException("Domain Value missing: " + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, null));
+    	attributeValue = attributeValueRepository.findByRelationAndAttribute(relation, domainValue)
+				.orElseThrow(() -> new AppException("Person 1 for Person 2 missing for relation " + relation.getId(), null));
+    	errorMessage = "Invalid (Attribute Value) Dv Id " + attributeValue.getAttributeValue();
+		domainValue = domainValueRepository.findById(Long.valueOf(attributeValue.getAttributeValue()))
+				.orElseThrow(() -> new AppException(errorMessage, null));
+    	domainValueFlags = new DomainValueFlags(domainValue);
+    	retrieveRelationAttributesResponseVO.setRelationGroup(domainValueFlags.getRelationGroup());
+    	
+		domainValue =  domainValueRepository.findById(Constants.PERSON_ATTRIBUTE_DV_ID_GENDER)
+				.orElseThrow(() -> new AppException("Domain Value missing: " + Constants.PERSON_ATTRIBUTE_DV_ID_GENDER, null));
+    	attributeValue = attributeValueRepository.findByPersonAndAttribute(relation.getPerson1(), domainValue)
+				.orElseThrow(() -> new AppException("Gender missing for person " + relation.getPerson1().getId(), null));
+    	retrieveRelationAttributesResponseVO.setPerson1GenderDVId(Long.valueOf(attributeValue.getAttributeValue()));
+    	
+    	attributeValue = attributeValueRepository.findByPersonAndAttribute(relation.getPerson2(), domainValue)
+				.orElseThrow(() -> new AppException("Gender missing for person " + relation.getPerson2().getId(), null));
+    	retrieveRelationAttributesResponseVO.setPerson2GenderDVId(Long.valueOf(attributeValue.getAttributeValue()));
+    	
     	retrieveRelationAttributesResponseVO.setAttributeValueVOList(attributeValuesEntityToVo(attributeValueList));
     	return retrieveRelationAttributesResponseVO;
     }
@@ -728,9 +739,32 @@ public class PersonRelationService {
     public SaveAttributesResponseVO saveRelationAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
     	Relation relation = null;
     	SaveAttributesResponseVO saveAttributesResponseVO;
+    	AttributeValue person1ForPerson2Av;
+    	DomainValue domainValue;
+    	DomainValueFlags domainValueFlags;
+    	String relationGroup;
     	
 		relation = relationRepository.findByIdAndTenant(saveAttributesRequestVO.getEntityId(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Relation Id " + saveAttributesRequestVO.getEntityId(), null));
+		domainValue =  domainValueRepository.findById(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)
+				.orElseThrow(() -> new AppException("Attribute Dv Id missing: " + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, null));
+		person1ForPerson2Av = attributeValueRepository.findByRelationAndAttribute(relation, domainValue)
+				.orElseThrow(() -> new AppException("Mandatory Attribute missing for relation " + saveAttributesRequestVO.getEntityId(), null));
+		domainValue = domainValueRepository.findById(Long.valueOf(person1ForPerson2Av.getAttributeValue()))
+				.orElseThrow(() -> new AppException("Invalid Attribute Value Dv Id " + person1ForPerson2Av.getAttributeValue(), null));
+    	domainValueFlags = new DomainValueFlags(domainValue);
+    	relationGroup = domainValueFlags.getRelationGroup();
+    	for(AttributeValueVO attributeValueVO : saveAttributesRequestVO.getAttributeValueVOList()) {
+    		if (attributeValueVO.getId() == null) {
+    			throw new AppException("System error: Attribute with null id", null);
+    		}
+    		domainValue = domainValueRepository.findById(attributeValueVO.getAttributeDvId())
+    				.orElseThrow(() -> new AppException("Invalid Attribute " + attributeValueVO.getAttributeDvId(), null));
+    		domainValueFlags.setDomainValue(domainValue);
+        	if (domainValueFlags.getRelationGroup() != null && !domainValueFlags.getRelationGroup().equals(relationGroup)) {
+        		throw new AppException("Attribute " + domainValue.getValue() + " cannot be used for " + relationGroup + " relations.", null);
+        	}
+    	}
     	
 		saveAttributesResponseVO = new SaveAttributesResponseVO();
 		saveAttributesResponseVO.setEntityId(saveAttributesRequestVO.getEntityId());

@@ -1,5 +1,5 @@
 var domainValueVOList, isAppReadOnly, highlightedEntity, domainValueVOMap;
-var paSelectElement, raSelectElement, paDomainValueVOList, raDomainValueVOList, isPersonNode;
+var paSelectElement, raSpSelectElement, raPcSelectElement, paDomainValueVOList, raDomainValueVOList, isPersonNode;
 var action, selectElementMap, doubleClick, paSearchXtraOptions;
 var allPersonsSelectElement, malePersonsSelectElement, femalePersonsSelectElement;
 var translator;
@@ -176,9 +176,12 @@ async function retrieveAppStartValues() {
 	paSelectElement = document.createElement("select");
 	paSelectElement.setAttribute("name","attributenames");
 	paSelectElement.classList.add("propdrop");
-	raSelectElement = document.createElement("select");
-	raSelectElement.setAttribute("name","attributenames");
-	raSelectElement.classList.add("propdrop");
+	raSpSelectElement = document.createElement("select");
+	raSpSelectElement.setAttribute("name","attributenames");
+	raSpSelectElement.classList.add("propdrop");
+	raPcSelectElement = document.createElement("select");
+	raPcSelectElement.setAttribute("name","attributenames");
+	raPcSelectElement.classList.add("propdrop");
 	selectElementMap = new Map();
 	paDomainValueVOList = [];
 	raDomainValueVOList = [];
@@ -195,7 +198,12 @@ async function retrieveAppStartValues() {
 		}
 		else if (domainValueVO.category == CATEGORY_RELATION_ATTRIBUTE) {
 			if (domainValueVO.isInputAsAttribute) {
-				raSelectElement.appendChild(optionElement);
+				if (domainValueVO.relationGroup == null || domainValueVO.relationGroup == RELATION_GROUP_SPOUSE) {
+					raSpSelectElement.appendChild(optionElement);
+				}
+				if (domainValueVO.relationGroup == null || domainValueVO.relationGroup == RELATION_GROUP_PARENT_CHILD) {
+					raPcSelectElement.appendChild(optionElement);
+				}
 				raDomainValueVOList.push(domainValueVO);
 			}
 		}
@@ -234,7 +242,7 @@ async function editEntityAttributes(e) {
 	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, actionButtonElement, addButtonElement;
 	var person1Node, person2Node, retrieveRelationAttributesResponseVO,  person1GenderDVId, person2GenderDVId, person1ForPerson2SelectElement,  person2ForPerson2SelectElement;
 	var retrievePersonAttributesResponseVO, photoImageElement;
-	var person1AsPerRelationId;
+	var person1AsPerRelationId, relationGroup;
 	
 	if (highlightedEntity != undefined) {
 		highlightedEntity.color = DEFAULT_COLOR;
@@ -278,6 +286,7 @@ async function editEntityAttributes(e) {
 			person1GenderDVId = retrieveRelationAttributesResponseVO.person1GenderDVId;
 			person2GenderDVId = retrieveRelationAttributesResponseVO.person2GenderDVId;
 			person1AsPerRelationId = retrieveRelationAttributesResponseVO.person1Id;
+			relationGroup = retrieveRelationAttributesResponseVO.relationGroup;
 		}
 		else {
 			if (!e.data.edge.id.startsWith("S")) {
@@ -386,7 +395,7 @@ async function editEntityAttributes(e) {
 		attributeValueBlockElement = document.createElement("fieldset");
 		rightBarElement.appendChild(attributeValueBlockElement);
 		
-		selectElement = (isPersonNode ? paSelectElement : raSelectElement).cloneNode(true);
+		selectElement = (isPersonNode ? paSelectElement : (relationGroup == RELATION_GROUP_SPOUSE ? raSpSelectElement : raPcSelectElement)).cloneNode(true);
 		if (action == ACTION_SEARCH) {
 			for (optionElement of paSearchXtraOptions) {
 				selectElement.appendChild(optionElement.cloneNode(true));
@@ -545,8 +554,8 @@ async function editEntityAttributes(e) {
 				}
 				if (attributeVsValueListMap.has(RELATION_ATTRIBUTE_DV_ID_RELATION_SUB_TYPE)) {
 					relationSubType = attributeVsValueListMap.get(RELATION_ATTRIBUTE_DV_ID_RELATION_SUB_TYPE)[0].attributeValueVO.attributeValue;
-					if (attributeDomainValueVO.isRelationParentChild && !VALID_RELSUBTYPES_PARENT_CHILD.includes(relationSubType) ||
-						attributeDomainValueVO.isRelationSpouse && !VALID_RELSUBTYPES_SPOUSE.includes(relationSubType)) {
+					if (attributeDomainValueVO.relationGroup == RELATION_GROUP_PARENT_CHILD && !VALID_RELSUBTYPES_PARENT_CHILD.includes(relationSubType) ||
+						attributeDomainValueVO.relationGroup == RELATION_GROUP_SPOUSE && !VALID_RELSUBTYPES_SPOUSE.includes(relationSubType)) {
 						alert("Invalid relation sub type");
 						return;
 					}
