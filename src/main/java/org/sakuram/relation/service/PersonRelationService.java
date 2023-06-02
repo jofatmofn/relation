@@ -1278,10 +1278,11 @@ public class PersonRelationService {
     	int cellCount, cellInd, lastCellInd, lastRecordLevel;
     	Iterator<String> strItr;
     	String cellContent, personAttributeValuesArr[], currentGender, previousGender;
-    	long personId;
+    	Long personId;
     	Optional<Person> person;
     	AttributeValue genderAv;
     	DomainValue genderAttributeDv;
+    	Map<String, String> referenceIdMap;
 		
 		validationMessageList = new ArrayList<List<Object>>();
 		validationMessageHeader = new ArrayList<Object>(3);
@@ -1291,6 +1292,7 @@ public class PersonRelationService {
 		validationMessageHeader.add("Column");
 		validationMessageHeader.add("Error");
 		
+		referenceIdMap = new HashMap<String, String>();
 		previousGender = null;
 		lastRecordLevel = -1;
     	recordLoop: for (CSVRecord csvRecord : csvRecords) {
@@ -1331,7 +1333,7 @@ public class PersonRelationService {
 				}
     			
     			personAttributeValuesArr = cellContent.split("#", -1);
-    			if (personAttributeValuesArr.length != 2 && personAttributeValuesArr.length != 4) {
+    			if (personAttributeValuesArr.length != 2 && personAttributeValuesArr.length != 4 && personAttributeValuesArr.length != 5) {
 					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Missing or extraneous components.");
 					continue recordLoop;
     			}
@@ -1347,22 +1349,31 @@ public class PersonRelationService {
     			
     			currentGender = null;
     			if (personAttributeValuesArr.length == 2) {
+    				personId = null;
     		    	try {
     		    		personId = Long.parseLong(personAttributeValuesArr[1]);
     		    	} catch(NumberFormatException nfe) {
-    					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Person id not numeric.");
-    					continue recordLoop;
+    		    		// NOP
     		    	}
-    	    		person = personRepository.findByIdAndTenant(personId, SecurityContext.getCurrentTenant());
-    	    		if (!person.isPresent()) {
-    					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Person doesn't exist.");
-    					continue recordLoop;
-    	    		}
-    	    		genderAttributeDv = domainValueRepository.findById(Constants.PERSON_ATTRIBUTE_DV_ID_GENDER)
-    						.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + Constants.PERSON_ATTRIBUTE_DV_ID_GENDER, null));
-    				genderAv = attributeValueRepository.findByPersonAndAttribute(person.get(), genderAttributeDv)
-    						.orElseThrow(() -> new AppException("Invalid gender", null));
-    	    		currentGender = genderAv.getAttributeValue();
+    		    	if (personId == null) {
+    		    		if (referenceIdMap.containsKey(personAttributeValuesArr[1])) {
+    		    			currentGender = referenceIdMap.get(personAttributeValuesArr[1]);
+    		    		} else {
+	    					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Invalid reference id.");
+	    					continue recordLoop;
+    		    		}
+    		    	} else {
+	    	    		person = personRepository.findByIdAndTenant(personId, SecurityContext.getCurrentTenant());
+	    	    		if (!person.isPresent()) {
+	    					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Person doesn't exist.");
+	    					continue recordLoop;
+	    	    		}
+	    	    		genderAttributeDv = domainValueRepository.findById(Constants.PERSON_ATTRIBUTE_DV_ID_GENDER)
+	    						.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + Constants.PERSON_ATTRIBUTE_DV_ID_GENDER, null));
+	    				genderAv = attributeValueRepository.findByPersonAndAttribute(person.get(), genderAttributeDv)
+	    						.orElseThrow(() -> new AppException("Invalid gender", null));
+	    	    		currentGender = genderAv.getAttributeValue();
+    		    	}
     			} else {
     	    		if (personAttributeValuesArr[1].equals("")) {
     					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Person name cannot be empty.");
@@ -1373,6 +1384,13 @@ public class PersonRelationService {
     					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Unsupported Gender.");
     					continue recordLoop;
     				}
+        			if (personAttributeValuesArr.length == 5) {
+        	    		if (personAttributeValuesArr[4].equals("")) {
+        					addValidationMessage(validationMessageList, csvRecord, cellInd, "Invalid cell content: Reference id cannot be empty.");
+        					continue recordLoop;
+        	    		}
+        				referenceIdMap.put(personAttributeValuesArr[4], currentGender);
+        			}
     	    		
     			}
 				if (cellCount == 1) {
@@ -1417,6 +1435,7 @@ public class PersonRelationService {
     	boolean isRelationNewlyCreated;
     	Iterator<String> strItr;
     	String cellContent;
+    	Map<String, Person> referenceIdMap;
     	
 		firstNamePersAttributeDv = domainValueRepository.findById(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME)
 				.orElseThrow(() -> new AppException("Attribute Dv Id missing: " + Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME, null));
@@ -1433,6 +1452,7 @@ public class PersonRelationService {
 
 		malePersonList = new ArrayList<Person>();
 		femalePersonList = new ArrayList<Person>();
+		referenceIdMap = new HashMap<String, Person>();
 
     	for (CSVRecord csvRecord : csvRecords) {
 			mainPerson = null;
@@ -1456,7 +1476,7 @@ public class PersonRelationService {
 				if (cellCount == 1) {
 					level = cellInd / 2;
 				}
-    	    	parsedCellContentVO = cellContentsToPerson(cellContent, level, malePersonList, femalePersonList, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
+    	    	parsedCellContentVO = cellContentsToPerson(cellContent, level, malePersonList, femalePersonList, referenceIdMap, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
 				if (cellInd % 2 == 0) {
 	    	    	mainPerson = parsedCellContentVO.person;
 	    	    	withinParentSequenceNo = parsedCellContentVO.sequenceNo;
@@ -1478,7 +1498,7 @@ public class PersonRelationService {
 	    				cellContent = "#Unknown#M#";
 	    			}
 	    			cellCount++;
-	    	    	parsedCellContentVO = cellContentsToPerson(cellContent, level, malePersonList, femalePersonList, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
+	    	    	parsedCellContentVO = cellContentsToPerson(cellContent, level, malePersonList, femalePersonList, referenceIdMap, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
 	    	    	mainPerson = parsedCellContentVO.person;
 	    	    	mainPersonGenderAv = parsedCellContentVO.genderAv;
     			}
@@ -1529,7 +1549,7 @@ public class PersonRelationService {
     	}
     }
     
-    private ParsedCellContentVO cellContentsToPerson(String cellContents, int level, List<Person> malePersonList, List<Person> femalePersonList, DomainValue firstNamePersAttributeDv, DomainValue genderPersAttributeDv, DomainValue labelPersAttributeDv) {
+    private ParsedCellContentVO cellContentsToPerson(String cellContents, int level, List<Person> malePersonList, List<Person> femalePersonList, Map<String, Person> referenceIdMap, DomainValue firstNamePersAttributeDv, DomainValue genderPersAttributeDv, DomainValue labelPersAttributeDv) {
     	long personId;
     	Person person;
     	String[] personAttributeValuesArr;
@@ -1546,9 +1566,13 @@ public class PersonRelationService {
 		}
 		
 		if (personAttributeValuesArr.length == 2) {
-    		personId = Long.parseLong(personAttributeValuesArr[1]);
-    		person = personRepository.findByIdAndTenant(personId, SecurityContext.getCurrentTenant())
-    				.orElseThrow(() -> new AppException("Invalid Person Id " + personAttributeValuesArr[1], null));
+	    	try {
+	    		personId = Long.parseLong(personAttributeValuesArr[1]);
+	    		person = personRepository.findByIdAndTenant(personId, SecurityContext.getCurrentTenant())
+	    				.orElseThrow(() -> new AppException("Invalid Person Id " + personAttributeValuesArr[1], null));
+	    	} catch(NumberFormatException nfe) {
+	    		person = referenceIdMap.get(personAttributeValuesArr[1]);
+	    	}
 			genderAv = attributeValueRepository.findByPersonAndAttribute(person, genderPersAttributeDv)
 					.orElseThrow(() -> new AppException("Invalid gender", null));
 	    	
@@ -1575,6 +1599,9 @@ public class PersonRelationService {
     		} else {
         		person = new Person();
         		person = personRepository.save(person);
+        		if (personAttributeValuesArr.length == 5) {
+        			referenceIdMap.put(personAttributeValuesArr[4], person);
+        		}
         		
 	    		attributeValue = new AttributeValue(firstNamePersAttributeDv, personAttributeValuesArr[1], person, null);
 	    		attributeValueRepository.save(attributeValue);
