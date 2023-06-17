@@ -715,11 +715,16 @@ public class PersonRelationService {
     }
     
     public SaveAttributesResponseVO savePersonAttributes(SaveAttributesRequestVO saveAttributesRequestVO) {
-    	Person person;
+    	Person person, source;
     	SaveAttributesResponseVO saveAttributesResponseVO;
     	
+    	source = null;
+    	if (saveAttributesRequestVO.getSourceId() != null) {
+    		source = personRepository.findByIdAndTenant(saveAttributesRequestVO.getSourceId(), SecurityContext.getCurrentTenant())
+    				.orElseThrow(() -> new AppException("Invalid Source " + saveAttributesRequestVO.getSourceId(), null));
+    	}
     	if (saveAttributesRequestVO.getEntityId() == Constants.NEW_ENTITY_ID) {
-    		person = new Person();
+    		person = new Person(source);
     		person = personRepository.save(person);
     	}
     	else {
@@ -732,7 +737,7 @@ public class PersonRelationService {
     	
 		saveAttributesResponseVO = new SaveAttributesResponseVO();
 		saveAttributesResponseVO.setEntityId(person.getId());
-		saveAttributesResponseVO.setInsertedAttributeValueIdList(saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), person, null));
+		saveAttributesResponseVO.setInsertedAttributeValueIdList(saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), person, null, source));
     	return saveAttributesResponseVO;
     }
     
@@ -743,7 +748,13 @@ public class PersonRelationService {
     	DomainValue domainValue;
     	DomainValueFlags domainValueFlags;
     	String relationGroup;
+    	Person source;
     	
+    	source = null;
+    	if (saveAttributesRequestVO.getSourceId() != null) {
+    		source = personRepository.findByIdAndTenant(saveAttributesRequestVO.getSourceId(), SecurityContext.getCurrentTenant())
+    				.orElseThrow(() -> new AppException("Invalid Source " + saveAttributesRequestVO.getSourceId(), null));
+    	}
 		relation = relationRepository.findByIdAndTenant(saveAttributesRequestVO.getEntityId(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Relation Id " + saveAttributesRequestVO.getEntityId(), null));
 		domainValue =  domainValueRepository.findById(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)
@@ -768,11 +779,11 @@ public class PersonRelationService {
     	
 		saveAttributesResponseVO = new SaveAttributesResponseVO();
 		saveAttributesResponseVO.setEntityId(saveAttributesRequestVO.getEntityId());
-		saveAttributesResponseVO.setInsertedAttributeValueIdList(saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), null, relation));
+		saveAttributesResponseVO.setInsertedAttributeValueIdList(saveAttributeValue(saveAttributesRequestVO.getAttributeValueVOList(), null, relation, source));
     	return saveAttributesResponseVO;
     }
 
-    private List<Long> saveAttributeValue(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation) {
+    private List<Long> saveAttributeValue(List<AttributeValueVO> attributeValueVOList, Person person, Relation relation, Person source) {
     	AttributeValue attributeValue, insertedAttributeValue, preModifyAttributeValue;
     	List<Long> incomingAttributeValueWithIdList, insertedAttributeValueIdList;
     	List<AttributeValue> toDeleteAttributeValueList;
@@ -795,7 +806,7 @@ public class PersonRelationService {
     				.orElseThrow(() -> new AppException("Invalid Attribute " + attributeValueVO.getAttributeDvId(), null));
     		domainValueFlags.setDomainValue(attributeDv);
     		if (attributeValueVO.getId() < 1) {	// Insert New AV
-    			insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation);
+    			insertedAttributeValue = insertAttributeValue(attributeValueVO, person, relation, source);
     			insertedAttributeValueIdList.add(insertedAttributeValue.getId());
 				if (attributeValueVO.getTranslatedValue() != null) {	// Insert New Translation
 					translation = new Translation(insertedAttributeValue, null, attributeValueVO.getTranslatedValue());
@@ -826,6 +837,7 @@ public class PersonRelationService {
     				attributeValue.setValueAccurate(attributeValueVO.isValueAccurate());
     				attributeValue.setStartDate(attributeValueVO.getStartDate());
     				attributeValue.setEndDate(attributeValueVO.getEndDate());
+    				attributeValue.setSource(source);
     				attributeValueRepository.save(attributeValue);
     			}
     			translatedValue = attributeValue.getTranslation() == null ? null : attributeValue.getTranslation().getValue();
@@ -858,11 +870,11 @@ public class PersonRelationService {
 		return insertedAttributeValueIdList;
     }
 
-    private AttributeValue insertAttributeValue(AttributeValueVO attributeValueVO, Person person, Relation relation) {
+    private AttributeValue insertAttributeValue(AttributeValueVO attributeValueVO, Person person, Relation relation, Person source) {
     	AttributeValue attributeValue;
     	DomainValue attributeDv;
     	
-    	attributeValue = new AttributeValue();
+    	attributeValue = new AttributeValue(source);
 		attributeDv = domainValueRepository.findById(attributeValueVO.getAttributeDvId())
 				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValueVO.getAttributeDvId(), null));
 		attributeValue.setAttribute(attributeDv);
@@ -872,7 +884,6 @@ public class PersonRelationService {
 		attributeValue.setValueAccurate(attributeValueVO.isValueAccurate());
 		attributeValue.setStartDate(attributeValueVO.getStartDate());
 		attributeValue.setEndDate(attributeValueVO.getEndDate());
-		attributeValue.setCreator(SecurityContext.getCurrentUser());
 		return attributeValueRepository.save(attributeValue);
     }
 
@@ -1146,7 +1157,7 @@ public class PersonRelationService {
     
     public RelationVO saveRelation(RelatedPersonsVO saveRelationRequestVO) {
     	// Person 1 is expected to be one of Father, Mother, Husband
-    	Person person1, person2;
+    	Person person1, person2, source;
     	Relation relation;
     	AttributeValue attributeValue1, attributeValue2, genderAv;
     	DomainValue attributeDv;
@@ -1159,20 +1170,24 @@ public class PersonRelationService {
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveRelationRequestVO.getPerson1Id(), null));
     	person2 = personRepository.findByIdAndTenant(saveRelationRequestVO.getPerson2Id(), SecurityContext.getCurrentTenant())
 				.orElseThrow(() -> new AppException("Invalid Person Id " + saveRelationRequestVO.getPerson2Id(), null));
+    	source = null;
+    	if (saveRelationRequestVO.getSourceId() != null) {
+    		source = personRepository.findByIdAndTenant(saveRelationRequestVO.getSourceId(), SecurityContext.getCurrentTenant())
+    				.orElseThrow(() -> new AppException("Invalid Source " + saveRelationRequestVO.getSourceId(), null));
+    	}
 
-    	relation = new Relation(person1, person2);
+    	relation = new Relation(person1, person2, source);
     	relation = relationRepository.save(relation);
 
-    	attributeValue1 = new AttributeValue();
+    	attributeValue1 = new AttributeValue(source);
 		attributeDv = domainValueRepository.findById(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2)
 				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, null));
 		attributeValue1.setAttribute(attributeDv);
 		attributeValue1.setAttributeValue(saveRelationRequestVO.getPerson1ForPerson2());
 		attributeValue1.setRelation(relation);
-		attributeValue1.setCreator(SecurityContext.getCurrentUser());
 		attributeValueRepository.save(attributeValue1);
 		
-		attributeValue2 = new AttributeValue();
+		attributeValue2 = new AttributeValue(source);
 		attributeDv = domainValueRepository.findById(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1)
 				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1, null));
 		attributeValue2.setAttribute(attributeDv);
@@ -1192,7 +1207,6 @@ public class PersonRelationService {
 			attributeValue2.setAttributeValue(Constants.RELATION_NAME_WIFE);
 		}
 		attributeValue2.setRelation(relation);
-		attributeValue2.setCreator(SecurityContext.getCurrentUser());
 		attributeValueRepository.save(attributeValue2);
 		
 		relation.setAttributeValueList(new ArrayList<AttributeValue>(Arrays.asList(attributeValue1, attributeValue2)));
@@ -1509,9 +1523,9 @@ public class PersonRelationService {
     	    	if ((relation = relationRepository.findRelationGivenPersons(mainPerson.getId(), spousePerson.getId(), SecurityContext.getCurrentTenantId())) == null) {
     	    		isRelationNewlyCreated = true;
         			if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
-        				relation = new Relation(mainPerson, spousePerson);
+        				relation = new Relation(mainPerson, spousePerson, null); // TODO: SOURCE
         			} else if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE)) {
-        				relation = new Relation(spousePerson, mainPerson);
+        				relation = new Relation(spousePerson, mainPerson, null);	// TODO: SOURCE
         			}
         	    	relation = relationRepository.save(relation);
         	    	
@@ -1597,7 +1611,7 @@ public class PersonRelationService {
     			genderAv = attributeValueRepository.findByPersonAndAttribute(person, genderPersAttributeDv)
     					.orElseThrow(() -> new AppException("Invalid gender", null));
     		} else {
-        		person = new Person();
+        		person = new Person(null);	// TODO: SOURCE
         		person = personRepository.save(person);
         		if (personAttributeValuesArr.length == 5) {
         			referenceIdMap.put(personAttributeValuesArr[4], person);
@@ -1633,7 +1647,7 @@ public class PersonRelationService {
     		isRelationNewlyCreated = false;
     		if ((relation = relationRepository.findRelationGivenPersons(mainPerson.getId(), personList.get(level - 1).getId(), SecurityContext.getCurrentTenantId())) == null) {
         		isRelationNewlyCreated = true;
-		    	relation = new Relation(personList.get(level - 1), mainPerson);
+		    	relation = new Relation(personList.get(level - 1), mainPerson, null);	// TODO: SOURCE
 		    	relation = relationRepository.save(relation);
 		    	
 				attributeValue = new AttributeValue(person1ForPerson2RelAttributeDv, parentRelationName, null, relation);

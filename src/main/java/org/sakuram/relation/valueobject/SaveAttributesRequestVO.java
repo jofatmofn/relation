@@ -10,6 +10,7 @@ public class SaveAttributesRequestVO {
 	private long entityId;
 	private List<AttributeValueVO> attributeValueVOList;
 	private long creatorId;
+	private Long sourceId;
 	private byte[] photo;
 
 }

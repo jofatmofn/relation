@@ -30,6 +30,12 @@ import org.springframework.context.annotation.ComponentScan;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter @Setter
+@NoArgsConstructor
 @EnableAutoConfiguration
 @ComponentScan
 @Entity
@@ -61,6 +67,10 @@ public class Relation {
 	@JoinColumn(name="creator_fk", nullable=false)
 	private AppUser creator;
 	
+	@ManyToOne
+	@JoinColumn(name="source_fk", nullable=true)
+	private Person source;
+	
 	@Column(name="created_at", nullable=false, updatable=false)
 	@CreationTimestamp
 	private Timestamp createdAt;
@@ -81,94 +91,11 @@ public class Relation {
 	@Where(clause="overwritten_by_fk is null and deleter_fk is null")
 	private List<AttributeValue> attributeValueList;
 
-	public long getId() {
-		return id;
-	}
-
-	public void setId(long id) {
-		this.id = id;
-	}
-
-	public Person getPerson1() {
-		return person1;
-	}
-
-	public void setPerson1(Person person1) {
-		this.person1 = person1;
-	}
-
-	public Person getPerson2() {
-		return person2;
-	}
-
-	public void setPerson2(Person person2) {
-		this.person2 = person2;
-	}
-
-	public Tenant getTenant() {
-		return tenant;
-	}
-
-	public void setTenant(Tenant tenant) {
-		this.tenant = tenant;
-	}
-
-	public AppUser getCreator() {
-		return creator;
-	}
-
-	public void setCreator(AppUser creator) {
-		this.creator = creator;
-	}
-
-	public Timestamp getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(Timestamp createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public Relation getOverwrittenBy() {
-		return overwrittenBy;
-	}
-
-	public void setOverwrittenBy(Relation overwrittenBy) {
-		this.overwrittenBy = overwrittenBy;
-	}
-
-	public AppUser getDeleter() {
-		return deleter;
-	}
-
-	public void setDeleter(AppUser deleter) {
-		this.deleter = deleter;
-	}
-
-	public Timestamp getDeletedAt() {
-		return deletedAt;
-	}
-
-	public void setDeletedAt(Timestamp deletedAt) {
-		this.deletedAt = deletedAt;
-	}
-
-	public List<AttributeValue> getAttributeValueList() {
-		return attributeValueList;
-	}
-
-	public void setAttributeValueList(List<AttributeValue> attributeValueList) {
-		this.attributeValueList = attributeValueList;
-	}
-
-	public Relation() {
-		
-	}
-	
-	public Relation(Person person1, Person person2) {
+	public Relation(Person person1, Person person2, Person source) {
 		this.person1 = person1;
 		this.person2 = person2;
 		this.creator = SecurityContext.getCurrentUser();
+		this.source = source;
 	}
 	
 	@PrePersist

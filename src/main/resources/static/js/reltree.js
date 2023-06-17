@@ -198,11 +198,11 @@ async function retrieveAppStartValues() {
 		}
 		else if (domainValueVO.category == CATEGORY_RELATION_ATTRIBUTE) {
 			if (domainValueVO.isInputAsAttribute) {
-				if (domainValueVO.relationGroup == null || domainValueVO.relationGroup == RELATION_GROUP_SPOUSE) {
+				if (domainValueVO.relationGroup == null || domainValueVO.relationGroup == "" || domainValueVO.relationGroup == RELATION_GROUP_SPOUSE) {
 					raSpSelectElement.appendChild(optionElement);
 				}
-				if (domainValueVO.relationGroup == null || domainValueVO.relationGroup == RELATION_GROUP_PARENT_CHILD) {
-					raPcSelectElement.appendChild(optionElement);
+				if (domainValueVO.relationGroup == null || domainValueVO.relationGroup == "" || domainValueVO.relationGroup == RELATION_GROUP_PARENT_CHILD) {
+					raPcSelectElement.appendChild(optionElement.cloneNode(true));	// Without cloneNode, the optionElement is removed from raSpSelectElement
 				}
 				raDomainValueVOList.push(domainValueVO);
 			}
@@ -450,7 +450,7 @@ async function editEntityAttributes(e) {
 		var ind1, ind2, attributeValueNBlkList, searchedPersonId, saveAttributesResponseVO;
 		var toInsertAttributeValueDummyId, relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
 		var searchResultsWindowElement, searchResultsTableElement, searchCloseButtonElement, searchReturnButtonElement, searchResultsVO, searchResultsList, srInputElement, srRowNo, searchMessageElement;
-		var isTranslatable, personIdsList, photoInputElement, file, personSearchCriteriaVO;
+		var isTranslatable, personIdsList, photoInputElement, file, personSearchCriteriaVO, dsource;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
@@ -598,6 +598,11 @@ async function editEntityAttributes(e) {
 						}
 					}
 				}
+				dsource = sourceOfData();
+				if (dsource == "error") {
+					return;
+				}
+				saveAttributesRequestVO.sourceId = dsource;
 				saveAttributesResponseVO = await invokeService((isPersonNode ? "basic/savePersonAttributes" : "basic/saveRelationAttributes"), saveAttributesRequestVO);
 				toInsertAttributeValueDummyId = 1;
 				for (let insertedAttributeValueId of saveAttributesResponseVO.insertedAttributeValueIdList) {
@@ -978,7 +983,7 @@ function relatePersons() {
 	actionButtonElement = document.getElementById("actionbutton");
 	actionButtonElement.onclick = async function() {
 		var person1Id, person2Id, relationId, fatherPersonElement, motherPersonElement, childPersonElement, husbandPersonElement, wifePersonElement;
-		var selectedRelGrp;
+		var selectedRelGrp, dsource;
 		
 		selectedRelGrp = document.querySelector('input[name="relGrp"]:checked')?.value;
 		
@@ -997,12 +1002,16 @@ function relatePersons() {
 				alert("One of Father, Mother is required");
 				return;
 			}
+			dsource = sourceOfData();
+			if (dsource == "error") {
+				return;
+			}
 			if (motherPersonId != -1) {
-				relationId = await saveRelation({person1Id: motherPersonId, person2Id: childPersonId, person1ForPerson2: RELATION_NAME_MOTHER_DV_ID});
+				relationId = await saveRelation({person1Id: motherPersonId, person2Id: childPersonId, person1ForPerson2: RELATION_NAME_MOTHER_DV_ID, sourceId: dsource});
 			}
 			// Beware: The above and below saveRelation are NOT part of a single TRANSACTION
 			if (fatherPersonId != -1) {
-				relationId = await saveRelation({person1Id: fatherPersonId, person2Id: childPersonId, person1ForPerson2: RELATION_NAME_FATHER_DV_ID});
+				relationId = await saveRelation({person1Id: fatherPersonId, person2Id: childPersonId, person1ForPerson2: RELATION_NAME_FATHER_DV_ID, sourceId: dsource});
 			}
 		} else {
 			husbandPersonElement = document.getElementById("husbandPerson");
@@ -1219,12 +1228,12 @@ async function logout() {
 }
 
 function enableDisableRWFunctions() {
-	for (let buttonElement of document.querySelectorAll("div#leftbarbuttons > button[rel-modify-data]")) {
+	for (let element of document.querySelectorAll("*[rel-modify-data]")) {
 		if (isAppReadOnly) {
-			buttonElement.setAttribute("disabled","");
+			element.setAttribute("disabled","");
 		}
 		else {
-			buttonElement.removeAttribute("disabled");
+			element.removeAttribute("disabled");
 		}
 	}
 }
@@ -1357,4 +1366,18 @@ async function uploadPrData() {
 			}
 		}
 	}
+}
+
+function sourceOfData() {
+	var dsource;
+	
+	dsource = document.getElementById("dsource").value;
+	if (dsource == null || dsource == "") {
+		return null;
+	}
+	if (isNaN(dsource)) {
+		alert("Source has to be (numeric) user-id")
+		return "error";
+	}
+	return +dsource;
 }

@@ -90,6 +90,10 @@ public class AttributeValue {
 	@JoinColumn(name="creator_fk", nullable=false)
 	private AppUser creator;
 	
+	@ManyToOne
+	@JoinColumn(name="source_fk", nullable=true)
+	private Person source;
+	
 	@Column(name="created_at", nullable=false, updatable=false)
 	@CreationTimestamp
 	private Timestamp createdAt;
@@ -116,6 +120,11 @@ public class AttributeValue {
 		return translation == null ? attributeValue : translation.getValue();
 	}
 	
+	public AttributeValue(Person source) {
+		this.source = source;
+		this.creator = SecurityContext.getCurrentUser();
+	}
+	
 	public AttributeValue(DomainValue attribute, String attributeValue, Person person, Relation relation) {
 		this.attribute = attribute;
 		this.attributeValue = attributeValue;
@@ -133,7 +142,7 @@ public class AttributeValue {
 		this.person = attributeValue.person;
 		this.relation = attributeValue.relation;
 		this.startDate = attributeValue.startDate;
-		// createdAt, deletedAt, deleter, id, overwrittenBy, tenant, translation, translationList
+		// source, createdAt, deletedAt, deleter, id, overwrittenBy, tenant, translation, translationList
 	}
 	
 	@PrePersist

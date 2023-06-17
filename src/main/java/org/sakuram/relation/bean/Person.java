@@ -31,9 +31,11 @@ import org.springframework.context.annotation.ComponentScan;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter @Setter
+@NoArgsConstructor
 @EnableAutoConfiguration
 @ComponentScan
 @Entity
@@ -60,6 +62,10 @@ public class Person {
 	@JoinColumn(name="creator_fk", nullable=false)
 	private AppUser creator;
 	
+	@ManyToOne
+	@JoinColumn(name="source_fk", nullable=true)
+	private Person source;
+	
 	@Column(name="created_at", nullable=false, updatable=false)
 	@CreationTimestamp
 	private Timestamp createdAt;
@@ -80,8 +86,9 @@ public class Person {
 	@Where(clause="overwritten_by_fk is null and deleter_fk is null")
 	private List<AttributeValue> attributeValueList;
 
-	public Person() {
+	public Person(Person source) {
 		this.creator = SecurityContext.getCurrentUser();
+		this.source = source;
 	}
 	
 	@PrePersist
