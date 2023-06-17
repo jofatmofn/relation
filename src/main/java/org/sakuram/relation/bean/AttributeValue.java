@@ -125,12 +125,13 @@ public class AttributeValue {
 		this.creator = SecurityContext.getCurrentUser();
 	}
 	
-	public AttributeValue(DomainValue attribute, String attributeValue, Person person, Relation relation) {
+	public AttributeValue(DomainValue attribute, String attributeValue, Person person, Relation relation, Person source) {
 		this.attribute = attribute;
 		this.attributeValue = attributeValue;
 		this.person = person;
 		this.relation = relation;
 		this.creator = SecurityContext.getCurrentUser();
+		this.source = source;
 	}
 	
 	public AttributeValue(AttributeValue attributeValue) {	// Clone

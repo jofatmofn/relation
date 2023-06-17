@@ -1307,7 +1307,7 @@ function nodeToFocus() {
 }
 
 async function uploadPrData() {
-	var actionButtonElement, rightBarElement, pRDataCsvInputElement, formData;
+	var actionButtonElement, rightBarElement, pRDataCsvInputElement, formData, dsource;
 	
 	clearSidebar();
 	document.getElementById("sidebarbuttons").innerHTML = "<button id='actionbutton'>" + translator.getStr("labelUpload") + "</button>";
@@ -1334,6 +1334,11 @@ async function uploadPrData() {
 						return;
 					}
 					let formData = new FormData();
+					dsource = sourceOfData();
+					if (dsource == "error") {
+						return;
+					}
+					formData.append("sourceId", dsource);
 					formData.append("file", pRDataCsvInput.files[0]);
 					// TODO: Using invokeService instead of fetch?
 					await fetch("basic/importPrData", {

@@ -1265,7 +1265,7 @@ public class PersonRelationService {
     	personRepository.save(person);
     }
 
-    public List<List<Object>> importPrData(Iterable<CSVRecord> csvRecords) {
+    public List<List<Object>> importPrData(Long sourceId, Iterable<CSVRecord> csvRecords) {
     	// Two passes, one to validate and one to store into DB. This avoids gap in person/relation/attributeValue ids, caused by exception during storing.
 		List<List<Object>> validationMessageList;
 		List<Object> validationMessage;
@@ -1276,7 +1276,7 @@ public class PersonRelationService {
 			validationMessageList.set(0, validationMessage);
 			validationMessage.add("File imported Successfully.");
 			try {
-				storePrData(csvRecords);
+				storePrData(sourceId, csvRecords);
 			} catch (Exception e) {
 				e.printStackTrace();
 				validationMessage.set(0, e.getMessage());
@@ -1431,7 +1431,7 @@ public class PersonRelationService {
     	
     }
 
-    private void storePrData(Iterable<CSVRecord> csvRecords) {
+    private void storePrData(Long sourceId, Iterable<CSVRecord> csvRecords) {
     	/* A cell content (Person details) is either skipped (if person id) or INSERTed.
     	 * For relationship to be INSERTed, no prior relationship should exist between the two persons already.
     	 * There is no DELETE or MODIFY of Person and Relation.
@@ -1439,7 +1439,7 @@ public class PersonRelationService {
     	 * Different sequence within each parent not supported
     	 */
     	int level, cellCount, cellInd;
-    	Person mainPerson, spousePerson;
+    	Person mainPerson, spousePerson, source;
     	Relation relation;
     	AttributeValue attributeValue, mainPersonGenderAv, spousePersonGenderAv;
     	DomainValue firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv, person1ForPerson2RelAttributeDv, person2ForPerson1RelAttributeDv, sequenceOfPerson2ForPerson1RelAttributeDv;
@@ -1463,6 +1463,11 @@ public class PersonRelationService {
 				.orElseThrow(() -> new AppException("Attribute Dv Id missing: " + Constants.RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1, null));
 		sequenceOfPerson2ForPerson1RelAttributeDv =  domainValueRepository.findById(Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1)
 				.orElseThrow(() -> new AppException("Attribute Dv Id missing: " + Constants.RELATION_ATTRIBUTE_DV_ID_SEQUENCE_OF_PERSON2_FOR_PERSON1, null));
+    	source = null;
+    	if (sourceId != null) {
+    		source = personRepository.findByIdAndTenant(sourceId, SecurityContext.getCurrentTenant())
+    				.orElseThrow(() -> new AppException("Invalid Source " + sourceId, null));
+    	}
 
 		malePersonList = new ArrayList<Person>();
 		femalePersonList = new ArrayList<Person>();
@@ -1490,7 +1495,7 @@ public class PersonRelationService {
 				if (cellCount == 1) {
 					level = cellInd / 2;
 				}
-    	    	parsedCellContentVO = cellContentsToPerson(cellContent, level, malePersonList, femalePersonList, referenceIdMap, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
+    	    	parsedCellContentVO = cellContentsToPerson(cellContent, level, malePersonList, femalePersonList, referenceIdMap, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv, source);
 				if (cellInd % 2 == 0) {
 	    	    	mainPerson = parsedCellContentVO.person;
 	    	    	withinParentSequenceNo = parsedCellContentVO.sequenceNo;
@@ -1512,7 +1517,7 @@ public class PersonRelationService {
 	    				cellContent = "#Unknown#M#";
 	    			}
 	    			cellCount++;
-	    	    	parsedCellContentVO = cellContentsToPerson(cellContent, level, malePersonList, femalePersonList, referenceIdMap, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv);
+	    	    	parsedCellContentVO = cellContentsToPerson(cellContent, level, malePersonList, femalePersonList, referenceIdMap, firstNamePersAttributeDv, genderPersAttributeDv, labelPersAttributeDv, source);
 	    	    	mainPerson = parsedCellContentVO.person;
 	    	    	mainPersonGenderAv = parsedCellContentVO.genderAv;
     			}
@@ -1523,20 +1528,20 @@ public class PersonRelationService {
     	    	if ((relation = relationRepository.findRelationGivenPersons(mainPerson.getId(), spousePerson.getId(), SecurityContext.getCurrentTenantId())) == null) {
     	    		isRelationNewlyCreated = true;
         			if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
-        				relation = new Relation(mainPerson, spousePerson, null); // TODO: SOURCE
+        				relation = new Relation(mainPerson, spousePerson, source);
         			} else if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE)) {
-        				relation = new Relation(spousePerson, mainPerson, null);	// TODO: SOURCE
+        				relation = new Relation(spousePerson, mainPerson, source);
         			}
         	    	relation = relationRepository.save(relation);
         	    	
-    				attributeValue = new AttributeValue(person1ForPerson2RelAttributeDv, Constants.RELATION_NAME_HUSBAND, null, relation);
+    				attributeValue = new AttributeValue(person1ForPerson2RelAttributeDv, Constants.RELATION_NAME_HUSBAND, null, relation, source);
     	    		attributeValueRepository.save(attributeValue);
     	    		
-    				attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_WIFE, null, relation);
+    				attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_WIFE, null, relation, source);
     	    		attributeValueRepository.save(attributeValue);
     	    		
     	    	}
-    	    	saveSequenceNo(relation, sequenceOfPerson2ForPerson1RelAttributeDv, withinSpouseSequenceNo, isRelationNewlyCreated);
+    	    	saveSequenceNo(relation, sequenceOfPerson2ForPerson1RelAttributeDv, withinSpouseSequenceNo, isRelationNewlyCreated, source);
     			
     		}
 
@@ -1557,13 +1562,13 @@ public class PersonRelationService {
     		}
     		
     		if (mainPerson != null) {
-        		establishParent(mainPerson, mainPersonGenderAv, withinParentSequenceNo, level, Constants.RELATION_NAME_FATHER, malePersonList, person1ForPerson2RelAttributeDv, person2ForPerson1RelAttributeDv, sequenceOfPerson2ForPerson1RelAttributeDv);
-        		establishParent(mainPerson, mainPersonGenderAv, withinParentSequenceNo, level, Constants.RELATION_NAME_MOTHER, femalePersonList, person1ForPerson2RelAttributeDv, person2ForPerson1RelAttributeDv, sequenceOfPerson2ForPerson1RelAttributeDv);
+        		establishParent(mainPerson, mainPersonGenderAv, withinParentSequenceNo, level, Constants.RELATION_NAME_FATHER, malePersonList, person1ForPerson2RelAttributeDv, person2ForPerson1RelAttributeDv, sequenceOfPerson2ForPerson1RelAttributeDv, source);
+        		establishParent(mainPerson, mainPersonGenderAv, withinParentSequenceNo, level, Constants.RELATION_NAME_MOTHER, femalePersonList, person1ForPerson2RelAttributeDv, person2ForPerson1RelAttributeDv, sequenceOfPerson2ForPerson1RelAttributeDv, source);
     		}
     	}
     }
     
-    private ParsedCellContentVO cellContentsToPerson(String cellContents, int level, List<Person> malePersonList, List<Person> femalePersonList, Map<String, Person> referenceIdMap, DomainValue firstNamePersAttributeDv, DomainValue genderPersAttributeDv, DomainValue labelPersAttributeDv) {
+    private ParsedCellContentVO cellContentsToPerson(String cellContents, int level, List<Person> malePersonList, List<Person> femalePersonList, Map<String, Person> referenceIdMap, DomainValue firstNamePersAttributeDv, DomainValue genderPersAttributeDv, DomainValue labelPersAttributeDv, Person source) {
     	long personId;
     	Person person;
     	String[] personAttributeValuesArr;
@@ -1611,20 +1616,20 @@ public class PersonRelationService {
     			genderAv = attributeValueRepository.findByPersonAndAttribute(person, genderPersAttributeDv)
     					.orElseThrow(() -> new AppException("Invalid gender", null));
     		} else {
-        		person = new Person(null);	// TODO: SOURCE
+        		person = new Person(source);
         		person = personRepository.save(person);
         		if (personAttributeValuesArr.length == 5) {
         			referenceIdMap.put(personAttributeValuesArr[4], person);
         		}
         		
-	    		attributeValue = new AttributeValue(firstNamePersAttributeDv, personAttributeValuesArr[1], person, null);
+	    		attributeValue = new AttributeValue(firstNamePersAttributeDv, personAttributeValuesArr[1], person, null, source);
 	    		attributeValueRepository.save(attributeValue);
 	    		
-	        	genderAv = new AttributeValue(genderPersAttributeDv, isMale? Constants.GENDER_NAME_MALE : Constants.GENDER_NAME_FEMALE, person, null);
+	        	genderAv = new AttributeValue(genderPersAttributeDv, isMale? Constants.GENDER_NAME_MALE : Constants.GENDER_NAME_FEMALE, person, null, source);
 	    		attributeValueRepository.save(genderAv);
 	    		
 	    		if (!personAttributeValuesArr[3].equals("")) {
-		    		attributeValue = new AttributeValue(labelPersAttributeDv, personAttributeValuesArr[3], person, null);
+		    		attributeValue = new AttributeValue(labelPersAttributeDv, personAttributeValuesArr[3], person, null, source);
 		    		attributeValueRepository.save(attributeValue);
 	    		}
     		}
@@ -1637,7 +1642,7 @@ public class PersonRelationService {
     	return parsedCellContentVO;
     }
     
-    private void establishParent(Person mainPerson, AttributeValue mainPersonGenderAv, Double sequenceNo, int level, String parentRelationName, List<Person> personList, DomainValue person1ForPerson2RelAttributeDv, DomainValue person2ForPerson1RelAttributeDv, DomainValue sequenceOfPerson2ForPerson1RelAttributeDv) {
+    private void establishParent(Person mainPerson, AttributeValue mainPersonGenderAv, Double sequenceNo, int level, String parentRelationName, List<Person> personList, DomainValue person1ForPerson2RelAttributeDv, DomainValue person2ForPerson1RelAttributeDv, DomainValue sequenceOfPerson2ForPerson1RelAttributeDv, Person source) {
     	AttributeValue attributeValue;
     	Relation relation;
     	boolean isRelationNewlyCreated;
@@ -1647,26 +1652,26 @@ public class PersonRelationService {
     		isRelationNewlyCreated = false;
     		if ((relation = relationRepository.findRelationGivenPersons(mainPerson.getId(), personList.get(level - 1).getId(), SecurityContext.getCurrentTenantId())) == null) {
         		isRelationNewlyCreated = true;
-		    	relation = new Relation(personList.get(level - 1), mainPerson, null);	// TODO: SOURCE
+		    	relation = new Relation(personList.get(level - 1), mainPerson, source);
 		    	relation = relationRepository.save(relation);
 		    	
-				attributeValue = new AttributeValue(person1ForPerson2RelAttributeDv, parentRelationName, null, relation);
+				attributeValue = new AttributeValue(person1ForPerson2RelAttributeDv, parentRelationName, null, relation, source);
 	    		attributeValueRepository.save(attributeValue);
 	    		
 				if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_MALE)) {
-					attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_SON, null, relation);
+					attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_SON, null, relation, source);
 				} else { // if (mainPersonGenderAv.getAttributeValue().equals(Constants.GENDER_NAME_FEMALE))
-					attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_DAUGHTER, null, relation);
+					attributeValue = new AttributeValue(person2ForPerson1RelAttributeDv, Constants.RELATION_NAME_DAUGHTER, null, relation, source);
 				}
 	    		attributeValueRepository.save(attributeValue);
     		}
     		
-	    	saveSequenceNo(relation, sequenceOfPerson2ForPerson1RelAttributeDv, sequenceNo, isRelationNewlyCreated);
+	    	saveSequenceNo(relation, sequenceOfPerson2ForPerson1RelAttributeDv, sequenceNo, isRelationNewlyCreated, source);
     	}
     		
     }
 
-    private void saveSequenceNo(Relation relation, DomainValue sequenceOfPerson2ForPerson1RelAttributeDv, Double sequenceNo, boolean isRelationNewlyCreated) {
+    private void saveSequenceNo(Relation relation, DomainValue sequenceOfPerson2ForPerson1RelAttributeDv, Double sequenceNo, boolean isRelationNewlyCreated, Person source) {
     	AttributeValue attributeValue;
     	String formattedSequenceNo;
     	
@@ -1683,7 +1688,7 @@ public class PersonRelationService {
 						.orElseGet(() -> null);
 			}
 			if (attributeValue == null) {
-				attributeValue = new AttributeValue(sequenceOfPerson2ForPerson1RelAttributeDv, formattedSequenceNo, null, relation);
+				attributeValue = new AttributeValue(sequenceOfPerson2ForPerson1RelAttributeDv, formattedSequenceNo, null, relation, source);
 			} else {
 				attributeValue.setAttributeValue(formattedSequenceNo);
 			}
