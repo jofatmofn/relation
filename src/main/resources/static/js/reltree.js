@@ -1338,7 +1338,7 @@ async function uploadPrData() {
 					if (dsource == "error") {
 						return;
 					}
-					formData.append("sourceId", dsource);
+					formData.append("sourceId", dsource == null ? "" : dsource); // Fix to overcome the problem that null is sent as string "null"
 					formData.append("file", pRDataCsvInput.files[0]);
 					// TODO: Using invokeService instead of fetch?
 					await fetch("basic/importPrData", {
