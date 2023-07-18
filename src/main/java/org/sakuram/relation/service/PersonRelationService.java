@@ -917,33 +917,7 @@ public class PersonRelationService {
     	for(AttributeValueVO attributeValueVO : attributeValueVOList) {
     		if (attributeValueVO.getAttributeDvId() > 0) {
 	    		querySB.append(" AND ");
-	    		querySB.append("EXISTS (SELECT 1 FROM attribute_value av WHERE av.overwritten_by_fk IS NULL AND av.deleter_fk IS NULL AND av.person_fk = p.id AND av.attribute_fk = ");
-	    		querySB.append(attributeValueVO.getAttributeDvId());
-				domainValue = domainValueRepository.findById(Long.valueOf(attributeValueVO.getAttributeDvId()))
-						.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeValueVO.getAttributeDvId(), null));
-				domainValueFlags.setDomainValue(domainValue);
-				querySB.append(" AND (");
-				if (Objects.equals(domainValueFlags.getValidationJsRegEx(), Constants.TRANSLATABLE_REGEX) &&
-						personSearchCriteriaVO.isLenient()) {	// Beware: PostgreSQL specific syntax
-					querySB.append("(");
-				    for (String alternative : UtilFuncs.normaliseForSearch(attributeValueVO.getAttributeValue())) {
-			    		querySB.append(" av.normalised_value LIKE '%");
-			    		querySB.append(alternative);
-			    		querySB.append("%' OR");
-				    }
-				    querySB.delete(querySB.length() - 3, querySB.length());
-					querySB.append(")");
-				} else {
-		    		querySB.append(" LOWER(av.attribute_value) LIKE '%");
-		    		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
-		    		querySB.append("%'");
-				}
-	    		if (domainValueFlags.getIsTranslatable() && !SecurityContext.getCurrentLanguageDvId().equals(Constants.DEFAULT_LANGUAGE_DV_ID)) {
-		    		querySB.append(" OR EXISTS (SELECT 1 FROM translation t WHERE t.attribute_value_fk = av.id AND LOWER(t.value) LIKE '%");	// Beware: PostgreSQL specific syntax
-		    		querySB.append(attributeValueVO.getAttributeValue().toLowerCase());
-		    		querySB.append("%')");
-	    		}
-	    		querySB.append("))");
+	    		querySB.append(buildQueryOneAv(attributeValueVO.getAttributeDvId(), attributeValueVO.getAttributeValue(), personSearchCriteriaVO.isLenient(), "person_fk = p.id"));
     		}
     		else if (attributeValueVO.getAttributeDvId() == -1) {
 	    		querySB.append(" AND p.id = ");
@@ -953,7 +927,17 @@ public class PersonRelationService {
     			parentsCriteria = attributeValueVO.getAttributeValue().toLowerCase();
     		}
     		else if (attributeValueVO.getAttributeDvId() == -3) {
-    			spousesCriteria = attributeValueVO.getAttributeValue().toLowerCase();
+    			spousesCriteria = null; // attributeValueVO.getAttributeValue().toLowerCase();
+    			querySB.append(" AND (EXISTS (SELECT 1 FROM relation r WHERE r.person_1_fk = p.id AND ");
+	    		querySB.append(buildQueryOneAv(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, Constants.RELATION_NAME_HUSBAND, personSearchCriteriaVO.isLenient(),  "relation_fk = r.id"));
+	    		querySB.append(" AND ");
+	    		querySB.append(buildQueryOneAv(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME, attributeValueVO.getAttributeValue().toLowerCase(), personSearchCriteriaVO.isLenient(),  "person_fk = r.person_2_fk"));
+	    		querySB.append(")");
+    			querySB.append(" OR EXISTS (SELECT 1 FROM relation r WHERE r.person_2_fk = p.id AND ");
+	    		querySB.append(buildQueryOneAv(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, Constants.RELATION_NAME_HUSBAND, personSearchCriteriaVO.isLenient(),  "relation_fk = r.id"));
+	    		querySB.append(" AND ");
+	    		querySB.append(buildQueryOneAv(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME, attributeValueVO.getAttributeValue().toLowerCase(), personSearchCriteriaVO.isLenient(),  "person_fk = r.person_1_fk"));
+	    		querySB.append("))");
     		} else if (attributeValueVO.getAttributeDvId() == -4) {
     			childrenCriteria = attributeValueVO.getAttributeValue().toLowerCase();
     		}
@@ -1061,6 +1045,43 @@ public class PersonRelationService {
     	return searchResultsVO;
     }
 
+	private String buildQueryOneAv(long attributeDvId, String attributeValue, boolean isLenient, String avCriteria) {
+    	StringBuilder querySB;
+    	DomainValue domainValue;
+    	DomainValueFlags domainValueFlags;
+		querySB = new StringBuilder();
+    	domainValueFlags = new DomainValueFlags();
+		querySB.append(" EXISTS (SELECT 1 FROM attribute_value av WHERE av.overwritten_by_fk IS NULL AND av.deleter_fk IS NULL AND av.attribute_fk = ");
+		querySB.append(attributeDvId);
+		querySB.append(" AND av.");
+		querySB.append(avCriteria);
+		domainValue = domainValueRepository.findById(Long.valueOf(attributeDvId))
+				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeDvId, null));
+		domainValueFlags.setDomainValue(domainValue);
+		querySB.append(" AND (");
+		if (Objects.equals(domainValueFlags.getValidationJsRegEx(), Constants.TRANSLATABLE_REGEX) && isLenient) {	// Beware: PostgreSQL specific syntax
+			querySB.append("(");
+			for (String alternative : UtilFuncs.normaliseForSearch(attributeValue)) {
+				querySB.append(" av.normalised_value LIKE '%");
+				querySB.append(alternative);
+				querySB.append("%' OR");
+			}
+			querySB.delete(querySB.length() - 3, querySB.length());
+			querySB.append(")");
+		} else {
+			querySB.append(" LOWER(av.attribute_value) LIKE '%");
+			querySB.append(attributeValue.toLowerCase());
+			querySB.append("%'");
+		}
+		if (domainValueFlags.getIsTranslatable() && !SecurityContext.getCurrentLanguageDvId().equals(Constants.DEFAULT_LANGUAGE_DV_ID)) {
+			querySB.append(" OR EXISTS (SELECT 1 FROM translation t WHERE t.attribute_value_fk = av.id AND LOWER(t.value) LIKE '%");	// Beware: PostgreSQL specific syntax
+			querySB.append(attributeValue.toLowerCase());
+			querySB.append("%')");
+		}
+		querySB.append("))");
+		return querySB.toString();
+	}
+	
     private List<String> extractListSpecifiedIndices(List<String> inList, boolean[] copyFlagsArr) {
     	List<String> outList;
     	outList = new ArrayList<String>();
