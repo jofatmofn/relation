@@ -1523,6 +1523,7 @@ public class PersonRelationService {
 	    	    	mainPersonGenderAv = parsedCellContentVO.genderAv;
 				} else {
         	    	spousePerson = parsedCellContentVO.person;
+        	    	withinSpouseSequenceNo = parsedCellContentVO.sequenceNo;
         	    	spousePersonGenderAv = parsedCellContentVO.genderAv;
 				}
     		}
