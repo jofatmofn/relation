@@ -891,21 +891,16 @@ public class PersonRelationService {
     	List<AttributeValueVO> attributeValueVOList;
     	StringBuilder querySB;
     	List<Person> personList;
-    	long searchResultsCount;
-    	int searchResultAttributesListSize;
+    	int searchResultsCount, attributesCount;
     	SearchResultsVO searchResultsVO;
     	Map<Long, Integer> attributeVsColumnMap;
-    	List<List<String>> searchResultsList, searchResultsPostXtraFilterList, searchResultsFinal;
+    	List<List<String>> searchResultsList;
     	List<String> personAttributesList;
     	DomainValueFlags domainValueFlags;
-    	String attrVal, parentNamesSsv, spouseNamesSsv, childNamesSsv, parentsCriteria, spousesCriteria, childrenCriteria;
+    	String attrVal, parentNamesSsv, spouseNamesSsv, childNamesSsv;
     	DomainValue domainValue;
-    	boolean[] nonEmptyColumnArr;
     	
     	attributeValueVOList = personSearchCriteriaVO.getAttributeValueVOList();
-    	parentsCriteria = null;
-    	spousesCriteria = null;
-    	childrenCriteria = null;
     	domainValueFlags = new DomainValueFlags();
     	querySB = new StringBuilder();
     	querySB.append("SELECT * FROM person p LEFT OUTER JOIN tenant t ON p.tenant_fk = t.id WHERE p.overwritten_by_fk IS NULL AND p.deleter_fk IS NULL");
@@ -924,10 +919,15 @@ public class PersonRelationService {
 	    		querySB.append(attributeValueVO.getAttributeValue());
     		}
     		else if (attributeValueVO.getAttributeDvId() == -2) {
-    			parentsCriteria = attributeValueVO.getAttributeValue().toLowerCase();
+    			querySB.append(" AND (EXISTS (SELECT 1 FROM relation r WHERE r.person_2_fk = p.id AND ((");
+	    		querySB.append(buildQueryOneAv(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, Constants.RELATION_NAME_FATHER, personSearchCriteriaVO.isLenient(),  "relation_fk = r.id"));
+	    		querySB.append(" ) OR (");
+	    		querySB.append(buildQueryOneAv(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, Constants.RELATION_NAME_MOTHER, personSearchCriteriaVO.isLenient(),  "relation_fk = r.id"));
+	    		querySB.append(" )) AND ");
+	    		querySB.append(buildQueryOneAv(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME, attributeValueVO.getAttributeValue().toLowerCase(), personSearchCriteriaVO.isLenient(),  "person_fk = r.person_1_fk"));
+	    		querySB.append("))");
     		}
     		else if (attributeValueVO.getAttributeDvId() == -3) {
-    			spousesCriteria = null; // attributeValueVO.getAttributeValue().toLowerCase();
     			querySB.append(" AND (EXISTS (SELECT 1 FROM relation r WHERE r.person_1_fk = p.id AND ");
 	    		querySB.append(buildQueryOneAv(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, Constants.RELATION_NAME_HUSBAND, personSearchCriteriaVO.isLenient(),  "relation_fk = r.id"));
 	    		querySB.append(" AND ");
@@ -939,7 +939,13 @@ public class PersonRelationService {
 	    		querySB.append(buildQueryOneAv(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME, attributeValueVO.getAttributeValue().toLowerCase(), personSearchCriteriaVO.isLenient(),  "person_fk = r.person_1_fk"));
 	    		querySB.append("))");
     		} else if (attributeValueVO.getAttributeDvId() == -4) {
-    			childrenCriteria = attributeValueVO.getAttributeValue().toLowerCase();
+    			querySB.append(" AND (EXISTS (SELECT 1 FROM relation r WHERE r.person_1_fk = p.id AND ((");
+	    		querySB.append(buildQueryOneAv(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, Constants.RELATION_NAME_FATHER, personSearchCriteriaVO.isLenient(),  "relation_fk = r.id"));
+	    		querySB.append(" ) OR (");
+	    		querySB.append(buildQueryOneAv(Constants.RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2, Constants.RELATION_NAME_MOTHER, personSearchCriteriaVO.isLenient(),  "relation_fk = r.id"));
+	    		querySB.append(" )) AND ");
+	    		querySB.append(buildQueryOneAv(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME, attributeValueVO.getAttributeValue().toLowerCase(), personSearchCriteriaVO.isLenient(),  "person_fk = r.person_2_fk"));
+	    		querySB.append("))");
     		}
     	}
 		querySB.append(" ORDER BY p.id;");
@@ -950,17 +956,23 @@ public class PersonRelationService {
     	if (personList.size() == 0) {
     		return searchResultsVO;
     	}
+    	searchResultsVO.setCountInDb(personList.size());
     	
-    	searchResultAttributesListSize = 0;
     	attributeVsColumnMap = new HashMap<Long, Integer>();
-    	searchResultsList = new ArrayList<List<String>>(personList.size());
+    	searchResultsList = new ArrayList<List<String>>(Constants.SEARCH_RESULTS_MAX_COUNT);
     	personAttributesList = new ArrayList<String>(); // For Header
     	searchResultsList.add(personAttributesList);
     	personAttributesList.add("Id");
+    	personAttributesList.add("Parents");
+    	personAttributesList.add("Spouses");
+    	personAttributesList.add("Children");
+    	attributesCount = 4;
+    	searchResultsCount = 0;
+    	
     	for(Person person : personList) {
+    		searchResultsCount++;
     		personAttributesList = new ArrayList<String>();
     		searchResultsList.add(personAttributesList);
-    		personAttributesList.add(String.valueOf(person.getId()));
     		for (AttributeValue attributeValue : person.getAttributeValueList()) {
     			if(serviceParts.isCurrentValidAttributeValue(attributeValue)) {
     				domainValueFlags.setDomainValue(attributeValue.getAttribute());
@@ -976,72 +988,45 @@ public class PersonRelationService {
 	    				UtilFuncs.listSet(personAttributesList, attributeVsColumnMap.get(attributeValue.getAttribute().getId()), attrVal, "");
 	    			}
 	    			else {
-	    				attributeVsColumnMap.put(attributeValue.getAttribute().getId(), attributeVsColumnMap.size() + 1);
-	    				UtilFuncs.listSet(searchResultsList.get(0), attributeVsColumnMap.size(), attributeValue.getAttribute().getDvValue(), "");
-	    				UtilFuncs.listSet(personAttributesList, attributeVsColumnMap.size(), attrVal, "");
+	    				attributeVsColumnMap.put(attributeValue.getAttribute().getId(), attributesCount);
+	    				UtilFuncs.listSet(searchResultsList.get(0), attributesCount, attributeValue.getAttribute().getDvValue(), "");
+	    				UtilFuncs.listSet(personAttributesList, attributesCount, attrVal, "");
+	    				attributesCount++;
 	    			}
     			}
     		}
-    	}
-		// Add parents, spouses & children; Also apply search criteria based on them
-    	searchResultsPostXtraFilterList = new ArrayList<List<String>>(searchResultsList.size());
-		searchResultAttributesListSize = searchResultsList.get(0).size();
-		UtilFuncs.listSet(searchResultsList.get(0), searchResultAttributesListSize, "Parents", "");
-		UtilFuncs.listSet(searchResultsList.get(0), searchResultAttributesListSize + 1, "Spouses", "");
-		UtilFuncs.listSet(searchResultsList.get(0), searchResultAttributesListSize + 2, "Children", "");
-    	searchResultsCount = 0;
-		searchResultsPostXtraFilterList.add(0, searchResultsList.get(0));
-    	nonEmptyColumnArr = new boolean[searchResultsList.get(0).size()];
-    	for (int ind = 1; ind < searchResultsList.size(); ind++) {
+    		
+    		// Add parents, spouses & children
 			parentNamesSsv = "";
 			spouseNamesSsv = "";
 			childNamesSsv = "";
-    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_MOTHER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME))) {
+    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(person, Arrays.asList(Constants.RELATION_NAME_FATHER, Constants.RELATION_NAME_MOTHER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME))) {
     			parentNamesSsv += "/" + relativeAttributeEntry.getValue().getAvValue();
     		}
-    		if (parentsCriteria != null && (parentNamesSsv.equals("") || !parentNamesSsv.toLowerCase().contains(parentsCriteria))) {
-    			continue;
-    		}
-    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME))) {
+
+    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(person, Arrays.asList(Constants.RELATION_NAME_HUSBAND, Constants.RELATION_NAME_WIFE), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME))) {
     			spouseNamesSsv += "/" + relativeAttributeEntry.getValue().getAvValue();
     		}
-    		if (spousesCriteria != null && (spouseNamesSsv.equals("") || !spouseNamesSsv.toLowerCase().contains(spousesCriteria))) {
-    			continue;
-    		}
-    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(personList.get(ind - 1), Arrays.asList(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_DAUGHTER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME))) {
+
+    		for (Map.Entry<Person, AttributeValue> relativeAttributeEntry : retrieveRelativesAndAttributes(person, Arrays.asList(Constants.RELATION_NAME_SON, Constants.RELATION_NAME_DAUGHTER), Arrays.asList(Constants.PERSON_ATTRIBUTE_DV_ID_FIRST_NAME))) {
     			childNamesSsv += "/" + relativeAttributeEntry.getValue().getAvValue();
     		}
-    		if (childrenCriteria != null && (childNamesSsv.equals("") || !childNamesSsv.toLowerCase().contains(childrenCriteria))) {
-    			continue;
-    		}
-			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize, parentNamesSsv, "");
-			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize + 1, spouseNamesSsv, "");
-			UtilFuncs.listSet(searchResultsList.get(ind), searchResultAttributesListSize + 2, childNamesSsv, "");
-			searchResultsPostXtraFilterList.add(searchResultsList.get(ind));
-			for (int avInd = 0; avInd < searchResultsList.get(ind).size(); avInd++) {
-				if (!searchResultsList.get(ind).get(avInd).equals("")) {
-					nonEmptyColumnArr[avInd] = true;
-				}
-			}
-    		searchResultsCount++;
+
+    		personAttributesList.set(0, String.valueOf(person.getId()));
+    		personAttributesList.set(1, parentNamesSsv);
+    		personAttributesList.set(2, spouseNamesSsv);
+    		personAttributesList.set(3, childNamesSsv);
+
     		if (searchResultsCount == Constants.SEARCH_RESULTS_MAX_COUNT) {
-    			if (ind == searchResultsList.size() - 1) {
-    		    	searchResultsVO.setMorePresentInDb(false);
-    			}
-    			else {
-    		    	searchResultsVO.setMorePresentInDb(true);
-    			}
     			break;
     		}
     	}
-    	if (searchResultsCount > 0) {
-    		// Remove empty columns, caused by above code-based-filter for parents, spouses & children criteria
-    		searchResultsFinal = new ArrayList<List<String>>(searchResultsPostXtraFilterList.size());
-    		searchResultsVO.setResultsList(searchResultsFinal);
-    		for (List<String> searchResult : searchResultsPostXtraFilterList) {
-    			searchResultsFinal.add(extractListSpecifiedIndices(searchResult, nonEmptyColumnArr));
+    	for (List<String> attributesList : searchResultsList) { // Make all attributes list to be of uniform size
+    		if (attributesList.size() < attributesCount) {
+    			UtilFuncs.listSet(attributesList, attributesCount - 1, "", "");
     		}
     	}
+		searchResultsVO.setResultsList(searchResultsList.subList(0, searchResultsCount + 1));
     	return searchResultsVO;
     }
 
@@ -1059,19 +1044,25 @@ public class PersonRelationService {
 				.orElseThrow(() -> new AppException("Invalid Attribute Dv Id " + attributeDvId, null));
 		domainValueFlags.setDomainValue(domainValue);
 		querySB.append(" AND (");
-		if (Objects.equals(domainValueFlags.getValidationJsRegEx(), Constants.TRANSLATABLE_REGEX) && isLenient) {	// Beware: PostgreSQL specific syntax
-			querySB.append("(");
-			for (String alternative : UtilFuncs.normaliseForSearch(attributeValue)) {
-				querySB.append(" av.normalised_value LIKE '%");
-				querySB.append(alternative);
-				querySB.append("%' OR");
+		if (Objects.equals(domainValueFlags.getValidationJsRegEx(), Constants.TRANSLATABLE_REGEX)) {	// Beware: PostgreSQL specific syntax
+			if (isLenient) {
+				querySB.append("(");
+				for (String alternative : UtilFuncs.normaliseForSearch(attributeValue)) {
+					querySB.append(" av.normalised_value LIKE '%");
+					querySB.append(alternative);
+					querySB.append("%' OR");
+				}
+				querySB.delete(querySB.length() - 3, querySB.length());
+				querySB.append(")");
+			} else {
+				querySB.append(" LOWER(av.attribute_value) LIKE '%");
+				querySB.append(attributeValue.toLowerCase());
+				querySB.append("%'");
 			}
-			querySB.delete(querySB.length() - 3, querySB.length());
-			querySB.append(")");
 		} else {
-			querySB.append(" LOWER(av.attribute_value) LIKE '%");
+			querySB.append(" LOWER(av.attribute_value) = '");
 			querySB.append(attributeValue.toLowerCase());
-			querySB.append("%'");
+			querySB.append("'");
 		}
 		if (domainValueFlags.getIsTranslatable() && !SecurityContext.getCurrentLanguageDvId().equals(Constants.DEFAULT_LANGUAGE_DV_ID)) {
 			querySB.append(" OR EXISTS (SELECT 1 FROM translation t WHERE t.attribute_value_fk = av.id AND LOWER(t.value) LIKE '%");	// Beware: PostgreSQL specific syntax
@@ -1082,17 +1073,6 @@ public class PersonRelationService {
 		return querySB.toString();
 	}
 	
-    private List<String> extractListSpecifiedIndices(List<String> inList, boolean[] copyFlagsArr) {
-    	List<String> outList;
-    	outList = new ArrayList<String>();
-    	for (int ind = 0; ind < copyFlagsArr.length; ind++) {
-    		if (copyFlagsArr[ind]) {
-    			outList.add(inList.get(ind));
-    		}
-    	}
-    	return outList;
-    }
-    
     private List<Map.Entry<Person, AttributeValue>> retrieveRelativesAndAttributes(Person forPerson, List<String> requiredRelationTypesList, List<Long> requiredAttributeTypesList) {
     	List<Map.Entry<Person, AttributeValue>> personAttributeValueList;
     	

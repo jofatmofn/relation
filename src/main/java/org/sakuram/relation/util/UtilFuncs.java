@@ -147,4 +147,15 @@ public class UtilFuncs {
     	}
     }
     
+    public List<String> extractListSpecifiedIndices(List<String> inList, boolean[] copyFlagsArr) {
+    	List<String> outList;
+    	outList = new ArrayList<String>();
+    	for (int ind = 0; ind < copyFlagsArr.length; ind++) {
+    		if (copyFlagsArr[ind]) {
+    			outList.add(inList.get(ind));
+    		}
+    	}
+    	return outList;
+    }
+    
 }

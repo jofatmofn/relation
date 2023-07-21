@@ -673,12 +673,7 @@ async function editEntityAttributes(e) {
 						}
 					} */
 					searchResultsTableElement.innerHTML = "";
-					if (searchResultsVO.morePresentInDb) {
-						searchMessageElement.innerText = translator.getStr("messagePartialSearchResults").replace("#resultCount#", searchResultsList.length - 1);
-					}
-					else {
-						searchMessageElement.innerText =  (searchResultsList.length - 1) + " " + translator.getStr("labelPersons");
-					}
+					searchMessageElement.innerText = translator.getStr("messageSearchResults").replace("#resultCount#", searchResultsVO.countInDb).replace("#partialCount#", searchResultsList.length - 1);
 					
 					srRowNo = -1;
 					for (let attributesList of searchResultsList) {
