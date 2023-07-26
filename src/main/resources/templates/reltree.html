@@ -42,7 +42,7 @@
 				<div id="userdetails">
 					<label for="user" th:utext="#{label.user}"></label>:&nbsp;
 					<input type="text" id="user" class="authenticated" style="display: none" disabled/><br/>
-					<input type="button" onclick="location.href='./oauth2/authorization/google';" th:attr="value=#{label.loginWithGoogle}" class="unauthenticated" style="display: inline-block"/>
+					<input type="button" onclick="location.href='./oauth2/authorization/reltree';" th:attr="value=#{label.loginWithGoogle}" class="unauthenticated" style="display: inline-block"/>
 					<button onclick="logout()" class="authenticated" style="display: none" th:utext="#{label.logout}"></button><br/>
 					<label for="dsource" th:utext="#{label.dsource}"></label>:&nbsp;
 					<input type="text" id="dsource" rel-modify-data/>
