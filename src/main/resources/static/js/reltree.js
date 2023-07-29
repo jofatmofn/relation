@@ -242,7 +242,7 @@ async function editEntityAttributes(e) {
 	var attributeValueVOList, rightBarElement, valueElement, attributeValueBlockElement, actionButtonElement, addButtonElement;
 	var person1Node, person2Node, retrieveRelationAttributesResponseVO,  person1GenderDVId, person2GenderDVId, person1ForPerson2SelectElement,  person2ForPerson2SelectElement;
 	var retrievePersonAttributesResponseVO, photoImageElement;
-	var person1AsPerRelationId, relationGroup;
+	var person1AsPerRelationId, relationGroup, isEditEnabled;
 	
 	if (highlightedEntity != undefined) {
 		highlightedEntity.color = DEFAULT_COLOR;
@@ -274,6 +274,7 @@ async function editEntityAttributes(e) {
 				photoImageElement.setAttribute("src", "data:image/jpg;base64," + retrievePersonAttributesResponseVO.photo);
 			}
 			attributeValueVOList = retrievePersonAttributesResponseVO.attributeValueVOList;
+			isEditEnabled = retrievePersonAttributesResponseVO.manageAccess;
 		}
 	}
 	else {
@@ -294,6 +295,7 @@ async function editEntityAttributes(e) {
 			}
 			return;
 		}
+		isEditEnabled = !isAppReadOnly;
 	}
 	
 	highlightedEntity.color = HIGHLIGHT_COLOR;
@@ -304,7 +306,7 @@ async function editEntityAttributes(e) {
 		attributeValueBlockElement = document.createElement("fieldset");
 		rightBarElement.appendChild(attributeValueBlockElement);
 		attributeValueBlockElement.appendChild(document.createTextNode(attributeValueVO.attributeName));
-		createAttributeBlock(attributeValueBlockElement, attributeValueVO, action);
+		createAttributeBlock(attributeValueBlockElement, attributeValueVO, action, isEditEnabled);
 	}
 	/* Mandatory attributes for new entity */
 	if (action == ACTION_SAVE && attributeValueVOList.length == 0) {
@@ -313,7 +315,7 @@ async function editEntityAttributes(e) {
 				attributeValueBlockElement = document.createElement("fieldset");
 				rightBarElement.appendChild(attributeValueBlockElement);
 				attributeValueBlockElement.appendChild(document.createTextNode(attributeDomainValueVO.value));
-				createAttributeBlock(attributeValueBlockElement, {attributeDvId: attributeDomainValueVO.id}, action);
+				createAttributeBlock(attributeValueBlockElement, {attributeDvId: attributeDomainValueVO.id}, action, isEditEnabled);
 			}
 		}
 	}
@@ -358,8 +360,8 @@ async function editEntityAttributes(e) {
 		}
 	}
 	
-	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">+</button>" +
-		"<button id='actionbutton'" + (action == ACTION_SAVE && isAppReadOnly ? " disabled" : "") + ">" + translator.getStr("label" + action) + "</button>" +
+	document.getElementById("sidebarbuttons").innerHTML = "<button id='addbutton'" + (action == ACTION_SAVE && !isEditEnabled ? " disabled" : "") + ">+</button>" +
+		"<button id='actionbutton'" + (action == ACTION_SAVE && !isEditEnabled ? " disabled" : "") + ">" + translator.getStr("label" + action) + "</button>" +
 		(action == ACTION_SEARCH ? "<input type='checkbox' id='isLenient'><label for='isLenient'>" + translator.getStr("labelIsLenient") + "</label>" : "");
 	if (action == ACTION_SAVE) {
 		if (isPersonNode) {
@@ -404,10 +406,10 @@ async function editEntityAttributes(e) {
 		attributeValueBlockElement.appendChild(selectElement);
 		if (isPersonNode && action == ACTION_SEARCH) {
 			selectElement.value = PERSON_ATTRIBUTE_DV_ID_FIRST_NAME;
-			createAttributeBlock(attributeValueBlockElement, {attributeDvId: PERSON_ATTRIBUTE_DV_ID_FIRST_NAME}, action);
+			createAttributeBlock(attributeValueBlockElement, {attributeDvId: PERSON_ATTRIBUTE_DV_ID_FIRST_NAME}, action, isEditEnabled);
 		}
 		else {
-			createAttributeBlock(attributeValueBlockElement, {attributeDvId: parseInt(selectElement.options[0].value)}, action);
+			createAttributeBlock(attributeValueBlockElement, {attributeDvId: parseInt(selectElement.options[0].value)}, action, isEditEnabled);
 		}
 		selectElement.onchange = function() {
 			var avbChildNodeList, skippedNodeCount, avbChildNode;
@@ -422,7 +424,7 @@ async function editEntityAttributes(e) {
 					skippedNodeCount = skippedNodeCount + 1;
 				}
 			}
-			createAttributeBlock(selectElement.parentElement, {attributeDvId: parseInt(selectElement.options[selectElement.selectedIndex].value)}, action);
+			createAttributeBlock(selectElement.parentElement, {attributeDvId: parseInt(selectElement.options[selectElement.selectedIndex].value)}, action, isEditEnabled);
 		};
 		
 	};
@@ -450,7 +452,7 @@ async function editEntityAttributes(e) {
 		var ind1, ind2, attributeValueNBlkList, searchedPersonId, saveAttributesResponseVO;
 		var toInsertAttributeValueDummyId, relationPerson1ForPerson2, relationPerson2ForPerson1, relationSubType;
 		var searchResultsWindowElement, searchResultsTableElement, searchCloseButtonElement, searchReturnButtonElement, searchResultsVO, searchResultsList, srInputElement, srRowNo, searchMessageElement;
-		var isTranslatable, personIdsList, photoInputElement, file, personSearchCriteriaVO, dsource;
+		var isTranslatable, personIdsList, photoInputElement, file, personSearchCriteriaVO, dsource, indexAdjustment;
 		
 		attributeValueVOList = [];
 		attributeVsValueListMap = new Map();
@@ -461,15 +463,17 @@ async function editEntityAttributes(e) {
 			inputElements = attributeValueBlkElement.querySelectorAll("input,select:not([name=attributenames])");
 			attributeDvId = parseInt(attributeValueBlkElement.getAttribute("attributedvid"));
 			attributeDomainValueVO = domainValueVOMap.get(attributeDvId);
+			indexAdjustment = 0;
 			if (action == ACTION_SAVE && document.getElementById("language").value != DEFAULT_LANGUAGE_DV_ID &&
 					attributeDomainValueVO.validationJsRegEx != null && attributeDomainValueVO.validationJsRegEx == TRANSLATABLE_REGEX) {
 				isTranslatable = true;
+				indexAdjustment++;
 			} else {
 				isTranslatable = false;
 			}
 			attributeValueVO = {attributeDvId: attributeDvId, id: null,
 				attributeValue: (inputElements[0].tagName == "INPUT" ? inputElements[0].value : inputElements[0].options[inputElements[0].selectedIndex].value),
-				translatedValue: (isTranslatable ? inputElements[1].value : null), valueAccurate: null, startDate: null, endDate: null};
+				translatedValue: (isTranslatable ? inputElements[1].value : null), valueAccurate: null, startDate: null, endDate: null, private: null};
 			if (action == ACTION_SAVE) {
 				if (attributeValueBlkElement.hasAttribute("attributevalueid")) {
 					attributeValueVO.id = parseInt(attributeValueBlkElement.getAttribute("attributevalueid"));
@@ -479,15 +483,17 @@ async function editEntityAttributes(e) {
 					attributeValueVO.id = toInsertAttributeValueDummyId;
 					attributeValueBlkElement.setAttribute("attributevalueid", toInsertAttributeValueDummyId);
 				}
-				attributeValueVO.valueAccurate = inputElements[(isTranslatable ? 2 : 1)].checked;
-				if (inputElements.length > (isTranslatable ? 3 : 2)) {
-					if (inputElements[(isTranslatable ? 3  : 2)].value != "") {
-						attributeValueVO.startDate = pikadayToIsoFormat(inputElements[(isTranslatable ? 3 : 2)].value);
+				attributeValueVO.valueAccurate = inputElements[1 + indexAdjustment].checked;
+				if (attributeDomainValueVO.repetitionType != FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED) {
+					if (inputElements[2 + indexAdjustment].value != "") {
+						attributeValueVO.startDate = pikadayToIsoFormat(inputElements[2 + indexAdjustment].value);
 					}
-					if (inputElements[(isTranslatable ? 4 : 3)].value != "") {
-						attributeValueVO.endDate = pikadayToIsoFormat(inputElements[(isTranslatable ? 4 : 3)].value);
+					if (inputElements[3 + indexAdjustment].value != "") {
+						attributeValueVO.endDate = pikadayToIsoFormat(inputElements[3 + indexAdjustment].value);
 					}
+					indexAdjustment = indexAdjustment + 2;
 				}
+				attributeValueVO.private = inputElements[2 + indexAdjustment].checked;
 			}
 			attributeValueVOList.push(attributeValueVO);
 			if (attributeVsValueListMap.has(attributeDvId)) {
@@ -615,7 +621,7 @@ async function editEntityAttributes(e) {
 					attributeValueBlkElement.setAttribute("attributevalueid", insertedAttributeValueId);
 				}
 				alert("Saved");
-				document.getElementById("deletebutton").removeAttribute("disabled");
+				// document.getElementById("deletebutton").removeAttribute("disabled");
 				if (isPersonNode && highlightedEntity.id == NEW_ENTITY_ID) {
 					s.graph.dropNode(NEW_ENTITY_ID);
 					s.graph.addNode({
@@ -783,8 +789,8 @@ function areOverlappingDates(startDate1Str, endDate1Str, startDate2Str, endDate2
 	return false;
 }
 
-function createAttributeBlock(attributeValueBlockElement, attributeValueVO, action) {
-	var valueElement, isAccurateElement, startDateElement, endDateElement;
+function createAttributeBlock(attributeValueBlockElement, attributeValueVO, action, isEditEnabled) {
+	var valueElement, isAccurateElement, startDateElement, endDateElement, isPrivateElement;
 	var startDatePicker, endDatePicker, attributeDomainValueVO;
 	var deleteBlockImageElement, regEx;
 	
@@ -798,7 +804,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	if (attributeValueVO.id != undefined) {
 		attributeValueBlockElement.setAttribute("attributevalueid", attributeValueVO.id);
 	}
-	if (action == ACTION_SAVE && isAppReadOnly) {
+	if (action == ACTION_SAVE && !isEditEnabled) {
 		attributeValueBlockElement.setAttribute("disabled", "");
 	}
 	else {
@@ -897,6 +903,16 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 		}
 	}
 	
+	attributeValueBlockElement.appendChild(document.createElement("br"));
+	
+	attributeValueBlockElement.appendChild(document.createTextNode(translator.getStr("labelIsPrivate") + ": "));
+	isPrivateElement = document.createElement("input");
+	attributeValueBlockElement.appendChild(isPrivateElement);
+	isPrivateElement.setAttribute("type","checkbox");
+	if (attributeValueVO.private != undefined && attributeValueVO.private) {
+		isPrivateElement.setAttribute("checked", "");
+	}
+	
 	if (attributeDomainValueVO.isInputAsAttribute) {
 		valueElement.removeAttribute("disabled");
 		isAccurateElement.removeAttribute("disabled");
@@ -904,6 +920,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 			startDateElement.removeAttribute("disabled");
 			endDateElement.removeAttribute("disabled");
 		}
+		isPrivateElement.removeAttribute("disabled");
 	}
 	else {
 		valueElement.setAttribute("disabled","");
@@ -912,6 +929,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 			startDateElement.setAttribute("disabled","");
 			endDateElement.setAttribute("disabled","");
 		}
+		isPrivateElement.setAttribute("disabled","");
 	}
 }
 

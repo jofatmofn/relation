@@ -1,11 +1,14 @@
 package org.sakuram.relation.spring;
 
+import java.util.stream.Stream;
+
 import javax.servlet.http.HttpSession;
 
 import org.apache.logging.log4j.LogManager;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.sakuram.relation.bean.AppUser;
 import org.sakuram.relation.bean.DomainValue;
 import org.sakuram.relation.bean.Tenant;
@@ -56,23 +59,31 @@ public class SecurityAspect {
 		return returnValueObject;
 	}
 
-	@Around("(execution(* org.sakuram.relation.controller.*Controller.save*(..)) || execution(* org.sakuram.relation.controller.*Controller.delete*(..)) || execution(* org.sakuram.relation.controller.*Controller.import*(..))) && args(httpSession,..)")
+	@Around("(execution(* org.sakuram.relation.controller.*.*(..)) && args(httpSession,..))")
 	public Object identifyUser(ProceedingJoinPoint proceedingJoinPoint, HttpSession httpSession) throws Throwable {
 		Object returnValueObject;
     	Long appUserId;
     	AppUser appUser;
+    	boolean isWriteAccessRequired;
+    	MethodSignature callingMethodSignature;
 		
-		if (httpSession == null || httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID) == null) {
+    	callingMethodSignature = (MethodSignature) proceedingJoinPoint.getSignature();
+    	isWriteAccessRequired = Stream.of("create", "save", "delete", "import").anyMatch(s -> callingMethodSignature.getMethod().getName().startsWith(s));
+		if (isWriteAccessRequired && (httpSession == null || httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID) == null)) {
 			throw new AppException("Establish yourself by logging-in to the system", null);
 		}
-		appUserId = (Long)(httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID));
-		SecurityContext.setCurrentUserId(appUserId);
-    	appUser = appUserRepository.findById(appUserId)
-    			.orElseThrow(() -> new AppException("Invalid User Id " + appUserId, null));
-    	SecurityContext.setCurrentUser(appUser);
-		LogManager.getLogger().debug("Established User: " + appUserId);
-		if (projectUserService.isAppReadOnly(SecurityContext.getCurrentTenant(), appUser)) {
-			throw new AppException("Hacking attempt. You do not have privilege to perform this operation", null);
+		if (httpSession != null && httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID) != null) {
+			appUserId = (Long)(httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID));
+			SecurityContext.setCurrentUserId(appUserId);
+	    	appUser = appUserRepository.findById(appUserId)
+	    			.orElseThrow(() -> new AppException("Invalid User Id " + appUserId, null));
+	    	SecurityContext.setCurrentUser(appUser);
+			LogManager.getLogger().debug("User for PersonRelationController: " + appUserId);
+			if (isWriteAccessRequired && projectUserService.isAppReadOnly(SecurityContext.getCurrentTenant(), appUser) &&
+					!callingMethodSignature.getDeclaringTypeName().endsWith("PersonRelationController") &&
+					!callingMethodSignature.getMethod().getName().equals("savePersonAttributes")) {
+				throw new AppException("Hacking attempt. You do not have privilege to perform this operation", null);
+			}
 		}
 		
 		returnValueObject = proceedingJoinPoint.proceed();

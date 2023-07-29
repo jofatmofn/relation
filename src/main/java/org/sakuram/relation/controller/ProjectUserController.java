@@ -34,7 +34,7 @@ public class ProjectUserController {
     @RequestMapping(value = "/preLogout", method = RequestMethod.POST)
     public void preLogout(HttpSession httpSession, @AuthenticationPrincipal OAuth2User principal) {
     	httpSession.removeAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID);
-		LogManager.getLogger().debug("Logout: " + principal.getAttribute("name"));
+		// LogManager.getLogger().debug("Logout: " + principal.getAttribute("name"));	principal will be null if the user has already been timed-out by OAUTH server
     	return;
     }
     
