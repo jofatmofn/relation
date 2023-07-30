@@ -275,6 +275,8 @@ async function editEntityAttributes(e) {
 			}
 			attributeValueVOList = retrievePersonAttributesResponseVO.attributeValueVOList;
 			isEditEnabled = retrievePersonAttributesResponseVO.manageAccess;
+		} else {
+			isEditEnabled = true; // New Person
 		}
 	}
 	else {
@@ -493,7 +495,7 @@ async function editEntityAttributes(e) {
 					}
 					indexAdjustment = indexAdjustment + 2;
 				}
-				attributeValueVO.private = inputElements[2 + indexAdjustment].checked;
+				attributeValueVO.isPrivate = inputElements[2 + indexAdjustment].checked;
 			}
 			attributeValueVOList.push(attributeValueVO);
 			if (attributeVsValueListMap.has(attributeDvId)) {
@@ -909,20 +911,15 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	isPrivateElement = document.createElement("input");
 	attributeValueBlockElement.appendChild(isPrivateElement);
 	isPrivateElement.setAttribute("type","checkbox");
-	if (attributeValueVO.private != undefined && attributeValueVO.private) {
+	if (attributeDomainValueVO.privacyRestrictionType != FLAG_ATTRIBUTE_PRIVACY_RESTRICTION_INDIVIDUAL_CHOICE) {
+		isPrivateElement.setAttribute("disabled","");
+	}
+	if (attributeDomainValueVO.privacyRestrictionType == FLAG_ATTRIBUTE_PRIVACY_RESTRICTION_PRIVATE_ONLY ||
+			attributeDomainValueVO.privacyRestrictionType == FLAG_ATTRIBUTE_PRIVACY_RESTRICTION_INDIVIDUAL_CHOICE && attributeValueVO.isPrivate != undefined && attributeValueVO.isPrivate) {
 		isPrivateElement.setAttribute("checked", "");
 	}
 	
-	if (attributeDomainValueVO.isInputAsAttribute) {
-		valueElement.removeAttribute("disabled");
-		isAccurateElement.removeAttribute("disabled");
-		if (attributeDomainValueVO.repetitionType != FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED) {
-			startDateElement.removeAttribute("disabled");
-			endDateElement.removeAttribute("disabled");
-		}
-		isPrivateElement.removeAttribute("disabled");
-	}
-	else {
+	if (!attributeDomainValueVO.isInputAsAttribute) {
 		valueElement.setAttribute("disabled","");
 		isAccurateElement.setAttribute("disabled","");
 		if (attributeDomainValueVO.repetitionType != FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED) {
