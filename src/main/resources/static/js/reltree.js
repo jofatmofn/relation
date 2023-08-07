@@ -475,7 +475,7 @@ async function editEntityAttributes(e) {
 			}
 			attributeValueVO = {attributeDvId: attributeDvId, id: null,
 				attributeValue: (inputElements[0].tagName == "INPUT" ? inputElements[0].value : inputElements[0].options[inputElements[0].selectedIndex].value),
-				translatedValue: (isTranslatable ? inputElements[1].value : null), valueAccurate: null, startDate: null, endDate: null, private: null};
+				translatedValue: (isTranslatable ? inputElements[1].value : null), valueApproximate: null, startDate: null, endDate: null, private: null};
 			if (action == ACTION_SAVE) {
 				if (attributeValueBlkElement.hasAttribute("attributevalueid")) {
 					attributeValueVO.id = parseInt(attributeValueBlkElement.getAttribute("attributevalueid"));
@@ -485,7 +485,7 @@ async function editEntityAttributes(e) {
 					attributeValueVO.id = toInsertAttributeValueDummyId;
 					attributeValueBlkElement.setAttribute("attributevalueid", toInsertAttributeValueDummyId);
 				}
-				attributeValueVO.valueAccurate = inputElements[1 + indexAdjustment].checked;
+				attributeValueVO.valueApproximate = inputElements[1 + indexAdjustment].checked;
 				if (attributeDomainValueVO.repetitionType != FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED) {
 					if (inputElements[2 + indexAdjustment].value != "") {
 						attributeValueVO.startDate = pikadayToIsoFormat(inputElements[2 + indexAdjustment].value);
@@ -792,7 +792,7 @@ function areOverlappingDates(startDate1Str, endDate1Str, startDate2Str, endDate2
 }
 
 function createAttributeBlock(attributeValueBlockElement, attributeValueVO, action, isEditEnabled) {
-	var valueElement, isAccurateElement, startDateElement, endDateElement, isPrivateElement;
+	var valueElement, isApproximateElement, startDateElement, endDateElement, isPrivateElement;
 	var startDatePicker, endDatePicker, attributeDomainValueVO;
 	var deleteBlockImageElement, regEx;
 	
@@ -871,12 +871,12 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	
 	attributeValueBlockElement.appendChild(document.createElement("br"));
 	
-	attributeValueBlockElement.appendChild(document.createTextNode(translator.getStr("labelIsAccurate") + ": "));
-	isAccurateElement = document.createElement("input");
-	attributeValueBlockElement.appendChild(isAccurateElement);
-	isAccurateElement.setAttribute("type","checkbox");
-	if (attributeValueVO.valueAccurate != undefined && attributeValueVO.valueAccurate) {
-		isAccurateElement.setAttribute("checked", "");
+	attributeValueBlockElement.appendChild(document.createTextNode(translator.getStr("labelIsApproximate") + ": "));
+	isApproximateElement = document.createElement("input");
+	attributeValueBlockElement.appendChild(isApproximateElement);
+	isApproximateElement.setAttribute("type","checkbox");
+	if (attributeValueVO.valueApproximate != undefined && attributeValueVO.valueApproximate) {
+		isApproximateElement.setAttribute("checked", "");
 	}
 	
 	if (attributeDomainValueVO.repetitionType != FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED) {
@@ -921,7 +921,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	
 	if (!attributeDomainValueVO.isInputAsAttribute) {
 		valueElement.setAttribute("disabled","");
-		isAccurateElement.setAttribute("disabled","");
+		isApproximateElement.setAttribute("disabled","");
 		if (attributeDomainValueVO.repetitionType != FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED) {
 			startDateElement.setAttribute("disabled","");
 			endDateElement.setAttribute("disabled","");
