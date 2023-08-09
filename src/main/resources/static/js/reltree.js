@@ -229,7 +229,7 @@ async function retrieveAppStartValues() {
 	
 	paSearchXtraOptions = [];
 	ind = 0;
-	for (label of ["labelPersonId", "labelParents", "labelSpouses", "labelChildren"]) {
+	for (label of ["labelPersonId", "labelParents", "labelSpouses", "labelChildren", "labelSiblings"]) {
 		optionElement = document.createElement("option");
 		optionElement.setAttribute("value", --ind);
 		optionElement.appendChild(document.createTextNode(translator.getStr(label)));
