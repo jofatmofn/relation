@@ -475,7 +475,7 @@ async function editEntityAttributes(e) {
 			}
 			attributeValueVO = {attributeDvId: attributeDvId, id: null,
 				attributeValue: (inputElements[0].tagName == "INPUT" ? inputElements[0].value : inputElements[0].options[inputElements[0].selectedIndex].value),
-				translatedValue: (isTranslatable ? inputElements[1].value : null), valueApproximate: null, startDate: null, endDate: null, private: null};
+				translatedValue: (isTranslatable ? inputElements[1].value : null), valueApproximate: null, startDate: null, endDate: null, private: null, maybeNotRegistered: null};
 			if (action == ACTION_SAVE) {
 				if (attributeValueBlkElement.hasAttribute("attributevalueid")) {
 					attributeValueVO.id = parseInt(attributeValueBlkElement.getAttribute("attributevalueid"));
@@ -496,6 +496,8 @@ async function editEntityAttributes(e) {
 					indexAdjustment = indexAdjustment + 2;
 				}
 				attributeValueVO.isPrivate = inputElements[2 + indexAdjustment].checked;
+			} else {
+				attributeValueVO.maybeNotRegistered = inputElements[1].checked;
 			}
 			attributeValueVOList.push(attributeValueVO);
 			if (attributeVsValueListMap.has(attributeDvId)) {
@@ -792,7 +794,7 @@ function areOverlappingDates(startDate1Str, endDate1Str, startDate2Str, endDate2
 }
 
 function createAttributeBlock(attributeValueBlockElement, attributeValueVO, action, isEditEnabled) {
-	var valueElement, isApproximateElement, startDateElement, endDateElement, isPrivateElement;
+	var valueElement, isApproximateElement, startDateElement, endDateElement, isPrivateElement, isMaybeNotRegisteredElement;
 	var startDatePicker, endDatePicker, attributeDomainValueVO;
 	var deleteBlockImageElement, regEx;
 	
@@ -866,6 +868,13 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	}
 
 	if (action != ACTION_SAVE) {
+		attributeValueBlockElement.appendChild(document.createElement("br"));
+		
+		attributeValueBlockElement.appendChild(document.createTextNode(translator.getStr("labelIsMaybeNotRegistered") + ": "));
+		isMaybeNotRegisteredElement = document.createElement("input");
+		attributeValueBlockElement.appendChild(isMaybeNotRegisteredElement);
+		isMaybeNotRegisteredElement.setAttribute("type","checkbox");
+	
 		return;
 	}
 	
