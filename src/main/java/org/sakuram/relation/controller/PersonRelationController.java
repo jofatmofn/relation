@@ -157,13 +157,13 @@ public class PersonRelationController {
     }
 
     @RequestMapping(value = "/importPrData", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void importPrData(HttpSession httpSession, HttpServletResponse response, @RequestParam("sourceId") Long sourceId, @RequestParam("file") MultipartFile file) throws IOException {
+    public void importPrData(HttpSession httpSession, HttpServletResponse response, @RequestParam("function") String function, @RequestParam("sourceId") Long sourceId, @RequestParam("file") MultipartFile file) throws IOException {
     	List<List<Object>> recordList;
     	CSVParser csvParser;
     	
 		csvParser = new CSVParser(new BufferedReader(new InputStreamReader(file.getInputStream(), "UTF-8")), CSVFormat.DEFAULT);
 		List<CSVRecord> inRecordsList = csvParser.getRecords();
-    	recordList = personRelationService.importPrData(sourceId, inRecordsList);
+    	recordList = personRelationService.importPrData(function, sourceId, inRecordsList);
     	
 		try (ServletOutputStream servletOutputStream = response.getOutputStream();
 				CSVPrinter csvPrinter = new CSVPrinter(new BufferedWriter(new OutputStreamWriter(servletOutputStream, StandardCharsets.UTF_8)), CSVFormat.DEFAULT)) {

@@ -1333,7 +1333,12 @@ async function uploadPrData() {
 	document.getElementById("sidebartitle").textContent = translator.getStr("labelPersonsNRelationsUpload");
 
 	rightBarElement = document.getElementById("sidebarbody");
-	rightBarElement.innerHTML = "<input id='pRDataCsvInput' type='file' accept='.csv' />";
+	rightBarElement.innerHTML = `
+					<input type="radio" id="ufCheckDuplicates" name="uploadFunction" value="ufCheckDuplicates" checked/>
+					<label for="ufCheckDuplicates">${translator.getStr("labelUploadFunctionCheckDuplicates")}</label><br/>
+					<input type="radio" id="ufStore" name="uploadFunction" value="ufStore"/>
+					<label for="ufStore">${translator.getStr("labelUploadFunctionStore")}</label><br/>
+					<input id='pRDataCsvInput' type='file' accept='.csv' />`
 	
 	actionButtonElement = document.getElementById("actionbutton");
 	actionButtonElement.onclick = async function() {
@@ -1353,6 +1358,7 @@ async function uploadPrData() {
 						return;
 					}
 					let formData = new FormData();
+					formData.append("function", document.querySelector('input[type="radio"][name="uploadFunction"]:checked').value);
 					dsource = sourceOfData();
 					if (dsource == "error") {
 						return;
