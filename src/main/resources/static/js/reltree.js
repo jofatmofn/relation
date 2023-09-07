@@ -218,6 +218,9 @@ async function retrieveAppStartValues() {
 				selectElementMap.set(domainValueVO.category, selectElement);
 			}
 			selectElement.appendChild(optionElement);
+			if (domainValueVO.category == CATEGORY_BOOLEAN && domainValueVO.value == DEFAULT_BOOLEAN) { // TODO: Map of Category Vs. Default Value in DB or constants
+				optionElement.setAttribute("selected", "");
+			}
 		}
 	}
 
@@ -228,11 +231,11 @@ async function retrieveAppStartValues() {
 	translator = new Language(domainValueVOMap.get(retrieveAppStartValuesResponseVO.inUseLanguage).languageCode);
 	
 	paSearchXtraOptions = [];
-	ind = 0;
-	for (label of ["labelPersonId", "labelParents", "labelSpouses", "labelChildren", "labelSiblings"]) {
+	for (let domainValueVO of ADDITIONAL_PERSON_ATTRIBUTES_ARRAY) {
+		domainValueVOMap.set(domainValueVO.id, domainValueVO);
 		optionElement = document.createElement("option");
-		optionElement.setAttribute("value", --ind);
-		optionElement.appendChild(document.createTextNode(translator.getStr(label)));
+		optionElement.setAttribute("value", domainValueVO.id);
+		optionElement.appendChild(document.createTextNode(translator.getStr(domainValueVO.value)));
 		paSearchXtraOptions.push(optionElement);
 	}
 
@@ -798,12 +801,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 	var startDatePicker, endDatePicker, attributeDomainValueVO;
 	var deleteBlockImageElement, regEx;
 	
-	if (attributeValueVO.attributeDvId > 0) {
-		attributeDomainValueVO = domainValueVOMap.get(attributeValueVO.attributeDvId);
-	}
-	else {
-		attributeDomainValueVO = {attributeDomain: ""}
-	}
+	attributeDomainValueVO = domainValueVOMap.get(attributeValueVO.attributeDvId);
 	attributeValueBlockElement.setAttribute("attributedvid", attributeValueVO.attributeDvId);
 	if (attributeValueVO.id != undefined) {
 		attributeValueBlockElement.setAttribute("attributevalueid", attributeValueVO.id);

@@ -6,6 +6,7 @@ const CATEGORY_RELATION_SUB_TYPE = "RelSubType";
 const CATEGORY_PERSON_ATTRIBUTE = "PersAttribute";
 const CATEGORY_RELATION_ATTRIBUTE = "RelAttribute";
 const CATEGORY_LANGUAGE = "Language";
+const CATEGORY_BOOLEAN = "Bool";
 
 const FLAG_ATTRIBUTE_REPETITION_NOT_ALLOWED = "NA";
 const FLAG_ATTRIBUTE_REPETITION_OVERLAPPING_ALLOWED = "OA";
@@ -48,6 +49,16 @@ const RELATION_GROUP_SPOUSE = "Sp"
 const TRANSLATABLE_REGEX = "\\p{L}|[ \\u0BBE-\\u0BCD]";
 const DEFAULT_LANGUAGE_DV_ID = 336;
 const DEFAULT_LANGUAGE_CODE = "eng";
+const DEFAULT_BOOLEAN = "True";
+
+const ADDITIONAL_PERSON_ATTRIBUTES_ARRAY = [
+  {id: -1, value: "labelPersonId", attributeDomain: "", validationJsRegEx: "\\d"},
+  {id: -2, value: "labelParents", attributeDomain: "", validationJsRegEx: TRANSLATABLE_REGEX},
+  {id: -3, value: "labelSpouses", attributeDomain: "", validationJsRegEx: TRANSLATABLE_REGEX},
+  {id: -4, value: "labelChildren", attributeDomain: "", validationJsRegEx: TRANSLATABLE_REGEX},
+  {id: -5, value: "labelSiblings", attributeDomain: "", validationJsRegEx: TRANSLATABLE_REGEX},
+];
+
 
 var eng = {
 	labelPersonId: "Person Id",
