@@ -91,9 +91,10 @@ async function drawGraph() {
 						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
 			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "display") {
 					s.graph.read(await invokeService("basic/displayTree", {startPersonId : e.data.node.id}), timeout_ms=0);
-			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "export") {
+			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value.startsWith("export")) {
 				data = await invokeService("basic/exportTree", {startPersonId : e.data.node.id, 
-					maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}, timeout_ms=0);
+					maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value),
+					exportTreeType: document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value}, timeout_ms=0);
 				// https://stackoverflow.com/questions/46638343/download-csv-file-as-response-on-ajax-request
 				const downloadData = (function() {
 				    const a = document.createElement("a");
@@ -111,7 +112,7 @@ async function drawGraph() {
 				    };
 				}());
 
-				downloadData(data, "tree.csv");
+				downloadData(data, document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value + ".csv");
 			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "roots") {
 				s.graph.read(await invokeService("basic/retrieveRoots", {startPersonId : e.data.node.id}));
 			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "parceners") {

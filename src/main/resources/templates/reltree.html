@@ -83,8 +83,10 @@
 					<br/>
 					&emsp;<input type="radio" id="displayTree" name="cfgPersonDblClk" value="display" onclick="enDisableDepth(this);"/>
 					<label for="displayTree" th:utext="#{label.view} + '-2'"></label><br/>
-					&emsp;<input type="radio" id="exportTree" name="cfgPersonDblClk" value="export" onclick="enDisableDepth(this);"/>
-					<label for="exportTree" th:utext="#{label.export}"></label><br/>
+					&emsp;<input type="radio" id="exportTree" name="cfgPersonDblClk" value="exportTree" onclick="enDisableDepth(this);"/>
+					<label for="exportTree" th:utext="#{label.exportTree}"></label><br/>
+					&emsp;<input type="radio" id="exportFullTree" name="cfgPersonDblClk" value="exportFullTree" onclick="enDisableDepth(this);"/>
+					<label for="exportFullTree" th:utext="#{label.exportFullTree}"></label><br/>
 					<input type="radio" id="roots" name="cfgPersonDblClk" value="roots" onclick="enDisableDepth(this);"/>
 					<label for="roots" th:utext="#{label.roots}"></label><br/>
 					<input type="radio" id="parceners" name="cfgPersonDblClk" value="parceners" onclick="enDisableDepth(this);"/>

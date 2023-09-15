@@ -74,7 +74,11 @@ public class PersonRelationController {
     	List<List<Object>> recordList;
 		ServletOutputStream servletOutputStream;
 		
-    	recordList = personRelationService.exportTree(retrieveRelationsRequestVO);
+		if (retrieveRelationsRequestVO.getExportTreeType() != null && retrieveRelationsRequestVO.getExportTreeType().equals(Constants.EXPORT_TREE_TYPE_FULL)) {
+			recordList = personRelationService.exportFullTree(retrieveRelationsRequestVO);
+		} else {
+			recordList = personRelationService.exportTree(retrieveRelationsRequestVO);
+		}
     	
 		servletOutputStream = response.getOutputStream();
     	try (CSVPrinter csvPrinter = new CSVPrinter(new BufferedWriter(new OutputStreamWriter(servletOutputStream, StandardCharsets.UTF_8)), CSVFormat.DEFAULT)) {
