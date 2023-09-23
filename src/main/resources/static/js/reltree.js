@@ -471,7 +471,7 @@ async function editEntityAttributes(e) {
 			attributeDomainValueVO = domainValueVOMap.get(attributeDvId);
 			indexAdjustment = 0;
 			if (action == ACTION_SAVE && document.getElementById("language").value != DEFAULT_LANGUAGE_DV_ID &&
-					attributeDomainValueVO.validationJsRegEx != null && attributeDomainValueVO.validationJsRegEx == TRANSLATABLE_REGEX) {
+					attributeDomainValueVO.isScriptConvertible != null && attributeDomainValueVO.isScriptConvertible) {
 				isTranslatable = true;
 				indexAdjustment++;
 			} else {
@@ -545,7 +545,7 @@ async function editEntityAttributes(e) {
 						return;
 					}
 					if (document.getElementById("language").value != DEFAULT_LANGUAGE_DV_ID &&
-							attributeDomainValueVO.validationJsRegEx != null && attributeDomainValueVO.validationJsRegEx == TRANSLATABLE_REGEX &&
+							attributeDomainValueVO.isScriptConvertible != null && attributeDomainValueVO.isScriptConvertible &&
 							value.attributeValueVO.translatedValue == "") {
 						value.attributeValueBlkElement.className = "attrValError";
 						alert("Blank is not a valid translation");
@@ -833,7 +833,7 @@ function createAttributeBlock(attributeValueBlockElement, attributeValueVO, acti
 		var loopInd, isTranslatable;
 		
 		if (action == ACTION_SAVE && document.getElementById("language").value != DEFAULT_LANGUAGE_DV_ID &&
-				attributeDomainValueVO.validationJsRegEx != null && attributeDomainValueVO.validationJsRegEx == TRANSLATABLE_REGEX) {
+				attributeDomainValueVO.isScriptConvertible != null && attributeDomainValueVO.isScriptConvertible) {
 			isTranslatable = true;
 		} else {
 			isTranslatable = false;
