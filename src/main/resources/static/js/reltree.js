@@ -84,40 +84,7 @@ async function drawGraph() {
 		doubleClick = 2;
 		if (e.data.node.id != NEW_ENTITY_ID && e.data.node.id != SEARCH_ENTITY_ID) {
 			s.graph.clear();
-			if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "drel") {
-				s.graph.read(await invokeService("basic/retrieveRelations", {startPersonId : e.data.node.id}));
-			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "view") {
-					s.graph.read(await invokeService("basic/retrieveTree", {startPersonId : e.data.node.id, 
-						maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
-			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "display") {
-					s.graph.read(await invokeService("basic/displayTree", {startPersonId : e.data.node.id}), timeout_ms=0);
-			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value.startsWith("export")) {
-				data = await invokeService("basic/exportTree", {startPersonId : e.data.node.id, 
-					maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value),
-					exportTreeType: document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value}, timeout_ms=0);
-				// https://stackoverflow.com/questions/46638343/download-csv-file-as-response-on-ajax-request
-				const downloadData = (function() {
-				    const a = document.createElement("a");
-				    document.body.appendChild(a);
-				    a.style = "display: none";
-				    return function (data, fileName) {
-				        const blob = new Blob([data], {type: "octet/stream"}),
-				            url = window.URL.createObjectURL(blob);
-				        a.href = url;
-				        a.download = fileName;
-				        a.click();
-				            setTimeout(function() {
-				                window.URL.revokeObjectURL(url);
-				            }, 100);
-				    };
-				}());
-
-				downloadData(data, document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value + ".csv");
-			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "roots") {
-				s.graph.read(await invokeService("basic/retrieveRoots", {startPersonId : e.data.node.id}));
-			} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "parceners") {
-				s.graph.read(await invokeService("basic/retrieveParceners", {startPersonId : e.data.node.id}));
-			}
+			await callBackendAndPopulateGraph(e.data.node.id);
 			s.refresh();
 		}
 		clearSidebar();
@@ -162,6 +129,43 @@ async function drawGraph() {
 	}
 	enableDisableRWFunctions();
 
+}
+
+async function callBackendAndPopulateGraph(personId) {
+	if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "drel") {
+		s.graph.read(await invokeService("basic/retrieveRelations", {startPersonId : personId}));
+	} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "view") {
+			s.graph.read(await invokeService("basic/retrieveTree", {startPersonId : personId,
+				maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value)}));
+	} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "display") {
+			s.graph.read(await invokeService("basic/displayTree", {startPersonId : personId}), timeout_ms=0);
+	} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value.startsWith("export")) {
+		data = await invokeService("basic/exportTree", {startPersonId : personId,
+			maxDepth : parseInt(document.getElementById("depth").options[document.getElementById("depth").selectedIndex].value),
+			exportTreeType: document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value}, timeout_ms=0);
+		// https://stackoverflow.com/questions/46638343/download-csv-file-as-response-on-ajax-request
+		const downloadData = (function() {
+		    const a = document.createElement("a");
+		    document.body.appendChild(a);
+		    a.style = "display: none";
+		    return function (data, fileName) {
+		        const blob = new Blob([data], {type: "octet/stream"}),
+		            url = window.URL.createObjectURL(blob);
+		        a.href = url;
+		        a.download = fileName;
+		        a.click();
+		            setTimeout(function() {
+		                window.URL.revokeObjectURL(url);
+		            }, 100);
+		    };
+		}());
+
+		downloadData(data, document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value + ".csv");
+	} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "roots") {
+		s.graph.read(await invokeService("basic/retrieveRoots", {startPersonId : personId}));
+	} else if (document.querySelector('input[type="radio"][name="cfgPersonDblClk"]:checked').value == "parceners") {
+		s.graph.read(await invokeService("basic/retrieveParceners", {startPersonId : personId}));
+	}
 }
 
 async function retrieveAppStartValues() {
