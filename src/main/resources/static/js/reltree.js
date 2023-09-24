@@ -415,8 +415,8 @@ async function editEntityAttributes(e) {
 		}
 		attributeValueBlockElement.appendChild(selectElement);
 		if (isPersonNode && action == ACTION_SEARCH) {
-			selectElement.value = PERSON_ATTRIBUTE_DV_ID_FIRST_NAME;
-			createAttributeBlock(attributeValueBlockElement, {attributeDvId: PERSON_ATTRIBUTE_DV_ID_FIRST_NAME}, action, isEditEnabled);
+			selectElement.value = PERSON_ATTRIBUTE_DV_ID_ANY_NAME;
+			createAttributeBlock(attributeValueBlockElement, {attributeDvId: PERSON_ATTRIBUTE_DV_ID_ANY_NAME}, action, isEditEnabled);
 		}
 		else {
 			createAttributeBlock(attributeValueBlockElement, {attributeDvId: parseInt(selectElement.options[0].value)}, action, isEditEnabled);

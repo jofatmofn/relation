@@ -22,6 +22,7 @@ const NEW_ENTITY_ID = "-1";
 const SEARCH_ENTITY_ID = "-2";
 
 const PERSON_ATTRIBUTE_DV_ID_FIRST_NAME = 20;
+const PERSON_ATTRIBUTE_DV_ID_ANY_NAME = -6;
 const RELATION_ATTRIBUTE_DV_ID_PERSON1_FOR_PERSON2 = 34;
 const RELATION_ATTRIBUTE_DV_ID_PERSON2_FOR_PERSON1 = 35;
 const RELATION_ATTRIBUTE_DV_ID_RELATION_SUB_TYPE = 36;
@@ -57,6 +58,7 @@ const ADDITIONAL_PERSON_ATTRIBUTES_ARRAY = [
   {id: -3, value: "labelSpouses", attributeDomain: "", validationJsRegEx: TRANSLATABLE_REGEX},
   {id: -4, value: "labelChildren", attributeDomain: "", validationJsRegEx: TRANSLATABLE_REGEX},
   {id: -5, value: "labelSiblings", attributeDomain: "", validationJsRegEx: TRANSLATABLE_REGEX},
+  {id: -6, value: "labelAnyName", attributeDomain: "", validationJsRegEx: TRANSLATABLE_REGEX},
 ];
 
 
@@ -66,6 +68,7 @@ var eng = {
 	labelSpouses: "Spouses",
 	labelChildren: "Children",
 	labelSiblings: "Siblings",
+	labelAnyName: "Any Name",
 	labelDetails: "Details",
 	labelNewPerson: "new person",
 	labelDetailsOfRelation: "Details of relation between",
@@ -113,6 +116,7 @@ var tam = {
 	labelSpouses: "வாழ்க்கைத் துணைவர்கள்",
 	labelChildren: "குழந்தைகள்",
 	labelSiblings: "உடன்பிறந்தவர்கள்",
+	labelAnyName: "ஏதாவதொரு பெயர்",
 	labelDetails: "விபரங்கள்",
 	labelNewPerson: "புது நபர்",
 	labelDetailsOfRelation: "உறவின் விவரங்கள்",
