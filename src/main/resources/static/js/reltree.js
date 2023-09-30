@@ -1114,27 +1114,29 @@ async function ascertainRelation() {
 	actionButtonElement = document.getElementById("actionbutton");
 	actionButtonElement.onclick = async function() {
 		var person1Id, person2Id, relationId, person1Element, person2Element;
-		var exclrelElement, excludeRelationIdCsv;
+		var exclrelElement, excludeRelationIdCsv, exclPersElement, excludePersonIdCsv;
 		person1Element = document.getElementById("person1");
 		person2Element = document.getElementById("person2");
 		exclrelElement = document.getElementById("exclrelids");
+		exclPersElement = document.getElementById("exclpersids");
 		person1Id = parseInt(person1Element.options[person1Element.selectedIndex].value);
 		person2Id = parseInt(person2Element.options[person2Element.selectedIndex].value);
 		excludeRelationIdCsv = exclrelElement.value;
+		excludePersonIdCsv = exclPersElement.value;
 		if (person1Id == person2Id) {
 			alert("Same person cannot be part of a relation");
 			return;
 		}
 		s.graph.clear();
-		s.graph.read(await invokeService("algo/retrieveRelationPath", {person1Id: person1Id, person2Id: person2Id, excludeRelationIdCsv: excludeRelationIdCsv}, timeout_ms=50000));
+		s.graph.read(await invokeService("algo/retrieveRelationPath", {person1Id: person1Id, person2Id: person2Id, excludeRelationIdCsv: excludeRelationIdCsv, excludePersonIdCsv: excludePersonIdCsv}, timeout_ms=50000));
 		s.refresh();
-		await getPersonsPair(person1Id, person2Id, excludeRelationIdCsv);
+		await getPersonsPair(person1Id, person2Id, excludeRelationIdCsv, excludePersonIdCsv);
 	}
 }
 
-async function getPersonsPair(person1Id, person2Id, excludeRelationIdCsv) {
+async function getPersonsPair(person1Id, person2Id, excludeRelationIdCsv, excludePersonIdCsv) {
 	var rightBarElement, person1Element, person2Element;
-	var exclrelElement;
+	var exclrelElement, exclPersElement;
 
 	await createPersonDropdown();
 	rightBarElement = document.getElementById("sidebarbody");
@@ -1166,6 +1168,16 @@ async function getPersonsPair(person1Id, person2Id, excludeRelationIdCsv) {
 		exclrelElement.value = excludeRelationIdCsv;
 	}
 	rightBarElement.appendChild(exclrelElement);
+	
+	rightBarElement.appendChild(document.createElement("br"));
+	rightBarElement.appendChild(document.createTextNode(translator.getStr("labelExcludePersons") + ": "));
+	exclPersElement = document.createElement("input");
+	exclPersElement.setAttribute("type","text");
+	exclPersElement.setAttribute("id", "exclpersids");
+	if (excludePersonIdCsv != null) {
+		exclPersElement.value = excludePersonIdCsv;
+	}
+	rightBarElement.appendChild(exclPersElement);
 	
 }
 
