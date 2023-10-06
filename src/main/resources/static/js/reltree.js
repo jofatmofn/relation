@@ -16,16 +16,24 @@ async function drawGraph() {
 			location.reload();
 		}
 		else {
-			alert(event.reason);
-			switch (event.reason) {
-				case "Establish Project before using the system":
-					document.getElementById("project").value = 	"";
-					break;
-				case "Establish yourself by logging-in to the system":
-					loginLogout("");
-					isAppReadOnly=true;
-					enableDisableRWFunctions();
-					break;
+			if (event.reason == "Error: Internal Server Error. Message: No message available") {
+				alert("Internal Server Error. Report to SysAdmin.")
+			} else {
+				alert(event.reason);
+				switch (event.reason) {
+					case "Establish Project before using the system":
+						// document.getElementById("project").value = 	""; Let the last used value remain so that the user can just click on Switch to re-establish the session
+						break;
+					case "Establish yourself by logging-in to the system":
+						loginLogout("");
+						isAppReadOnly=true;
+						enableDisableRWFunctions();
+						break;
+					default:
+						if (event.reason.startsWith("Invalid Person Id")) {	// TODO: To be made more generic
+							clearSidebar();
+						}
+				}
 			}
 		}
 	});
@@ -190,6 +198,7 @@ async function retrieveAppStartValues() {
 	selectElementMap = new Map();
 	paDomainValueVOList = [];
 	raDomainValueVOList = [];
+	paSearchXtraOptions = [];
 	for (let domainValueVO of domainValueVOList) {
 		domainValueVOMap.set(domainValueVO.id, domainValueVO);
 		optionElement = document.createElement("option");
@@ -200,6 +209,8 @@ async function retrieveAppStartValues() {
 				paSelectElement.appendChild(optionElement);
 				paDomainValueVOList.push(domainValueVO);
 			}
+		} else 	if (domainValueVO.category == CATEGORY_ADDITIONAL_PERSON_ATTRIBUTE) {
+			paSearchXtraOptions.push(optionElement);
 		}
 		else if (domainValueVO.category == CATEGORY_RELATION_ATTRIBUTE) {
 			if (domainValueVO.isInputAsAttribute) {
@@ -235,15 +246,6 @@ async function retrieveAppStartValues() {
 	languageSelectElement.value = retrieveAppStartValuesResponseVO.inUseLanguage;
 	translator = new Language(domainValueVOMap.get(retrieveAppStartValuesResponseVO.inUseLanguage).languageCode);
 	
-	paSearchXtraOptions = [];
-	for (let domainValueVO of ADDITIONAL_PERSON_ATTRIBUTES_ARRAY) {
-		domainValueVOMap.set(domainValueVO.id, domainValueVO);
-		optionElement = document.createElement("option");
-		optionElement.setAttribute("value", domainValueVO.id);
-		optionElement.appendChild(document.createTextNode(translator.getStr(domainValueVO.value)));
-		paSearchXtraOptions.push(optionElement);
-	}
-
 }
 
 async function editEntityAttributes(e) {
