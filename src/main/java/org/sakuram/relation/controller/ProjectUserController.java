@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.sakuram.relation.bean.Tenant;
 import org.sakuram.relation.service.ProjectUserService;
 import org.sakuram.relation.util.Constants;
+import org.sakuram.relation.valueobject.ProjectVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,13 +23,14 @@ public class ProjectUserController {
     @Autowired
     ProjectUserService projectUserService;
     
-    @RequestMapping(value = "/switchProject", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public boolean switchProject(HttpSession httpSession, @RequestBody String projectId) {
+    @RequestMapping(value = "/switchProject", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE)
+    public ProjectVO switchProject(HttpSession httpSession, @RequestBody(required = false) String projectId) {
+    	ProjectVO projectVO;
+    	
+    	projectVO = projectUserService.switchProject(projectId, (Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID));
     	httpSession.removeAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID);
-    	httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID, projectUserService.switchProject(projectId));
-    	return projectUserService.isAppReadOnly(
-    			(Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID),
-    			(Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID));
+    	httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_PROJECT_SURROGATE_ID, projectVO.getTenantId());
+    	return projectVO;
     }
     
     @RequestMapping(value = "/preLogout", method = RequestMethod.POST)
@@ -57,7 +59,7 @@ public class ProjectUserController {
     			(Long)httpSession.getAttribute(Constants.SESSION_ATTRIBUTE_USER_SURROGATE_ID));
     }
     
-    @RequestMapping(value = "/createProject", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/createProject", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE)
     public String createProject(HttpSession httpSession, @RequestBody String projectName) {
     	Tenant tenant;
     	Long appUserId;
@@ -68,7 +70,7 @@ public class ProjectUserController {
     	return tenant.getProjectId();
     }
     
-    @RequestMapping(value = "/switchLanguage", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/switchLanguage", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE)
     public void switchLanguage(HttpSession httpSession, @RequestBody String languageDvId) {
     	httpSession.removeAttribute(Constants.SESSION_ATTRIBUTE_LANGUAGE_DV_ID);
     	httpSession.setAttribute(Constants.SESSION_ATTRIBUTE_LANGUAGE_DV_ID, Long.parseLong(languageDvId));

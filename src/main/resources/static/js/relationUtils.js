@@ -40,7 +40,6 @@ async function invokeService(serviceUrl, requestVO, timeout_ms=30000)
 		};
 		httpRequest.open('POST', serviceUrl);
 		httpRequest.timeout = timeout_ms;
-		httpRequest.setRequestHeader('Content-Type', 'application/json');
 		httpRequest.ontimeout = function () {
 			netAction = 7;
 	    };
@@ -79,13 +78,12 @@ async function invokeService(serviceUrl, requestVO, timeout_ms=30000)
 		if (requestVO == null) {
 			httpRequest.send();
 		}
-		else if(requestVO == "") {
-			httpRequest.send("{}");
-		}
-		else if(typeof requestVO == "string") {
+		else if(typeof requestVO == "string" && (isNaN(requestVO))) {	// Is not complete, enough for now
+			httpRequest.setRequestHeader('Content-Type', 'text/plain');
 			httpRequest.send(requestVO);
 		}
 		else {
+			httpRequest.setRequestHeader('Content-Type', 'application/json');
 			httpRequest.send(JSON.stringify(requestVO));
 		}
 	});

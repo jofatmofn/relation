@@ -151,12 +151,12 @@ public class PersonRelationController {
     }
     
     @RequestMapping(value = "/deleteRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public void deleteRelation(HttpSession httpSession, @RequestBody Long relationId) {
+    public void deleteRelation(HttpSession httpSession, @RequestBody long relationId) {
     	personRelationService.deleteRelation(relationId);
     }
     
     @RequestMapping(value = "/deletePerson", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public void deletePerson(HttpSession httpSession, @RequestBody Long personId) {
+    public void deletePerson(HttpSession httpSession, @RequestBody long personId) {
     	personRelationService.deletePerson(personId);
     }
 

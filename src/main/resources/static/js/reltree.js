@@ -129,8 +129,13 @@ async function drawGraph() {
 	});
 
 	if (startProjectId != null) {
-		isAppReadOnly = await invokeService("projectuser/switchProject", startProjectId);
+		var projectVO;
+		
+		document.getElementById("personCount").innerText = "";
+		projectVO = await invokeService("projectuser/switchProject", startProjectId);
+		isAppReadOnly = projectVO.isAppReadOnly;
 		document.getElementById("project").value = startProjectId;
+		document.getElementById("personCount").innerText = projectVO.personCount;
 		if (startPersonId != null) {
 			s.graph.read(await invokeService("basic/retrieveRelations", {startPersonId : startPersonId}));
 		}
@@ -1245,7 +1250,12 @@ function enDisableDepth(clickedRadioElement) {
 }
 
 async function switchProject() {
-	isAppReadOnly = await invokeService("projectuser/switchProject", document.getElementById("project").value);
+	var projectVO;
+	
+	document.getElementById("personCount").innerText = "";
+	projectVO = await invokeService("projectuser/switchProject", document.getElementById("project").value);
+	isAppReadOnly = projectVO.isAppReadOnly;
+	document.getElementById("personCount").innerText = projectVO.personCount;
 	enableDisableRWFunctions();
 	alert("Project switched successfully");
 }

@@ -35,7 +35,7 @@
 				</div>
 				<div id="projectdetails">
 					<label for="project" th:utext="#{label.project}"></label>:&nbsp;
-					<input type="text" id="project"/><br/>
+					<input type="text" id="project"/>&nbsp;(<span id="personCount"></span>)<br/>
 					<button onclick="switchProject()" th:utext="#{label.switch}"></button>&nbsp;&nbsp;
 					<button onclick="createProject()" class="authenticated" style="display: none" th:utext="#{label.createNew}"></button>
 				</div>
