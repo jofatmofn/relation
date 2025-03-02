@@ -2,7 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org" th:attr="lang=${#locale}">
 	<head>
 		<meta charset="utf-8"/>
-		<!-- script src="sigmajs/sigma.min.js"></script -->
+		<script th:src="@{${viteAssetService.getAsset('src/main.js')}}"></script>
+		<link rel="stylesheet" th:href="@{${viteAssetService.getAsset('index.html')}}">
 		<script src="sigmajs/sigma.require.js"></script>
 		<script src="sigmajs/plugins/sigma.renderers.edgeLabels.min.js"></script>
 		<script src="sigmajs/plugins/sigma.renderers.edgeDots.min.js"></script>
@@ -21,9 +22,6 @@
 		<script src="js/constants.js"></script>
 		<script src="js/relationUtils.js"></script>
 		<script src="js/reltree.js"></script>
-		
-		<link rel="stylesheet" type="text/css" href="css/reltree.css"/>
-		<link rel="stylesheet" type="text/css" href="css/searchresults.css"/>
 	</head>
 	<body onload="drawGraph()">
 		<div id="container">
