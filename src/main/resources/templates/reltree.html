@@ -2,46 +2,28 @@
 <html xmlns:th="http://www.thymeleaf.org" th:attr="lang=${#locale}">
 	<head>
 		<meta charset="utf-8"/>
-		<script th:src="@{${viteAssetService.getAsset('src/main.js')}}"></script>
+		<script th:src="@{${viteAssetService.getAsset('src/js/reltree.js')}}"></script>
 		<link rel="stylesheet" th:href="@{${viteAssetService.getAsset('index.html')}}">
-		<script src="sigmajs/sigma.require.js"></script>
-		<script src="sigmajs/plugins/sigma.renderers.edgeLabels.min.js"></script>
-		<script src="sigmajs/plugins/sigma.renderers.edgeDots.min.js"></script>
-
-		<script src="sigmajs/plugins/sigma.plugins.dragNodes.min.js"></script>
-
-		<script src="sigmajs/plugins/sigma.layout.noverlap.min.js"></script>
-		<script src="sigmajs/plugins/sigma.plugins.animate.min.js"></script>
-
-		<script src="sigmajs/plugins/sigma.exporters.svg.min.js"></script>
-		
-		<script src="pikaday/pikaday.js"></script>
-		<link rel="stylesheet" type="text/css" href="pikaday/css/pikaday.css"/>
-		<link rel="stylesheet" type="text/css" href="pikaday/css/theme.css"/>
-		
-		<script src="js/constants.js"></script>
-		<script src="js/relationUtils.js"></script>
-		<script src="js/reltree.js"></script>
 	</head>
-	<body onload="drawGraph()">
+	<body>
 		<div id="container">
 			<div id="topbar">
 				<div id="languageDetails">
 					<label for="Language" th:utext="#{label.language}"></label>:&nbsp;
 					<select id="language"></select><br/>
-					<button onclick="switchLanguage()" th:utext="#{label.switch}"></button>&nbsp;&nbsp;
+					<button id="switchLanguageButton" th:utext="#{label.switch}"></button>&nbsp;&nbsp;
 				</div>
 				<div id="projectdetails">
 					<label for="project" th:utext="#{label.project}"></label>:&nbsp;
 					<input type="text" id="project"/>&nbsp;(<span id="personCount"></span>)<br/>
-					<button onclick="switchProject()" th:utext="#{label.switch}"></button>&nbsp;&nbsp;
-					<button onclick="createProject()" class="authenticated" style="display: none" th:utext="#{label.createNew}"></button>
+					<button id="switchProjectButton" th:utext="#{label.switch}"></button>&nbsp;&nbsp;
+					<button id="createProjectButton" class="authenticated" style="display: none" th:utext="#{label.createNew}"></button>
 				</div>
 				<div id="userdetails">
 					<label for="user" th:utext="#{label.user}"></label>:&nbsp;
 					<input type="text" id="user" class="authenticated" style="display: none" disabled/><br/>
 					<input type="button" onclick="location.href='./oauth2/authorization/reltree';" th:attr="value=#{label.loginWithGoogle}" class="unauthenticated" style="display: inline-block"/>
-					<button onclick="logout()" class="authenticated" style="display: none" th:utext="#{label.logout}"></button><br/>
+					<button id="logoutButton" class="authenticated" style="display: none" th:utext="#{label.logout}"></button><br/>
 					<label for="dsource" th:utext="#{label.dsource}"></label>:&nbsp;
 					<input type="text" id="dsource" rel-modify-data/>
 				</div>
@@ -49,26 +31,26 @@
 			<div id="leftbar">
 				<div id="leftbartitle" th:utext="#{label.functions}"></div>
 				<div id="leftbarbuttons">
-					<button onclick="searchPerson()" th:utext="#{label.searchPerson}"></button><br/>
-					<button onclick="ascertainRelation()" th:utext="#{label.ascertainRelation}"></button><br/>
+					<button id="searchPersonButton" th:utext="#{label.searchPerson}"></button><br/>
+					<button id="ascertainRelationButton" th:utext="#{label.ascertainRelation}"></button><br/>
 					<hr/>
-					<button onclick="clearGraph()" th:utext="#{label.clearGraph}"></button><br/>
-					<button onclick="nodeToFocus()" th:utext="#{label.bringFocus}"></button><br/>
-					<button onclick="printGraph()" th:utext="#{label.printGraph}"></button><br/>
+					<button id="clearGraphButton" th:utext="#{label.clearGraph}"></button><br/>
+					<button id="nodeToFocusButton" th:utext="#{label.bringFocus}"></button><br/>
+					<button id="printGraphButton" th:utext="#{label.printGraph}"></button><br/>
 					<hr/>
-					<button onclick="addPerson()" rel-modify-data th:utext="#{label.addPerson}"></button><br/>
-					<button onclick="relatePersons()" rel-modify-data th:utext="#{label.relatePersons}"></button><br/>
-					<button onclick="uploadPrData()" rel-modify-data th:utext="#{label.uploadPersonsNRelations}"></button><br/>
+					<button id="addPersonButton" rel-modify-data th:utext="#{label.addPerson}"></button><br/>
+					<button id="relatePersonsButton" rel-modify-data th:utext="#{label.relatePersons}"></button><br/>
+					<button id="uploadPrDataButton" rel-modify-data th:utext="#{label.uploadPersonsNRelations}"></button><br/>
 				</div>
 				<hr/>
 				<div id="leftbarconfig">
 					<span th:utext="#{label.doubleClickFunction}"></span><br/>
-					<input type="radio" id="drel" name="cfgPersonDblClk" value="drel" checked onclick="enDisableDepth(this);"/>
+					<input type="radio" id="drel" name="cfgPersonDblClk" value="drel" checked/>
 					<label for="drel" th:utext="#{label.directRelations}"></label><br/>
 					<input type="radio" id="ftree" value="ftree" disabled/>
 					<label th:utext="#{label.relationTree}"></label>
 					<br/>
-					&emsp;<input type="radio" id="viewTree" name="cfgPersonDblClk" value="view" onclick="enDisableDepth(this);"/>
+					&emsp;<input type="radio" id="viewTree" name="cfgPersonDblClk" value="view"/>
 					<label for="viewTree" th:utext="#{label.view} + '-1'"></label>&emsp;
 					(
 					<label for="depth" th:utext="#{label.maxDepth}"></label>
@@ -79,15 +61,15 @@
 					</select>
 					)
 					<br/>
-					&emsp;<input type="radio" id="displayTree" name="cfgPersonDblClk" value="display" onclick="enDisableDepth(this);"/>
+					&emsp;<input type="radio" id="displayTree" name="cfgPersonDblClk" value="display"/>
 					<label for="displayTree" th:utext="#{label.view} + '-2'"></label><br/>
-					&emsp;<input type="radio" id="exportTree" name="cfgPersonDblClk" value="exportTree" onclick="enDisableDepth(this);"/>
+					&emsp;<input type="radio" id="exportTree" name="cfgPersonDblClk" value="exportTree"/>
 					<label for="exportTree" th:utext="#{label.exportTree}"></label><br/>
-					&emsp;<input type="radio" id="exportFullTree" name="cfgPersonDblClk" value="exportFullTree" onclick="enDisableDepth(this);"/>
+					&emsp;<input type="radio" id="exportFullTree" name="cfgPersonDblClk" value="exportFullTree"/>
 					<label for="exportFullTree" th:utext="#{label.exportFullTree}"></label><br/>
-					<input type="radio" id="roots" name="cfgPersonDblClk" value="roots" onclick="enDisableDepth(this);"/>
+					<input type="radio" id="roots" name="cfgPersonDblClk" value="roots"/>
 					<label for="roots" th:utext="#{label.roots}"></label><br/>
-					<input type="radio" id="parceners" name="cfgPersonDblClk" value="parceners" onclick="enDisableDepth(this);"/>
+					<input type="radio" id="parceners" name="cfgPersonDblClk" value="parceners"/>
 					<label for="parceners" th:utext="#{label.parceners}"></label><br/>
 				</div>
 			</div>
@@ -99,7 +81,7 @@
 				<hr/>
 				<div style="display: none" id="sidebarphoto">
 					<img class="column" style="float: left" id="sidebarphotoImg"/>
-					<input class="column" id="sidebarphotoInput" type="file" accept=".png,.jpg" onchange="document.getElementById('sidebarphotoImg').src = window.URL.createObjectURL(this.files[0])"/>
+					<input class="column" id="sidebarphotoInput" type="file" accept=".png,.jpg"/>
 					<hr style="clear: left"/>
 				</div>
 				<div id="sidebarbody" style="overflow-y:scroll; height:85%"></div>
