@@ -24,6 +24,7 @@ import org.sakuram.relation.valueobject.GraphVO;
 import org.sakuram.relation.valueobject.PersonSearchCriteriaVO;
 import org.sakuram.relation.valueobject.SaveAttributesRequestVO;
 import org.sakuram.relation.valueobject.SaveAttributesResponseVO;
+import org.sakuram.relation.valueobject.SaveOtherRelationRequestVO;
 import org.sakuram.relation.valueobject.SearchResultsVO;
 import org.sakuram.relation.valueobject.RelatedPersonsVO;
 import org.sakuram.relation.valueobject.RelationVO;
@@ -148,6 +149,11 @@ public class PersonRelationController {
     @RequestMapping(value = "/saveRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public RelationVO saveRelation(HttpSession httpSession, @RequestBody RelatedPersonsVO saveRelationRequestVO) {
     	return personRelationService.saveRelation(saveRelationRequestVO);
+    }
+    
+    @RequestMapping(value = "/saveOtherRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public void saveOtherRelation(HttpSession httpSession, @RequestBody SaveOtherRelationRequestVO saveOtherRelationRequestVO) {
+    	personRelationService.saveOtherRelation(saveOtherRelationRequestVO);
     }
     
     @RequestMapping(value = "/deleteRelation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
